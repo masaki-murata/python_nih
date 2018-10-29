@@ -19,8 +19,10 @@ def set_label():
     print("aho")
     for row in reader:
 #        print(path_to_png_dir+row[0])
-        img = np.asarray(Image.open(path_to_png_dir+row[0]))
+        img = np.asarray(Image.open(path_to_png_dir+row[0]).convert('L'))
         print(row[0], img.shape)
+        if row[1] == "No Finding":
+            print(row[1])
         
 
 set_label()
