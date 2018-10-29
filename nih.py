@@ -18,7 +18,9 @@ def set_label():
     header = next(reader)
     print("aho")
     for row in reader:
-        print(path_to_png_dir+row[0])
-#        Image.open(path_to_png_dir + name_png % id)
+#        print(path_to_png_dir+row[0])
+        img = np.asarray(Image.open(path_to_png_dir+row[0]))
+        print(row[0], img.shape)
+        
 
 set_label()
