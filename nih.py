@@ -228,7 +228,7 @@ def train(if_transfer=True,
 
     opt_generator = Adam(lr=1e-3, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
 #    model_multi_gpu.compile(loss='binary_crossentropy', optimizer=opt_generator)
-    model.compile(loss="binary_crossentropy", optimizer=opt_generator, metrics="accuracy")
+    model.compile(loss="binary_crossentropy", optimizer=opt_generator, metrics=["acc"])
     
     # start training
 #    for epoch in range(1,epochs+1):
