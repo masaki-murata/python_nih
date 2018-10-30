@@ -53,27 +53,47 @@ def set_gts(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murarta.csv",
     
     return gts
     
-def load_images(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv",
-                path_to_png_dir = "../nih_data/images/",
-                path_to_images = "../nih_data/images.npy",
-                image_num=128,
-                if_save = False,
-                if_shuffle = False,
+#def load_images(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv",
+#                path_to_png_dir = "../nih_data/images/",
+#                path_to_images = "../nih_data/images.npy",
+#                image_num=128,
+#                if_save = False,
+#                if_shuffle = False,
+#                ):
+#    df = pd.read_csv(path_to_nih_data_csv)
+#    if if_shuffle:
+#        df = df.sample(frac=1)
+#    df = df[:image_num]
+#    images = np.zeros((len(df),1024,1024))
+#    count = 0
+#    for image_index in df['Image Index'].values:
+#        images[count]  = np.asarray(Image.open(path_to_png_dir+image_index).convert('L'))
+#        count += 1
+#    
+#    if if_save:
+#        np.save(path_to_images, images)
+#
+#    return images
+    
+def load_images(df,
+                path_to_image_dir = "../nih_data/images/",
                 ):
-    df = pd.read_csv(path_to_nih_data_csv)
-    if if_shuffle:
-        df = df.sample(frac=1)
-    df = df[:image_num]
     images = np.zeros((len(df),1024,1024))
     count = 0
     for image_index in df['Image Index'].values:
-        images[count]  = np.asarray(Image.open(path_to_png_dir+image_index).convert('L'))
+        images[count]  = np.asarray(Image.open(path_to_image_dir+image_index).convert('L'))
         count += 1
+    images = images.reshape(images.shape+(1,))
     
-    if if_save:
-        np.save(path_to_images, images)
-
     return images
+
+    
+def load_gts(df,
+             ):
+    gts = np.array(df['gt'].values, dtype=np.int)
+    gts = gts.reshape(gts.shape+(1,))
+    
+    return gts    
     
 # Follow up が 0 のデータを抽出    
 def move_images(path_to_original_dir="/mnt/nas-public/nih-cxp-dataset/images/",
@@ -106,9 +126,49 @@ def grouping(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv",
 #    train_ids, validation_ids, test_ids = image_ids[:train_num], image_ids[train_num:train_num+validation_num], image_ids[train_num+validation_num:]
     
 #    return train_ids, validation_ids, test_ids
-    
-#grouping()
 
+def make_validation_dataset(df,
+                            ):
+    data = load_images(df)
+    labels = load_gts(df)
+    
+    return data, labels
+
+    
+def batch_iter(df,
+               batch_size=32,
+               ):
+    data_num = len(df)
+    num_batches_per_epoch = int( (data_num - 1) / batch_size ) + 1
+    while True:
+        for batch_num in range(num_batches_per_epoch):
+            if batch_num==0:
+                df = df.sample(frac=1)
+            start_index = batch_num * batch_size
+            end_index = min((batch_num + 1) * batch_size, data_num)
+            df_epoch = df[start_index:end_index]
+            data = load_images(df_epoch)
+            labels = load_gts(df_epoch)
+            
+            yield data, labels
+
+            
+def train(if_transfer=True,
+          ):
+    path_to_train_csv = "../nih_data/Data_Entry_2017_train.csv"
+    path_to_validation_csv = "../nih_data/Data_Entry_2017_validation.csv"
+    
+    # set validation data
+    df_validation = pd.read_csv(path_to_validation_csv)
+    val_data, val_label = make_validation_dataset(df_validation
+                                                  )
+    # set generator for training data
+    df_train = pd.read_csv(path_to_train_csv)
+    train_gen = batch_iter(df_train,
+                           batch_size=batch_size
+                           )
+    
+    
 images = load_images(path_to_nih_data_csv="../nih_data/Data_Entry_2017_train.csv",
                      )
 print(images.shape)
