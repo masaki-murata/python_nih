@@ -10,10 +10,11 @@ import pandas as pd
 import csv
 from PIL import Image
 
-def set_label(**args,
+def set_label(path_to_nih_data_csv = "../nih_data/nih_data_000.csv",
+              path_to_png_dir = "../nih_data/pngs/",
               ):
-    path_to_nih_data_csv = "../nih_data/nih_data_000.csv"
-    path_to_png_dir = "../nih_data/pngs/"
+#    path_to_nih_data_csv = "../nih_data/nih_data_000.csv"
+#    path_to_png_dir = "../nih_data/pngs/"
 #    name_png = "%08d_000.png"
     num_pngs = len(pd.read_csv(path_to_nih_data_csv))
     nih_csv = open(path_to_nih_data_csv, 'r', encoding="utf-8")
