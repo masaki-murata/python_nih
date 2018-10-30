@@ -53,12 +53,17 @@ def set_gts(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murarta.csv",
     
     return gts
     
-def get_first_image(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv",
-                    path_to_png_dir = "../nih_data/pngs/",
-                    path_to_images = "../nih_data/images.npy",
-                    if_save = False,
-                    ):
+def load_images(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv",
+                path_to_png_dir = "../nih_data/images/",
+                path_to_images = "../nih_data/images.npy",
+                image_num=128,
+                if_save = False,
+                if_shuffle = False,
+                ):
     df = pd.read_csv(path_to_nih_data_csv)
+    if if_shuffle:
+        df = df.sample(frac=1)
+    df = df[:image_num]
     images = np.zeros((len(df),1024,1024))
     count = 0
     for image_index in df['Image Index'].values:
@@ -102,9 +107,8 @@ def grouping(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv",
     
 #    return train_ids, validation_ids, test_ids
     
-grouping()
-#gts = set_label()
-#move_images()
-#gts = set_gts(if_save=True)
-#images = 
-#print(gts.shape)
+#grouping()
+
+images = load_images(path_to_nih_data_csv="../nih_data/Data_Entry_2017_train.csv",
+                     )
+print(images.shape)
