@@ -7,9 +7,29 @@ Created on Mon Oct 29 16:57:22 2018
 
 import numpy as np
 import pandas as pd
-import csv, shutil, random
+import os, csv, shutil, random
 from PIL import Image
+from keras.optimizers import Adam
+from keras.callbacks import CSVLogger, EarlyStopping, ModelCheckpoint
+from keras.utils.training_utils import multi_gpu_model
+from keras.models import Model
+from keras.layers import Dense, Flatten, Input
+from keras.applications.vgg16 import VGG16
+from keras.models import Sequential
 
+import tensorflow as tf
+from keras.backend.tensorflow_backend import set_session
+if os.name=='posix':
+    config = tf.ConfigProto(
+        gpu_options=tf.GPUOptions(
+            visible_device_list="1", # specify GPU number
+            allow_growth=True
+        )
+    )
+    
+    set_session(tf.Session(config=config))
+
+    
 """
 def set_label(path_to_nih_data_csv = "../nih_data/nih_data_000.csv",
               path_to_png_dir = "../nih_data/pngs/",
@@ -78,12 +98,13 @@ def set_gts(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murarta.csv",
 def load_images(df,
                 path_to_image_dir = "../nih_data/images/",
                 ):
-    images = np.zeros((len(df),1024,1024))
+    images = np.zeros((len(df),1024,1024,3))
     count = 0
     for image_index in df['Image Index'].values:
-        images[count]  = np.asarray(Image.open(path_to_image_dir+image_index).convert('L'))
+        for rgb in range(3):
+            images[count,:,:,rgb]  = np.asarray(Image.open(path_to_image_dir+image_index).convert('L'))
         count += 1
-    images = images.reshape(images.shape+(1,))
+#    images = images.reshape(images.shape+(1,))
     
     return images
 
@@ -128,9 +149,11 @@ def grouping(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv",
 #    return train_ids, validation_ids, test_ids
 
 def make_validation_dataset(df,
+                            val_num=128,
                             ):
-    data = load_images(df)
-    labels = load_gts(df)
+    df_shuffle = df.sample(frac=1)
+    data = load_images(df_shuffle[:val_num])
+    labels = load_gts(df_shuffle[:val_num])
     
     return data, labels
 
@@ -139,36 +162,82 @@ def batch_iter(df,
                batch_size=32,
                ):
     data_num = len(df)
-    num_batches_per_epoch = int( (data_num - 1) / batch_size ) + 1
-    while True:
-        for batch_num in range(num_batches_per_epoch):
-            if batch_num==0:
-                df = df.sample(frac=1)
-            start_index = batch_num * batch_size
-            end_index = min((batch_num + 1) * batch_size, data_num)
-            df_epoch = df[start_index:end_index]
-            data = load_images(df_epoch)
-            labels = load_gts(df_epoch)
-            
-            yield data, labels
+    steps_per_epoch = int( (data_num - 1) / batch_size ) + 1
+    def data_generator():
+        while True:
+            for batch_num in range(steps_per_epoch):
+                if batch_num==0:
+                    df_shuffle = df.sample(frac=1)
+                start_index = batch_num * batch_size
+                end_index = min((batch_num + 1) * batch_size, data_num)
+                df_epoch = df_shuffle[start_index:end_index]
+                data = load_images(df_epoch)
+                labels = load_gts(df_epoch)
+                
+                yield data, labels
+    
+    return data_generator(), steps_per_epoch
 
+def make_model():
+    input_tensor = Input(shape=(1024, 1024, 3))
+    vgg16 = VGG16(include_top=False, weights='imagenet', input_tensor=input_tensor)
+    for layer in vgg16.layers:
+        layer.trainable = False
+    top_model = Sequential()
+    top_model.add(Flatten(input_shape=vgg16.output_shape[1:]))
+    top_model.add(Dense(256, activation='relu'))
+#    top_model.add(Dropout(0.5))
+    top_model.add(Dense(1, activation='sigmoid'))
+
+    model = Model(input=vgg16.input, output=top_model(vgg16.output))
+    
+    model.summary()
+    
+    return model
             
 def train(if_transfer=True,
+          batch_size=32,
+          val_num=128,
+          nb_gpus=1,
           ):
     path_to_train_csv = "../nih_data/Data_Entry_2017_train.csv"
     path_to_validation_csv = "../nih_data/Data_Entry_2017_validation.csv"
     
     # set validation data
+    print("---  start make_validation_dataset  ---")
     df_validation = pd.read_csv(path_to_validation_csv)
-    val_data, val_label = make_validation_dataset(df_validation
+    val_data, val_label = make_validation_dataset(df_validation,
+                                                  val_num=val_num
                                                   )
+    
     # set generator for training data
     df_train = pd.read_csv(path_to_train_csv)
-    train_gen = batch_iter(df_train,
-                           batch_size=batch_size
-                           )
+    train_gen , steps_per_epoch= batch_iter(df_train,
+                                            batch_size=batch_size
+                                            )
+    
+    # setting model
+    print("---  start make_model  ---")
+    model = make_model()
+    if int(nb_gpus) > 1:
+        model_multiple_gpu = multi_gpu_model(model, gpus=nb_gpus)
+    else:
+        model_multiple_gpu = model
+#    else:
+#        model = model
+
+    opt_generator = Adam(lr=1e-3, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
+#    model_multi_gpu.compile(loss='binary_crossentropy', optimizer=opt_generator)
+    model.compile(loss="binary_crossentropy", optimizer=opt_generator)
+    
+    # start training
+#    for epoch in range(1,epochs+1):
+    model_multiple_gpu.fit_generator(train_gen,
+                                     steps_per_epoch=steps_per_epoch,
+                                     epochs=10,
+                                     validation_data=(val_data,val_label),
+                                     )
     
     
-images = load_images(path_to_nih_data_csv="../nih_data/Data_Entry_2017_train.csv",
-                     )
-print(images.shape)
+    
+train()
