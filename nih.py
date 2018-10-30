@@ -7,7 +7,7 @@ Created on Mon Oct 29 16:57:22 2018
 
 import numpy as np
 import pandas as pd
-import csv, shutil
+import csv, shutil, random
 from PIL import Image
 
 """
@@ -69,7 +69,8 @@ def get_first_image(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.c
         np.save(path_to_images, images)
 
     return images
-        
+    
+# Follow up が 0 のデータを抽出    
 def move_images(path_to_original_dir="/mnt/nas-public/nih-cxp-dataset/images/",
                 path_to_moved_dir="../nih_data/images/",
                 path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv",
@@ -79,14 +80,31 @@ def move_images(path_to_original_dir="/mnt/nas-public/nih-cxp-dataset/images/",
         shutil.copyfile(path_to_original_dir+image_index, path_to_moved_dir+image_index)
     
         
-def test(aho="aho", **args):
-    print(args)
-    if "aho" in args:
-        print("aho is here")
-    else:
-        print("no aho")
+def grouping(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv",
+             path_to_train_csv = "../nih_data/Data_Entry_2017_train.csv",
+             path_to_validation_csv = "../nih_data/Data_Entry_2017_validation.csv",
+             path_to_test_csv = "../nih_data/Data_Entry_2017_test.csv",
+             ratio = [0.7, 0.15, 0.15],
+#             if_save = False,
+             ):
+    df = pd.read_csv(path_to_nih_data_csv)
+    train_num, validation_num = int(ratio[0]*len(df)), int(ratio[1]*len(df))
+#    test_num = len(df) - (train_num + validation_num)
+    df_shuffle = df.sample(frac=1)
+    df_train, df_validation, df_test = df_shuffle[:train_num], df_shuffle[train_num:train_num+validation_num], df_shuffle[train_num+validation_num:]
+    # save to csv
+    df_train.to_csv(path_to_train_csv)
+    df_validation.to_csv(path_to_validation_csv)
+    df_test.to_csv(path_to_test_csv)
+#    image_ids = list( df['Image Index'].values )
+#    image_ids = random.sample(image_ids, len(image_ids))
+#    train_ids, validation_ids, test_ids = image_ids[:train_num], image_ids[train_num:train_num+validation_num], image_ids[train_num+validation_num:]
+    
+#    return train_ids, validation_ids, test_ids
+    
+grouping()
 #gts = set_label()
-move_images()
+#move_images()
 #gts = set_gts(if_save=True)
 #images = 
 #print(gts.shape)
