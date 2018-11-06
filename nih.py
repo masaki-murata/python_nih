@@ -204,6 +204,15 @@ def make_model(input_shape=(128, 128, 1)):
     x = Dense(256, activation="relu")(x)
     output = Dense(1, activation="sigmoid")(x)
 
+    model = Model(input_img, output)
+    opt_generator = Adam(lr=1e-3, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
+    model.compile(loss='binary_crossentropy', optimizer=opt_generator, metrics=['acc'])
+
+    model.summary()
+    
+    return model
+    
+
     # 転移学習用のモデルを作る関数
 def make_model_transfer(input_shape=(128, 128, 1)):
     input_tensor = Input(shape=(1024, 1024, 3))
