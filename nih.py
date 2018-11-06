@@ -115,7 +115,7 @@ def load_images(df,
     
     return images
 
-    
+# ground truth を dataframe からロードする関する
 def load_gts(df,
              ):
     gts = np.array(df['gt'].values, dtype=np.int)
