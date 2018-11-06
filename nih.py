@@ -13,7 +13,7 @@ from keras.optimizers import Adam
 from keras.callbacks import CSVLogger, EarlyStopping, ModelCheckpoint
 from keras.utils.training_utils import multi_gpu_model
 from keras.models import Model
-from keras.layers import Dense, Flatten, Input
+from keras.layers import Dense, Flatten, Input, Conv2D, BatchNormalization
 from keras.applications.vgg16 import VGG16
 from keras.models import Sequential
 
@@ -186,6 +186,26 @@ def batch_iter(df,
     return data_generator(), steps_per_epoch
 
 def make_model(input_shape=(128, 128, 1)):
+    input_img = Input(shape=input_shape)
+    x = Conv2D(filters=8, kernel_size=3, padding="same", activation="relu")(input_img)
+    x = Conv2D(filters=8, kernel_size=3, strides=2, padding="valid", activation="relu")(x)
+    x = BatchNormalization()(x)
+    x = Conv2D(filters=32, kernel_size=3, padding="same", activation="relu")(x)
+    x = Conv2D(filters=32, kernel_size=3, strides=2, padding="valid", activation="relu")(x)
+    x = BatchNormalization()(x)
+    x = Conv2D(filters=64, kernel_size=3, padding="same", activation="relu")(x)
+    x = Conv2D(filters=64, kernel_size=3, strides=2, padding="valid", activation="relu")(x)
+    x = BatchNormalization()(x)
+    x = Conv2D(filters=128, kernel_size=3, padding="same", activation="relu")(x)
+    x = Conv2D(filters=128, kernel_size=3, strides=2, padding="valid", activation="relu")(x)
+    x = BatchNormalization()(x)
+
+    x = Flatten()(x)
+    x = Dense(256, activation="relu")(x)
+    output = Dense(1, activation="sigmoid")(x)
+
+    # 転移学習用のモデルを作る関数
+def make_model_transfer(input_shape=(128, 128, 1)):
     input_tensor = Input(shape=(1024, 1024, 3))
     vgg16 = VGG16(include_top=False, weights='imagenet', input_tensor=input_tensor)
     for layer in vgg16.layers:
