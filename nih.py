@@ -96,13 +96,20 @@ def set_gts(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murarta.csv",
 #    return images
     
 def load_images(df,
+                input_shape=(128, 128, 1),
                 path_to_image_dir = "../nih_data/images/",
+                if_rgb=False,
                 ):
-    images = np.zeros((len(df),1024,1024,3))
+    images = np.zeros((len(df),)+input_shape)
+        
     count = 0
     for image_index in df['Image Index'].values:
-        for rgb in range(3):
-            images[count,:,:,rgb]  = np.asarray(Image.open(path_to_image_dir+image_index).convert('L'))
+        if if_rgb:
+            for rgb in range(3):
+                images[count,:,:,rgb]  = np.asarray(Image.open(path_to_image_dir+image_index).convert('L'))
+        else:
+            image = np.asarray( Image.open(path_to_image_dir+image_index).convert('L').resize(input_shape[-1:]) )
+            images[count] = image.reshape(input_shape)
         count += 1
 #    images = images.reshape(images.shape+(1,))
     
@@ -178,7 +185,7 @@ def batch_iter(df,
     
     return data_generator(), steps_per_epoch
 
-def make_model():
+def make_model(input_shape=(128, 128, 1)):
     input_tensor = Input(shape=(1024, 1024, 3))
     vgg16 = VGG16(include_top=False, weights='imagenet', input_tensor=input_tensor)
     for layer in vgg16.layers:
