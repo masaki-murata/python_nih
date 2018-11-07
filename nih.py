@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import os, csv, shutil, random
 from PIL import Image
-from keras.optimizers import Adam
+from keras.optimizers import Adam, SGD
 from keras.callbacks import CSVLogger, EarlyStopping, ModelCheckpoint
 from keras.utils.training_utils import multi_gpu_model
 from keras.models import Model
@@ -276,8 +276,9 @@ def train(if_transfer=True,
 #        model = model
 
     opt_generator = Adam(lr=1e-4, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
+    sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
 #    model_multi_gpu.compile(loss='binary_crossentropy', optimizer=opt_generator)
-    model.compile(loss="binary_crossentropy", optimizer=opt_generator, metrics=["acc"])
+    model.compile(loss="binary_crossentropy", optimizer=sgd, metrics=["acc"])
     
     # start training
 #    for epoch in range(1,epochs+1):
