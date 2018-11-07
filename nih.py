@@ -108,7 +108,7 @@ def load_images(df,
             for rgb in range(3):
                 images[count,:,:,rgb]  = np.asarray(Image.open(path_to_image_dir+image_index).convert('L'))
         else:
-            image = np.asarray( Image.open(path_to_image_dir+image_index).convert('L').resize(input_shape[-1:]) )
+            image = np.asarray( Image.open(path_to_image_dir+image_index).convert('L').resize(input_shape[:-1]) )
             images[count] = image.reshape(input_shape)
         count += 1
 #    images = images.reshape(images.shape+(1,))
@@ -156,10 +156,12 @@ def grouping(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv",
 #    return train_ids, validation_ids, test_ids
 
 def make_validation_dataset(df,
+                            input_shape=(128, 128, 1),
                             val_num=128,
+                            if_rgb=False,
                             ):
     df_shuffle = df.sample(frac=1)
-    data = load_images(df_shuffle[:val_num])
+    data = load_images(df_shuffle[:val_num], input_shape=input_shape, if_rgb=if_rgb)
     labels = load_gts(df_shuffle[:val_num])
     
     return data, labels
@@ -234,6 +236,7 @@ def make_model_transfer(input_shape=(128, 128, 1)):
 def train(if_transfer=True,
           batch_size=32,
           val_num=128,
+          epochs=100,
           nb_gpus=1,
           ):
     path_to_train_csv = "../nih_data/Data_Entry_2017_train.csv"
@@ -245,6 +248,7 @@ def train(if_transfer=True,
     val_data, val_label = make_validation_dataset(df_validation,
                                                   val_num=val_num
                                                   )
+    print(np.sum(val_label==0), np.sum(val_label==1))
     
     # set generator for training data
     df_train = pd.read_csv(path_to_train_csv)
@@ -262,7 +266,7 @@ def train(if_transfer=True,
 #    else:
 #        model = model
 
-    opt_generator = Adam(lr=1e-3, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
+    opt_generator = Adam(lr=1e-2, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
 #    model_multi_gpu.compile(loss='binary_crossentropy', optimizer=opt_generator)
     model.compile(loss="binary_crossentropy", optimizer=opt_generator, metrics=["acc"])
     
@@ -270,13 +274,14 @@ def train(if_transfer=True,
 #    for epoch in range(1,epochs+1):
     model_multiple_gpu.fit_generator(train_gen,
                                      steps_per_epoch=steps_per_epoch,
-                                     epochs=10,
+                                     epochs=epochs,
                                      validation_data=(val_data,val_label),
                                      )
     
     
     
-train(batch_size=4,
-      val_num=1,
+train(batch_size=32,
+      epochs=100,
+      val_num=512,
       nb_gpus=1,
       )
