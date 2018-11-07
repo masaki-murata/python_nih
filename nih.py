@@ -167,9 +167,9 @@ def make_validation_dataset(df,
     return data, labels
 
     
-def batch_iter(df,
-               batch_size=32,
-               ):
+def batch_iter_np(df,
+                  batch_size=32,
+                  ):
     data_num = len(df)
     steps_per_epoch = int( (data_num - 1) / batch_size ) + 1
     def data_generator():
@@ -237,6 +237,8 @@ def train(if_transfer=True,
           batch_size=32,
           val_num=128,
           epochs=100,
+          if_rgb=False,
+          if_batch_from_df=False,
           nb_gpus=1,
           ):
     path_to_train_csv = "../nih_data/Data_Entry_2017_train.csv"
@@ -246,15 +248,22 @@ def train(if_transfer=True,
     print("---  start make_validation_dataset  ---")
     df_validation = pd.read_csv(path_to_validation_csv)
     val_data, val_label = make_validation_dataset(df_validation,
-                                                  val_num=val_num
+                                                  val_num=val_num,
+                                                  if_rgb=if_rgb,
                                                   )
     print(np.sum(val_label==0), np.sum(val_label==1))
     
     # set generator for training data
     df_train = pd.read_csv(path_to_train_csv)
-    train_gen , steps_per_epoch= batch_iter(df_train,
-                                            batch_size=batch_size
-                                            )
+    if if_batch_from_df:
+        train_gen , steps_per_epoch= batch_iter_np(df_train,
+                                                   batch_size=batch_size
+                                                   )
+    else:
+        train_data, train_label = make_validation_dataset(df_train,
+                                                          val_num=len(df_train),
+                                                          if_rgb=if_rgb,
+                                                          )
     
     # setting model
     print("---  start make_model  ---")
@@ -266,22 +275,30 @@ def train(if_transfer=True,
 #    else:
 #        model = model
 
-    opt_generator = Adam(lr=1e-2, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
+    opt_generator = Adam(lr=1e-4, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
 #    model_multi_gpu.compile(loss='binary_crossentropy', optimizer=opt_generator)
     model.compile(loss="binary_crossentropy", optimizer=opt_generator, metrics=["acc"])
     
     # start training
 #    for epoch in range(1,epochs+1):
-    model_multiple_gpu.fit_generator(train_gen,
-                                     steps_per_epoch=steps_per_epoch,
-                                     epochs=epochs,
-                                     validation_data=(val_data,val_label),
-                                     )
+    if if_batch_from_df:
+        model_multiple_gpu.fit_generator(train_gen,
+                                         steps_per_epoch=steps_per_epoch,
+                                         epochs=epochs,
+                                         validation_data=(val_data,val_label),
+                                         )
+    else:
+        model_multiple_gpu.fit(train_data, train_label,
+#                               steps_per_epoch=steps_per_epoch,
+                               epochs=epochs,
+                               validation_data=(val_data,val_label),
+                               )
     
     
     
 train(batch_size=32,
       epochs=100,
-      val_num=512,
+      val_num=2048,
+      if_batch_from_df=False,
       nb_gpus=1,
       )
