@@ -8,6 +8,7 @@ Created on Mon Oct 29 16:57:22 2018
 import numpy as np
 import pandas as pd
 import os, csv, shutil, random
+from keras.utils import to_categorical
 from PIL import Image
 from keras.optimizers import Adam, SGD
 from keras.callbacks import CSVLogger, EarlyStopping, ModelCheckpoint
@@ -204,7 +205,7 @@ def make_model(input_shape=(128, 128, 1)):
 
     x = Flatten()(x)
     x = Dense(256, activation="relu")(x)
-    output = Dense(1, activation="sigmoid")(x)
+    output = Dense(2, activation="softmax")(x)
 
     model = Model(input_img, output)
     opt_generator = Adam(lr=1e-3, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
@@ -252,6 +253,7 @@ def train(if_transfer=True,
                                                   if_rgb=if_rgb,
                                                   )
     print(np.sum(val_label==0), np.sum(val_label==1))
+    val_label = to_categorical(val_label)
     
     # set generator for training data
     df_train = pd.read_csv(path_to_train_csv)
@@ -264,6 +266,7 @@ def train(if_transfer=True,
                                                           val_num=len(df_train),
                                                           if_rgb=if_rgb,
                                                           )
+        train_label = to_categorical(train_label)
     
     # setting model
     print("---  start make_model  ---")
