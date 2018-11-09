@@ -100,6 +100,7 @@ def load_images(df,
                 input_shape=(128, 128, 1),
                 path_to_image_dir = "../nih_data/images/",
                 if_rgb=False,
+                if_normalize=True,
                 ):
     images = np.zeros((len(df),)+input_shape)
         
@@ -110,6 +111,8 @@ def load_images(df,
                 images[count,:,:,rgb]  = np.asarray(Image.open(path_to_image_dir+image_index).convert('L'))
         else:
             image = np.asarray( Image.open(path_to_image_dir+image_index).convert('L').resize(input_shape[:-1]) )
+            if if_normalize:
+                image = (image-image.mean()) / image.std()
             images[count] = image.reshape(input_shape)
         count += 1
 #    images = images.reshape(images.shape+(1,))
@@ -160,16 +163,19 @@ def make_validation_dataset(df,
                             input_shape=(128, 128, 1),
                             val_num=128,
                             if_rgb=False,
+                            if_normalize=True,
                             ):
     df_shuffle = df.sample(frac=1)
-    data = load_images(df_shuffle[:val_num], input_shape=input_shape, if_rgb=if_rgb)
+    data = load_images(df_shuffle[:val_num], input_shape=input_shape, if_rgb=if_rgb, if_normalize=if_normalize)
     labels = load_gts(df_shuffle[:val_num])
-    
     return data, labels
 
     
 def batch_iter_np(df,
+                  input_shape=(128,128,1),
                   batch_size=32,
+                  if_rgb=False,
+                  if_normalize=True,
                   ):
     data_num = len(df)
     steps_per_epoch = int( (data_num - 1) / batch_size ) + 1
@@ -181,7 +187,7 @@ def batch_iter_np(df,
                 start_index = batch_num * batch_size
                 end_index = min((batch_num + 1) * batch_size, data_num)
                 df_epoch = df_shuffle[start_index:end_index]
-                data = load_images(df_epoch)
+                data = load_images(df_epoch, input_shape=input_shape, if_rgb=if_rgb, if_normalize=if_normalize)
                 labels = load_gts(df_epoch)
                 
                 yield data, labels
@@ -243,12 +249,14 @@ def make_model_transfer(input_shape=(128, 128, 1)):
     
     return model
             
-def train(if_transfer=True,
+def train(input_shape=(128,128,1),
           batch_size=32,
           val_num=128,
           epochs=100,
+          if_transfer=True,
           if_rgb=False,
           if_batch_from_df=False,
+          if_normalize=True,
           nb_gpus=1,
           ):
     path_to_train_csv = "../nih_data/Data_Entry_2017_train.csv"
@@ -258,8 +266,10 @@ def train(if_transfer=True,
     print("---  start make_validation_dataset  ---")
     df_validation = pd.read_csv(path_to_validation_csv)
     val_data, val_label = make_validation_dataset(df_validation,
+                                                  input_shape=input_shape,
                                                   val_num=val_num,
                                                   if_rgb=if_rgb,
+                                                  if_normalize=if_normalize,
                                                   )
     print(np.sum(val_label==0), np.sum(val_label==1))
     val_label = to_categorical(val_label)
@@ -272,8 +282,10 @@ def train(if_transfer=True,
                                                    )
     else:
         train_data, train_label = make_validation_dataset(df_train,
+                                                          input_shape=input_shape,
                                                           val_num=len(df_train),
                                                           if_rgb=if_rgb,
+                                                          if_normalize=if_normalize,
                                                           )
         train_label = to_categorical(train_label)
     
@@ -310,8 +322,10 @@ def train(if_transfer=True,
     
     
 train(batch_size=32,
+      input_shape=(256,256,1),
       epochs=100,
       val_num=2048,
       if_batch_from_df=False,
+      if_normalize=True,
       nb_gpus=1,
       )
