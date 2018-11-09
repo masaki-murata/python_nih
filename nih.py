@@ -212,7 +212,7 @@ def make_model(input_shape=(128, 128, 1)):
     top_model.add(Flatten(input_shape=vgg16.output_shape[1:]))
     top_model.add(Dense(256, activation='relu'))
 #    top_model.add(Dropout(0.5))
-    top_model.add(Dense(1, activation='sigmoid'))
+    top_model.add(Dense(2, activation='softmax'))
 
     model = Model(input=input_img, output=top_model(vgg16.output))
 
