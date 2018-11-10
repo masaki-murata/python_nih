@@ -291,7 +291,7 @@ def train(input_shape=(128,128,1),
     
     # setting model
     print("---  start make_model  ---")
-    model = make_model()
+    model = make_model(input_shape=input_shape)
     if int(nb_gpus) > 1:
         model_multiple_gpu = multi_gpu_model(model, gpus=nb_gpus)
     else:
