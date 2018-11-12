@@ -248,6 +248,10 @@ def make_model_transfer(input_shape=(128, 128, 1)):
     model.summary()
     
     return model
+
+
+def auc(y_true, y_pred):
+    pred_sorted = np.sort(y_pred, axis = 0)
             
 def train(input_shape=(128,128,1),
           batch_size=32,
