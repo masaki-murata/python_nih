@@ -251,7 +251,28 @@ def make_model_transfer(input_shape=(128, 128, 1)):
 
 
 def auc(y_true, y_pred):
-    pred_sorted = np.sort(y_pred, axis = 0)
+    # y_true, y_pred は numpy 形式
+    sick_true = y_true[:,1]
+    sick_pred = y_pred[:,1]
+    pred_sorted = np.sort(sick_pred)
+    positive_num = float( len(sick_true[sick_true==1]) )
+    negative_num = float( len(sick_true[sick_true==0]) )
+    data_num = len(sick_true)
+    assert positive_num+negative_num == float( data_num )
+    sensitivities, specificities = np.zeros(data_num), np.zeros(data_num)
+    count = 0
+    sensitivity, specificity = 0, 0
+    for threshold in pred_sorted:
+        tp_num = len( sick_true[(sick_pred>=threshold)&sick_true==1] )
+        tn_num = len( sick_true[(sick_pred<threshold)&sick_true==0] )
+        sensitivity_next = tp_num / positive_num
+        specificity_next = tn_num / positive_num
+        sensitivities[count] = tp_num / positive_num
+        specificities[count] = tn_num / positive_num
+        count += 1
+        
+#auc += 0.5*(fp_per_case[fp_id]-fp_per_case[fp_id+1])*(tpr[fp_id]+tpr[fp_id+1])    
+        
             
 def train(input_shape=(128,128,1),
           batch_size=32,
