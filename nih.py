@@ -264,8 +264,8 @@ def auc(y_true, y_pred):
     sensitivity, specificity = 0, 0
     auc = 0
     for threshold in pred_sorted:
-        tp_num = len( sick_true[(sick_pred>=threshold)&sick_true==1] )
-        fn_num = len( sick_true[(sick_pred>=threshold)&sick_true==0] )
+        tp_num = len( sick_true[(sick_pred>=threshold)&(sick_true==1)] )
+        fn_num = len( sick_true[(sick_pred>=threshold)&(sick_true==0)] )
         sensitivity_next = tp_num / positive_num
         specificity_next = fn_num / negative_num
         auc_part = 0.5*(sensitivity+sensitivity_next)*(specificity_next-specificity)
