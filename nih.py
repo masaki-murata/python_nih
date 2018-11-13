@@ -132,7 +132,10 @@ def load_gts(df,
 def move_images(path_to_original_dir="/mnt/nas-public/nih-cxp-dataset/images/",
                 path_to_moved_dir="../nih_data/images/",
                 path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv",
+                if_duplicate=True,
                 ):
+    if if_duplicate:
+        path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv"
     df = pd.read_csv(path_to_nih_data_csv)
     for image_index in df['Image Index'].values:
         shutil.copyfile(path_to_original_dir+image_index, path_to_moved_dir+image_index)
@@ -142,15 +145,32 @@ def grouping(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv",
              path_to_train_csv = "../nih_data/Data_Entry_2017_train.csv",
              path_to_validation_csv = "../nih_data/Data_Entry_2017_validation.csv",
              path_to_test_csv = "../nih_data/Data_Entry_2017_test.csv",
+             if_duplicate=True,
              ratio = [0.7, 0.15, 0.15],
 #             if_save = False,
              ):
-    path_to_nih_data_csv = "../nih_data/Data_Entry_2017.csv"
     df = pd.read_csv(path_to_nih_data_csv)
     train_num, validation_num = int(ratio[0]*len(df)), int(ratio[1]*len(df))
 #    test_num = len(df) - (train_num + validation_num)
     df_shuffle = df.sample(frac=1)
     df_train, df_validation, df_test = df_shuffle[:train_num], df_shuffle[train_num:train_num+validation_num], df_shuffle[train_num+validation_num:]
+    
+    if if_duplicate:
+        # 重複を含んだリストを読み込む
+        df_duplicate = pd.read_csv("../nih_data/Data_Entry_2017.csv")
+        # 患者リストを作成
+        train_ids = list(df_train["Patient ID"].values)
+        validation_ids = list(df_validation["Patient ID"].values)
+        test_ids = list(df_test["Patient ID"].values)
+        # 重複を許して患者を取り出す
+        df_train = df_duplicate[df_duplicate["Patient ID"].isin(train_ids)]
+        df_validation = df_duplicate[df_duplicate["Patient ID"].isin(validation_ids)]
+        df_test = df_duplicate[df_duplicate["Patient ID"].isin(test_ids)]
+        # 保存先を変更
+        path_to_train_csv = path_to_train_csv[:-4]+"_duplicate.csv"
+        path_to_validation_csv = path_to_validation_csv[:-4]+"_duplicate.csv"
+        path_to_test_csv = path_to_test_csv[:-4]+"_duplicate.csv"
+    
     # save to csv
     df_train.to_csv(path_to_train_csv)
     df_validation.to_csv(path_to_validation_csv)
@@ -167,6 +187,7 @@ def make_dataset(df,
                  if_rgb=False,
                  if_normalize=True,
                  ):
+#    df_deplicate = pd.read_csv()
     df = df[(df["Finding Labels"]=="No Finding") | (df["Finding Labels"].str.contains("Effusion"))]
     df_shuffle = df.sample(frac=1)
     data = load_images(df_shuffle[:val_num], input_shape=input_shape, if_rgb=if_rgb, if_normalize=if_normalize)
@@ -314,11 +335,16 @@ def train(input_shape=(128,128,1),
           if_rgb=False,
           if_batch_from_df=False,
           if_normalize=True,
+          if_duplicate=True,
           nb_gpus=1,
           ):
     path_to_train_csv = "../nih_data/Data_Entry_2017_train.csv"
     path_to_validation_csv = "../nih_data/Data_Entry_2017_validation.csv"
-    
+    if if_duplicate:
+        path_to_train_csv = path_to_train_csv[:-4]+"_duplicate.csv"
+        path_to_validation_csv = path_to_validation_csv[:-4]+"_duplicate.csv"
+#        path_to_test_csv = path_to_test_csv[:-4]+"_duplicate.csv"
+            
     # set validation data
     print("---  start make_validation_dataset  ---")
     df_validation = pd.read_csv(path_to_validation_csv)
