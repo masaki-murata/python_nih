@@ -31,34 +31,34 @@ if os.name=='posix':
     set_session(tf.Session(config=config))
 
     
-"""
-def set_label(path_to_nih_data_csv = "../nih_data/nih_data_000.csv",
-              path_to_png_dir = "../nih_data/pngs/",
-              ):
-#    path_to_nih_data_csv = "../nih_data/nih_data_000.csv"
-#    path_to_png_dir = "../nih_data/pngs/"
-#    name_png = "%08d_000.png"
-    num_pngs = len(pd.read_csv(path_to_nih_data_csv))
-    nih_csv = open(path_to_nih_data_csv, 'r', encoding="utf-8")
-    reader = csv.reader(nih_csv)
-    header = next(reader)
-#    no_findings = []
-    gts = np.ones(num_pngs, dtype=np.int)
-    count = 0
-    for row in reader:
-#        print(path_to_png_dir+row[0])
-        img = np.asarray(Image.open(path_to_png_dir+row[0]).convert('L'))
-#        print(row[0], img.shape)
-        if row[1] == "No Finding":
-#            print(row[1])
-#            no_findings.append(row[0])
-            gts[count] = 0
-        count += 1
-    if args[if_save_gts]:
-        np.save(args[path_to_gts],gts)
-#    print(len(no_findings))
-    return gts
-"""
+
+#def set_label(path_to_nih_data_csv = "../nih_data/nih_data_000.csv",
+#              path_to_png_dir = "../nih_data/pngs/",
+#              ):
+##    path_to_nih_data_csv = "../nih_data/nih_data_000.csv"
+##    path_to_png_dir = "../nih_data/pngs/"
+##    name_png = "%08d_000.png"
+#    num_pngs = len(pd.read_csv(path_to_nih_data_csv))
+#    nih_csv = open(path_to_nih_data_csv, 'r', encoding="utf-8")
+#    reader = csv.reader(nih_csv)
+#    header = next(reader)
+##    no_findings = []
+#    gts = np.ones(num_pngs, dtype=np.int)
+#    count = 0
+#    for row in reader:
+##        print(path_to_png_dir+row[0])
+#        img = np.asarray(Image.open(path_to_png_dir+row[0]).convert('L'))
+##        print(row[0], img.shape)
+#        if row[1] == "No Finding":
+##            print(row[1])
+##            no_findings.append(row[0])
+#            gts[count] = 0
+#        count += 1
+#    if args[if_save_gts]:
+#        np.save(args[path_to_gts],gts)
+##    print(len(no_findings))
+#    return gts
+
 
 # ground truth を作る関数
 def set_gts(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murarta.csv",
@@ -159,15 +159,18 @@ def grouping(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv",
     
 #    return train_ids, validation_ids, test_ids
 
-def make_validation_dataset(df,
-                            input_shape=(128, 128, 1),
-                            val_num=128,
-                            if_rgb=False,
-                            if_normalize=True,
-                            ):
+def make_dataset(df,
+                 input_shape=(128, 128, 1),
+                 val_num=128,
+                 if_rgb=False,
+                 if_normalize=True,
+                 ):
+    df = df[(df["Finding Labels"]=="No Finding") | (df["Finding Labels"].str.contains("Effusion"))]
     df_shuffle = df.sample(frac=1)
     data = load_images(df_shuffle[:val_num], input_shape=input_shape, if_rgb=if_rgb, if_normalize=if_normalize)
-    labels = load_gts(df_shuffle[:val_num])
+    labels = np.array(df["Finding Labels"].str.contains("Effusion")*1.0)
+    labels = to_categorical(labels)
+#    labels = load_gts(df_shuffle[:val_num])
     return data, labels
 
     
@@ -299,14 +302,14 @@ def train(input_shape=(128,128,1),
     # set validation data
     print("---  start make_validation_dataset  ---")
     df_validation = pd.read_csv(path_to_validation_csv)
-    val_data, val_label = make_validation_dataset(df_validation,
-                                                  input_shape=input_shape,
-                                                  val_num=val_num,
-                                                  if_rgb=if_rgb,
-                                                  if_normalize=if_normalize,
-                                                  )
+    val_data, val_label = make_dataset(df_validation,
+                                       input_shape=input_shape,
+                                       val_num=val_num,
+                                       if_rgb=if_rgb,
+                                       if_normalize=if_normalize,
+                                       )
     print(np.sum(val_label==0), np.sum(val_label==1))
-    val_label = to_categorical(val_label)
+#    val_label = to_categorical(val_label)
     
     # set generator for training data
     df_train = pd.read_csv(path_to_train_csv)
@@ -315,13 +318,13 @@ def train(input_shape=(128,128,1),
                                                    batch_size=batch_size
                                                    )
     else:
-        train_data, train_label = make_validation_dataset(df_train,
-                                                          input_shape=input_shape,
-                                                          val_num=len(df_train),
-                                                          if_rgb=if_rgb,
-                                                          if_normalize=if_normalize,
-                                                          )
-        train_label = to_categorical(train_label)
+        train_data, train_label = make_dataset(df_train,
+                                               input_shape=input_shape,
+                                               val_num=len(df_train),
+                                               if_rgb=if_rgb,
+                                               if_normalize=if_normalize,
+                                               )
+#        train_label = to_categorical(train_label)
     
     # setting model
     print("---  start make_model  ---")
