@@ -289,8 +289,10 @@ def auc(y_true, y_pred):
 #        count += 1
         
 #auc += 0.5*(fp_per_case[fp_id]-fp_per_case[fp_id+1])*(tpr[fp_id]+tpr[fp_id+1])    
-        
-            
+
+#def weighted_crossentropy(y_true, y_pred):
+#    y_pred[y_true]
+
 def train(input_shape=(128,128,1),
           batch_size=32,
           val_num=128,
@@ -346,7 +348,7 @@ def train(input_shape=(128,128,1),
     class_weight = {0:np.sum(train_label[:,1])/float(len(train_label)), 1:np.sum(train_label[:,0])/float(len(train_label))}
     print("class_weight = ", class_weight)
 #    model_multi_gpu.compile(loss='binary_crossentropy', optimizer=opt_generator)
-    model.compile(loss="binary_crossentropy", optimizer=sgd, metrics=["acc"])
+    model.compile(loss="categorical_crossentropy", optimizer=sgd, metrics=["acc"])
     
     # start training
     for epoch in range(1,epochs+1):
