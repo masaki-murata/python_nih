@@ -259,6 +259,7 @@ def auc(y_true, y_pred):
     negative_num = float( len(sick_true[sick_true==0]) )
     data_num = len(sick_true)
     assert positive_num+negative_num == float( data_num )
+    print("pred_sorted[0] = ", pred_sorted[0])
 #    sensitivities, specificities = np.zeros(data_num), np.zeros(data_num)
 #    count = 0
     sensitivity, specificity = 0, 0
