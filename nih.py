@@ -274,6 +274,8 @@ def auc(y_true, y_pred):
         auc += auc_part
         sensitivity = sensitivity_next+0
         specificity = specificity_next+0
+    
+    return auc
 #        sensitivities[count] = tp_num / positive_num
 #        specificities[count] = tn_num / positive_num
 #        count += 1
