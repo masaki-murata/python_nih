@@ -142,14 +142,10 @@ def grouping(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv",
              path_to_train_csv = "../nih_data/Data_Entry_2017_train.csv",
              path_to_validation_csv = "../nih_data/Data_Entry_2017_validation.csv",
              path_to_test_csv = "../nih_data/Data_Entry_2017_test.csv",
-             allow_deplicate = True,
              ratio = [0.7, 0.15, 0.15],
 #             if_save = False,
              ):
-    if allow_deplicate:
-        path_to_nih_data_csv = "../nih_data/Data_Entry_2017.csv"
-    else:
-        path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv"
+    path_to_nih_data_csv = "../nih_data/Data_Entry_2017.csv"
     df = pd.read_csv(path_to_nih_data_csv)
     train_num, validation_num = int(ratio[0]*len(df)), int(ratio[1]*len(df))
 #    test_num = len(df) - (train_num + validation_num)
@@ -295,10 +291,20 @@ def auc(y_true, y_pred):
 #    y_pred[y_true]
 
 def class_balance(data, labels):
-    data_norm = data[label[:,1]==0]
-    data_sick = data[label[:,1]==1]
+    data_norm = data[labels[:,1]==0]
+    data_sick = data[labels[:,1]==1]
     norm_num, sick_num = len(data_norm), len(data_sick)
     
+    norm_indices = np.random.randint(norm_num, sick_num)
+    data_norm_select = data_norm[norm_indices]
+    data_epoch = np.vstack((data_norm_select, data_sick))
+    labels_epoch = np.vstack(( np.tile(np.array([1,0]), (sick_num,1)), \
+                                               np.tile(np.array([0,1]), (sick_num,1)) ))
+    shuffle_indices = np.random.permutation(np.arange(len(labels_epoch)))
+    data_epoch = data_epoch[shuffle_indices]
+    labels_epoch = labels_epoch[shuffle_indices]
+    
+    return data_epoch, labels_epoch
 
 def train(input_shape=(128,128,1),
           batch_size=32,
@@ -322,6 +328,7 @@ def train(input_shape=(128,128,1),
                                        if_rgb=if_rgb,
                                        if_normalize=if_normalize,
                                        )
+    val_data, val_label = class_balance(val_data, val_label)
     print(np.sum(val_label[:,1]==0), np.sum(val_label[:,1]==1))
 #    val_label = to_categorical(val_label)
     
@@ -371,18 +378,19 @@ def train(input_shape=(128,128,1),
                                              validation_data=(val_data,val_label),
                                              )
         else:
+            train_data_epoch, train_labels_epoch = class_balance(train_data, train_label)
             norm_indices = np.random.randint(train_norm_num, train_sick_num)
-            train_data_norm_select = train_data_norm[norm_indices]
-            train_data_epoch = np.vstack((train_data_norm_select, train_data_sick))
-            train_label_epoch = np.vstack(( np.tile(np.array([1,0]), (train_sick_num,1)), \
-                                               np.tile(np.array([0,1]), (train_sick_num,1)) ))
-            shuffle_indices = np.random.permutation(np.arange(len(train_label_epoch)))
-            train_data_epoch = train_data_epoch[shuffle_indices]
-            train_label_epoch = train_label_epoch[shuffle_indices]
-            model_multiple_gpu.fit(train_data, train_label,
+#            train_data_norm_select = train_data_norm[norm_indices]
+#            train_data_epoch = np.vstack((train_data_norm_select, train_data_sick))
+#            train_label_epoch = np.vstack(( np.tile(np.array([1,0]), (train_sick_num,1)), \
+#                                               np.tile(np.array([0,1]), (train_sick_num,1)) ))
+#            shuffle_indices = np.random.permutation(np.arange(len(train_label_epoch)))
+#            train_data_epoch = train_data_epoch[shuffle_indices]
+#            train_label_epoch = train_label_epoch[shuffle_indices]
+            model_multiple_gpu.fit(train_data_epoch, train_labels_epoch,
     #                               steps_per_epoch=steps_per_epoch,
                                    epochs=1,
-                                   class_weight=class_weight,
+#                                   class_weight=class_weight,
                                    validation_data=(val_data,val_label),
                                    )
             val_pred = model_multiple_gpu.predict(val_data, batch_size=batch_size)
