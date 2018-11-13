@@ -294,6 +294,12 @@ def auc(y_true, y_pred):
 #def weighted_crossentropy(y_true, y_pred):
 #    y_pred[y_true]
 
+def class_balance(data, labels):
+    data_norm = data[label[:,1]==0]
+    data_sick = data[label[:,1]==1]
+    norm_num, sick_num = len(data_norm), len(data_sick)
+    
+
 def train(input_shape=(128,128,1),
           batch_size=32,
           val_num=128,
@@ -352,6 +358,11 @@ def train(input_shape=(128,128,1),
     model.compile(loss="categorical_crossentropy", optimizer=sgd, metrics=[metrics.categorical_accuracy])
     
     # start training
+    train_data_sick = train_data[train_label[:,1]==1]
+    train_data_norm = train_data[train_label[:,1]==0]
+    train_sick_num = len(train_data_sick)
+    train_norm_num = len(train_data_norm)
+    assert train_norm_num > train_sick_num
     for epoch in range(1,epochs+1):
         if if_batch_from_df:
             model_multiple_gpu.fit_generator(train_gen,
@@ -360,6 +371,14 @@ def train(input_shape=(128,128,1),
                                              validation_data=(val_data,val_label),
                                              )
         else:
+            norm_indices = np.random.randint(train_norm_num, train_sick_num)
+            train_data_norm_select = train_data_norm[norm_indices]
+            train_data_epoch = np.vstack((train_data_norm_select, train_data_sick))
+            train_label_epoch = np.vstack(( np.tile(np.array([1,0]), (train_sick_num,1)), \
+                                               np.tile(np.array([0,1]), (train_sick_num,1)) ))
+            shuffle_indices = np.random.permutation(np.arange(len(train_label_epoch)))
+            train_data_epoch = train_data_epoch[shuffle_indices]
+            train_label_epoch = train_label_epoch[shuffle_indices]
             model_multiple_gpu.fit(train_data, train_label,
     #                               steps_per_epoch=steps_per_epoch,
                                    epochs=1,
