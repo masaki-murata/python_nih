@@ -350,6 +350,7 @@ def train(input_shape=(128,128,1),
                                    validation_data=(val_data,val_label),
                                    )
             val_pred = model_multiple_gpu.predict(val_data, batch_size=batch_size)
+            print(val_pred.shape)
             val_auc = auc(val_label, val_pred)
             print("val_auc = ", val_auc)
     
