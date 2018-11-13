@@ -353,7 +353,7 @@ def train(input_shape=(128,128,1),
     
     
 train(batch_size=32,
-      input_shape=(256,256,1),
+      input_shape=(128,128,1),
       epochs=100,
       val_num=2048,
       if_batch_from_df=False,
