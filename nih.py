@@ -146,7 +146,7 @@ def grouping(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv",
              path_to_validation_csv = "../nih_data/Data_Entry_2017_validation.csv",
              path_to_test_csv = "../nih_data/Data_Entry_2017_test.csv",
              if_duplicate=True,
-             ratio = [0.7, 0.15, 0.15],
+             ratio = [0.8, 0.1, 0.1],
 #             if_save = False,
              ):
     df = pd.read_csv(path_to_nih_data_csv)
@@ -183,17 +183,17 @@ def grouping(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv",
 
 def make_dataset(df,
                  input_shape=(128, 128, 1),
-                 val_num=128,
+                 data_num=128,
                  if_rgb=False,
                  if_normalize=True,
                  ):
 #    df_deplicate = pd.read_csv()
     df = df[(df["Finding Labels"]=="No Finding") | (df["Finding Labels"].str.contains("Effusion"))]
+    data_num = min(data_num, len(df))
     df_shuffle = df.sample(frac=1)
-    data = load_images(df_shuffle[:val_num], input_shape=input_shape, if_rgb=if_rgb, if_normalize=if_normalize)
-    labels = np.array(df["Finding Labels"].str.contains("Effusion")*1.0)
-    labels = to_categorical(labels[:val_num])
-#    labels = load_gts(df_shuffle[:val_num])
+    data = load_images(df_shuffle[:data_num], input_shape=input_shape, if_rgb=if_rgb, if_normalize=if_normalize)
+    labels = np.array(df_shuffle["Finding Labels"].str.contains("Effusion")*1.0)
+    labels = to_categorical(labels[:data_num])
     return data, labels
 
     
@@ -350,7 +350,7 @@ def train(input_shape=(128,128,1),
     df_validation = pd.read_csv(path_to_validation_csv)
     val_data, val_label = make_dataset(df_validation,
                                        input_shape=input_shape,
-                                       val_num=val_num,
+                                       data_num=val_num,
                                        if_rgb=if_rgb,
                                        if_normalize=if_normalize,
                                        )
