@@ -169,7 +169,7 @@ def make_dataset(df,
     df_shuffle = df.sample(frac=1)
     data = load_images(df_shuffle[:val_num], input_shape=input_shape, if_rgb=if_rgb, if_normalize=if_normalize)
     labels = np.array(df["Finding Labels"].str.contains("Effusion")*1.0)
-    labels = to_categorical(labels)
+    labels = to_categorical(labels[:val_num])
 #    labels = load_gts(df_shuffle[:val_num])
     return data, labels
 
@@ -308,7 +308,7 @@ def train(input_shape=(128,128,1),
                                        if_rgb=if_rgb,
                                        if_normalize=if_normalize,
                                        )
-    print(np.sum(val_label==0), np.sum(val_label==1))
+    print(np.sum(val_label[:,1]==0), np.sum(val_label[:,1]==1))
 #    val_label = to_categorical(val_label)
     
     # set generator for training data
