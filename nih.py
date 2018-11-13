@@ -271,6 +271,8 @@ def auc(y_true, y_pred):
         auc_part = 0.5*(sensitivity+sensitivity_next)*(specificity_next-specificity)
         assert auc_part >= 0
         auc += auc_part
+        sensitivity = sensitivity_next+0
+        specificity = specificity_next+0
 #        sensitivities[count] = tp_num / positive_num
 #        specificities[count] = tn_num / positive_num
 #        count += 1
