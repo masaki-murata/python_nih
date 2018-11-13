@@ -141,9 +141,14 @@ def grouping(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv",
              path_to_train_csv = "../nih_data/Data_Entry_2017_train.csv",
              path_to_validation_csv = "../nih_data/Data_Entry_2017_validation.csv",
              path_to_test_csv = "../nih_data/Data_Entry_2017_test.csv",
+             allow_deplicate = True,
              ratio = [0.7, 0.15, 0.15],
 #             if_save = False,
              ):
+    if allow_deplicate:
+        path_to_nih_data_csv = "../nih_data/Data_Entry_2017.csv"
+    else:
+        path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv"
     df = pd.read_csv(path_to_nih_data_csv)
     train_num, validation_num = int(ratio[0]*len(df)), int(ratio[1]*len(df))
 #    test_num = len(df) - (train_num + validation_num)
@@ -338,7 +343,7 @@ def train(input_shape=(128,128,1),
 
     opt_generator = Adam(lr=1e-4, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
     sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
-    class_weight = {0:np.sum(train_data[:,1]==1)/len(train_data), 1:np.sum(train_data[:,1]==0)/len(train_data)}
+    class_weight = {0:np.sum(train_labels[:,1])/float(len(train_data)), 1:np.sum(train_labels[:,0])/float(len(train_data))}
 #    model_multi_gpu.compile(loss='binary_crossentropy', optimizer=opt_generator)
     model.compile(loss="binary_crossentropy", optimizer=sgd, metrics=["acc"])
     
