@@ -17,6 +17,7 @@ from keras.models import Model
 from keras.layers import Dense, Flatten, Input, Conv2D, BatchNormalization
 from keras.applications.vgg16 import VGG16
 from keras.models import Sequential
+from keras import metrics
 
 import tensorflow as tf
 from keras.backend.tensorflow_backend import set_session
@@ -348,7 +349,7 @@ def train(input_shape=(128,128,1),
     class_weight = {0:np.sum(train_label[:,1])/float(len(train_label)), 1:np.sum(train_label[:,0])/float(len(train_label))}
     print("class_weight = ", class_weight)
 #    model_multi_gpu.compile(loss='binary_crossentropy', optimizer=opt_generator)
-    model.compile(loss="categorical_crossentropy", optimizer=sgd, metrics=["acc"])
+    model.compile(loss="categorical_crossentropy", optimizer=sgd, metrics=[metrics.categorical_accuracy])
     
     # start training
     for epoch in range(1,epochs+1):
