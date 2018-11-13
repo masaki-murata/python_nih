@@ -343,7 +343,8 @@ def train(input_shape=(128,128,1),
 
     opt_generator = Adam(lr=1e-4, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
     sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
-    class_weight = {0:np.sum(train_label[:,1])/float(len(train_data)), 1:np.sum(train_label[:,0])/float(len(train_data))}
+    class_weight = {0:np.sum(train_label[:,1])/float(len(train_label)), 1:np.sum(train_label[:,0])/float(len(train_label))}
+    print("class_weight = ", class_weight)
 #    model_multi_gpu.compile(loss='binary_crossentropy', optimizer=opt_generator)
     model.compile(loss="binary_crossentropy", optimizer=sgd, metrics=["acc"])
     
