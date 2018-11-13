@@ -254,22 +254,26 @@ def auc(y_true, y_pred):
     # y_true, y_pred は numpy 形式
     sick_true = y_true[:,1]
     sick_pred = y_pred[:,1]
-    pred_sorted = np.sort(sick_pred)
+    pred_sorted = np.sort(sick_pred)[::-1] # 大きい順から、つまり最小感度から
     positive_num = float( len(sick_true[sick_true==1]) )
     negative_num = float( len(sick_true[sick_true==0]) )
     data_num = len(sick_true)
     assert positive_num+negative_num == float( data_num )
-    sensitivities, specificities = np.zeros(data_num), np.zeros(data_num)
-    count = 0
+#    sensitivities, specificities = np.zeros(data_num), np.zeros(data_num)
+#    count = 0
     sensitivity, specificity = 0, 0
+    auc = 0
     for threshold in pred_sorted:
         tp_num = len( sick_true[(sick_pred>=threshold)&sick_true==1] )
-        tn_num = len( sick_true[(sick_pred<threshold)&sick_true==0] )
+        fn_num = len( sick_true[(sick_pred>=threshold)&sick_true==0] )
         sensitivity_next = tp_num / positive_num
-        specificity_next = tn_num / positive_num
-        sensitivities[count] = tp_num / positive_num
-        specificities[count] = tn_num / positive_num
-        count += 1
+        specificity_next = fn_num / negative_num
+        auc_part = 0.5*(sensitivity+sensitivity_next)*(specificity_next-specificity)
+        assert auc_part >= 0
+        auc += auc_part
+#        sensitivities[count] = tp_num / positive_num
+#        specificities[count] = tn_num / positive_num
+#        count += 1
         
 #auc += 0.5*(fp_per_case[fp_id]-fp_per_case[fp_id+1])*(tpr[fp_id]+tpr[fp_id+1])    
         
