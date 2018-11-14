@@ -349,8 +349,8 @@ def train(input_shape=(128,128,1),
           nb_gpus=1,
           ):
     path_to_csv_dir = "../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) 
-    if os.path.exists(path_to_csv_dir):
-        grouping()
+    if not os.path.exists(path_to_csv_dir):
+        grouping(ratio=ratio)
     path_to_group_csv = path_to_csv_dir+ "%s.csv" 
 #    path_to_train_csv = "../nih_data/Data_Entry_2017_train.csv"
 #    path_to_validation_csv = "../nih_data/Data_Entry_2017_validation.csv"
@@ -446,6 +446,7 @@ train(batch_size=32,
       val_num=2048,
       ratio=[0.7,0.15,0.15],
       if_batch_from_df=False,
+      if_duplicate=True,
       if_normalize=True,
       nb_gpus=1,
       )
