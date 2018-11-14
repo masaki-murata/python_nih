@@ -142,13 +142,18 @@ def move_images(path_to_original_dir="/mnt/nas-public/nih-cxp-dataset/images/",
     
         
 def grouping(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv",
-             path_to_train_csv = "../nih_data/Data_Entry_2017_train.csv",
-             path_to_validation_csv = "../nih_data/Data_Entry_2017_validation.csv",
-             path_to_test_csv = "../nih_data/Data_Entry_2017_test.csv",
+#             path_to_save_dir = "../nih_data/ratio_t%.2fv%.2ft%.2f/",
+#             path_to_train_csv = "../nih_data/Data_Entry_2017_train.csv",
+#             path_to_validation_csv = "../nih_data/Data_Entry_2017_validation.csv",
+#             path_to_test_csv = "../nih_data/Data_Entry_2017_test.csv",
              if_duplicate=True,
              ratio = [0.8, 0.1, 0.1],
 #             if_save = False,
              ):
+    path_to_save_dir = "../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) 
+    os.makedirs(path_to_save_dir)
+    path_to_group_csv = path_to_save_dir+ "%s.csv"
+    
     df = pd.read_csv(path_to_nih_data_csv)
     train_num, validation_num = int(ratio[0]*len(df)), int(ratio[1]*len(df))
 #    test_num = len(df) - (train_num + validation_num)
@@ -167,14 +172,18 @@ def grouping(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv",
         df_validation = df_duplicate[df_duplicate["Patient ID"].isin(validation_ids)]
         df_test = df_duplicate[df_duplicate["Patient ID"].isin(test_ids)]
         # 保存先を変更
-        path_to_train_csv = path_to_train_csv[:-4]+"_duplicate.csv"
-        path_to_validation_csv = path_to_validation_csv[:-4]+"_duplicate.csv"
-        path_to_test_csv = path_to_test_csv[:-4]+"_duplicate.csv"
+        path_to_group_csv = path_to_group_csv[:-4]+"_duplicate.csv"
+#        path_to_train_csv = path_to_train_csv[:-4]+"_duplicate.csv"
+#        path_to_validation_csv = path_to_validation_csv[:-4]+"_duplicate.csv"
+#        path_to_test_csv = path_to_test_csv[:-4]+"_duplicate.csv"
     
     # save to csv
-    df_train.to_csv(path_to_train_csv)
-    df_validation.to_csv(path_to_validation_csv)
-    df_test.to_csv(path_to_test_csv)
+    df_train.to_csv(path_to_group_csv % "train")
+    df_validation.to_csv(path_to_group_csv % "validation")
+    df_test.to_csv(path_to_group_csv % "test")
+#    df_train.to_csv(path_to_train_csv)
+#    df_validation.to_csv(path_to_validation_csv)
+#    df_test.to_csv(path_to_test_csv)
 #    image_ids = list( df['Image Index'].values )
 #    image_ids = random.sample(image_ids, len(image_ids))
 #    train_ids, validation_ids, test_ids = image_ids[:train_num], image_ids[train_num:train_num+validation_num], image_ids[train_num+validation_num:]
@@ -331,6 +340,7 @@ def train(input_shape=(128,128,1),
           batch_size=32,
           val_num=128,
           epochs=100,
+          ratio=[0.7,0.15,0.15],
           if_transfer=True,
           if_rgb=False,
           if_batch_from_df=False,
@@ -338,16 +348,21 @@ def train(input_shape=(128,128,1),
           if_duplicate=True,
           nb_gpus=1,
           ):
-    path_to_train_csv = "../nih_data/Data_Entry_2017_train.csv"
-    path_to_validation_csv = "../nih_data/Data_Entry_2017_validation.csv"
+    path_to_csv_dir = "../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) 
+    if os.path.exists(path_to_csv_dir):
+        grouping()
+    path_to_group_csv = path_to_csv_dir+ "%s.csv" 
+#    path_to_train_csv = "../nih_data/Data_Entry_2017_train.csv"
+#    path_to_validation_csv = "../nih_data/Data_Entry_2017_validation.csv"
     if if_duplicate:
-        path_to_train_csv = path_to_train_csv[:-4]+"_duplicate.csv"
-        path_to_validation_csv = path_to_validation_csv[:-4]+"_duplicate.csv"
+        path_to_group_csv = path_to_group_csv[:-4]+"_duplicate.csv"
+#        path_to_train_csv = path_to_train_csv[:-4]+"_duplicate.csv"
+#        path_to_validation_csv = path_to_validation_csv[:-4]+"_duplicate.csv"
 #        path_to_test_csv = path_to_test_csv[:-4]+"_duplicate.csv"
             
     # set validation data
     print("---  start make_validation_dataset  ---")
-    df_validation = pd.read_csv(path_to_validation_csv)
+    df_validation = pd.read_csv(path_to_group_csv % "validation")
     val_data, val_label = make_dataset(df_validation,
                                        input_shape=input_shape,
                                        data_num=val_num,
@@ -359,7 +374,7 @@ def train(input_shape=(128,128,1),
 #    val_label = to_categorical(val_label)
     
     # set generator for training data
-    df_train = pd.read_csv(path_to_train_csv)
+    df_train = pd.read_csv(path_to_group_csv % "train")
     if if_batch_from_df:
         train_gen , steps_per_epoch= batch_iter_np(df_train,
                                                    batch_size=batch_size
@@ -386,7 +401,7 @@ def train(input_shape=(128,128,1),
     opt_generator = Adam(lr=1e-4, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
     sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
 #    class_weight = {0:np.sum(train_label[:,1])/float(len(train_label)), 1:np.sum(train_label[:,0])/float(len(train_label))}
-    print("class_weight = ", class_weight)
+#    print("class_weight = ", class_weight)
 #    model_multi_gpu.compile(loss='binary_crossentropy', optimizer=opt_generator)
     model.compile(loss="categorical_crossentropy", optimizer=sgd, metrics=[metrics.categorical_accuracy])
     
@@ -429,6 +444,7 @@ train(batch_size=32,
       input_shape=(128,128,1),
       epochs=100,
       val_num=2048,
+      ratio=[0.7,0.15,0.15],
       if_batch_from_df=False,
       if_normalize=True,
       nb_gpus=1,
