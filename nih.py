@@ -385,7 +385,7 @@ def train(input_shape=(128,128,1),
 
     opt_generator = Adam(lr=1e-4, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
     sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
-    class_weight = {0:np.sum(train_label[:,1])/float(len(train_label)), 1:np.sum(train_label[:,0])/float(len(train_label))}
+#    class_weight = {0:np.sum(train_label[:,1])/float(len(train_label)), 1:np.sum(train_label[:,0])/float(len(train_label))}
     print("class_weight = ", class_weight)
 #    model_multi_gpu.compile(loss='binary_crossentropy', optimizer=opt_generator)
     model.compile(loss="categorical_crossentropy", optimizer=sgd, metrics=[metrics.categorical_accuracy])
@@ -405,7 +405,7 @@ def train(input_shape=(128,128,1),
                                              )
         else:
             train_data_epoch, train_labels_epoch = class_balance(train_data, train_label)
-            norm_indices = np.random.randint(train_norm_num, train_sick_num)
+#            norm_indices = np.random.randint(train_norm_num, train_sick_num)
 #            train_data_norm_select = train_data_norm[norm_indices]
 #            train_data_epoch = np.vstack((train_data_norm_select, train_data_sick))
 #            train_label_epoch = np.vstack(( np.tile(np.array([1,0]), (train_sick_num,1)), \
