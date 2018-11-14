@@ -173,6 +173,7 @@ def grouping(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv",
         df_test = df_duplicate[df_duplicate["Patient ID"].isin(test_ids)]
         # 保存先を変更
         path_to_group_csv = path_to_group_csv[:-4]+"_duplicate.csv"
+        print(len(df_train))
 #        path_to_train_csv = path_to_train_csv[:-4]+"_duplicate.csv"
 #        path_to_validation_csv = path_to_validation_csv[:-4]+"_duplicate.csv"
 #        path_to_test_csv = path_to_test_csv[:-4]+"_duplicate.csv"
@@ -350,7 +351,7 @@ def train(input_shape=(128,128,1),
           ):
     path_to_csv_dir = "../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) 
     if not os.path.exists(path_to_csv_dir):
-        grouping(ratio=ratio)
+        grouping(if_duplicate=if_duplicate, ratio=ratio)
     path_to_group_csv = path_to_csv_dir+ "%s.csv" 
 #    path_to_train_csv = "../nih_data/Data_Entry_2017_train.csv"
 #    path_to_validation_csv = "../nih_data/Data_Entry_2017_validation.csv"
