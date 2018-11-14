@@ -383,7 +383,7 @@ def train(input_shape=(128,128,1),
     else:
         train_data, train_label = make_dataset(df_train,
                                                input_shape=input_shape,
-                                               val_num=len(df_train),
+                                               data_num=len(df_train),
                                                if_rgb=if_rgb,
                                                if_normalize=if_normalize,
                                                )
