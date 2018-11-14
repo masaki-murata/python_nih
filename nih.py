@@ -326,7 +326,7 @@ def class_balance(data, labels):
     data_sick = data[labels[:,1]==1]
     norm_num, sick_num = len(data_norm), len(data_sick)
     
-    norm_indices = np.random.randint(norm_num, sick_num)
+    norm_indices = np.random.randint(norm_num, size=sick_num)
     data_norm_select = data_norm[norm_indices]
     data_epoch = np.vstack((data_norm_select, data_sick))
     labels_epoch = np.vstack(( np.tile(np.array([1,0]), (sick_num,1)), \
