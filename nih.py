@@ -24,7 +24,7 @@ from keras.backend.tensorflow_backend import set_session
 if os.name=='posix':
     config = tf.ConfigProto(
         gpu_options=tf.GPUOptions(
-            visible_device_list="1", # specify GPU number
+            visible_device_list="2", # specify GPU number
             allow_growth=True
         )
     )
