@@ -386,7 +386,7 @@ def train(input_shape=(128,128,1),
                                        data_num=val_num,
                                        if_rgb=if_rgb,
                                        if_normalize=if_normalize,
-                                       if_load_npy=True,
+                                       if_load_npy=False,
                                        if_save_npy=False,
                                        )
     print(len(df_validation), len(val_label))
@@ -464,7 +464,6 @@ def train(input_shape=(128,128,1),
             print(val_pred.shape)
             val_auc = auc(val_label, val_pred)
             print("val_auc = ", val_auc)
-    
     
 train(batch_size=32,
       input_shape=(128,128,1),
