@@ -7,7 +7,7 @@ Created on Mon Oct 29 16:57:22 2018
 
 import numpy as np
 import pandas as pd
-import os, csv, shutil, random
+import os, csv, shutil, random, sys
 from keras.utils import to_categorical
 from PIL import Image
 from keras.optimizers import Adam, SGD
@@ -192,18 +192,33 @@ def grouping(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv",
 #    return train_ids, validation_ids, test_ids
 
 def make_dataset(df,
+                 group = "train",
+                 ratio=[0.7,0.15,0.15],
                  input_shape=(128, 128, 1),
                  data_num=128,
                  if_rgb=False,
                  if_normalize=True,
+                 if_load_npy=False,
+                 if_save_npy=False,
                  ):
+    path_to_data = "../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) + "%s_data.npy" % group
+    path_to_labels = "../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) + "%s_labels.npy" % group
+    if if_load_npy:
+        data = np.load(path_to_data)
+        labels = np.load(path_to_labels)
 #    df_deplicate = pd.read_csv()
-    df = df[(df["Finding Labels"]=="No Finding") | (df["Finding Labels"].str.contains("Effusion"))]
-    data_num = min(data_num, len(df))
-    df_shuffle = df.sample(frac=1)
-    data = load_images(df_shuffle[:data_num], input_shape=input_shape, if_rgb=if_rgb, if_normalize=if_normalize)
-    labels = np.array(df_shuffle["Finding Labels"].str.contains("Effusion")*1.0)
-    labels = to_categorical(labels[:data_num])
+    else:
+        df = df[(df["Finding Labels"]=="No Finding") | (df["Finding Labels"].str.contains("Effusion"))]
+        data_num = min(data_num, len(df))
+        df_shuffle = df.sample(frac=1)
+        data = load_images(df_shuffle[:data_num], input_shape=input_shape, if_rgb=if_rgb, if_normalize=if_normalize)
+        labels = np.array(df_shuffle["Finding Labels"].str.contains("Effusion")*1.0)
+        labels = to_categorical(labels[:data_num])
+    
+    if if_save_npy:
+        np.save(path_to_data, data)
+        np.save(path_to_labels, labels)
+    
     return data, labels
 
     
@@ -365,11 +380,17 @@ def train(input_shape=(128,128,1),
     print("---  start make_validation_dataset  ---")
     df_validation = pd.read_csv(path_to_group_csv % "validation")
     val_data, val_label = make_dataset(df_validation,
+                                       group="validation",
+                                       ratio=ratio,
                                        input_shape=input_shape,
                                        data_num=val_num,
                                        if_rgb=if_rgb,
                                        if_normalize=if_normalize,
+                                       if_load_npy=True,
+                                       if_save_npy=False,
                                        )
+    print(len(df_validation), len(val_label))
+    sys.exit()
     val_data, val_label = class_balance(val_data, val_label)
     print(np.sum(val_label[:,1]==0), np.sum(val_label[:,1]==1))
 #    val_label = to_categorical(val_label)
@@ -382,10 +403,14 @@ def train(input_shape=(128,128,1),
                                                    )
     else:
         train_data, train_label = make_dataset(df_train,
+                                               group="train",
+                                               ratio=ratio,
                                                input_shape=input_shape,
                                                data_num=len(df_train),
                                                if_rgb=if_rgb,
                                                if_normalize=if_normalize,
+                                               if_load_npy=True,
+                                               if_save_npy=False,
                                                )
 #        train_label = to_categorical(train_label)
     
@@ -451,3 +476,4 @@ train(batch_size=32,
       if_normalize=True,
       nb_gpus=1,
       )
+
