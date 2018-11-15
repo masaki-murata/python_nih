@@ -16,6 +16,7 @@ from keras.utils.training_utils import multi_gpu_model
 from keras.models import Model
 from keras.layers import Dense, Flatten, Input, Conv2D, BatchNormalization
 from keras.applications.vgg16 import VGG16
+from keras.applications.vgg19 import VGG19
 from keras.models import Sequential
 from keras import metrics
 
@@ -248,7 +249,7 @@ def batch_iter_np(df,
 def make_model(input_shape=(128, 128, 1)):
     input_img = Input(shape=input_shape)
     x = Conv2D(filters=3, kernel_size=3, padding="same", activation="relu")(input_img)
-    vgg16 = VGG16(include_top=False, weights=None, input_tensor=x)
+    transfer = VGG19(include_top=False, weights=None, input_tensor=x)
 #    x = Conv2D(filters=8, kernel_size=3, padding="same", activation="relu")(input_img)
 #    x = Conv2D(filters=8, kernel_size=3, strides=2, padding="valid", activation="relu")(x)
 #    x = BatchNormalization()(x)
@@ -266,12 +267,12 @@ def make_model(input_shape=(128, 128, 1)):
 #    x = Dense(256, activation="relu")(x)
 #    output = Dense(2, activation="softmax")(x)
     top_model = Sequential()
-    top_model.add(Flatten(input_shape=vgg16.output_shape[1:]))
+    top_model.add(Flatten(input_shape=transfer.output_shape[1:]))
     top_model.add(Dense(256, activation='relu'))
 #    top_model.add(Dropout(0.5))
     top_model.add(Dense(2, activation='softmax'))
 
-    model = Model(input=input_img, output=top_model(vgg16.output))
+    model = Model(input=input_img, output=top_model(transfer.output))
 
 #    model = Model(input_img, output)
     opt_generator = Adam(lr=1e-3, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
