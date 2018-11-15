@@ -192,7 +192,7 @@ def grouping(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv",
 #    return train_ids, validation_ids, test_ids
 
 def make_dataset(df,
-                 group = "train",
+                 group="train",
                  ratio=[0.7,0.15,0.15],
                  input_shape=(128, 128, 1),
                  data_num=128,
@@ -203,7 +203,7 @@ def make_dataset(df,
                  ):
     path_to_data = "../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) + "%s_data.npy" % group
     path_to_labels = "../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) + "%s_labels.npy" % group
-    if if_load_npy:
+    if if_load_npy and os.path.exists(path_to_data):
         data = np.load(path_to_data)
         labels = np.load(path_to_labels)
 #    df_deplicate = pd.read_csv()
@@ -383,14 +383,12 @@ def train(input_shape=(128,128,1),
                                        group="validation",
                                        ratio=ratio,
                                        input_shape=input_shape,
-                                       data_num=val_num,
+                                       data_num=len(df_validation),
                                        if_rgb=if_rgb,
                                        if_normalize=if_normalize,
-                                       if_load_npy=False,
+                                       if_load_npy=True,
                                        if_save_npy=False,
                                        )
-    print(len(df_validation), len(val_label))
-    sys.exit()
     val_data, val_label = class_balance(val_data, val_label)
     print(np.sum(val_label[:,1]==0), np.sum(val_label[:,1]==1))
 #    val_label = to_categorical(val_label)
@@ -413,6 +411,8 @@ def train(input_shape=(128,128,1),
                                                if_save_npy=False,
                                                )
 #        train_label = to_categorical(train_label)
+    print(len(df_train), len(train_label))
+    sys.exit()
     
     # setting model
     print("---  start make_model  ---")
