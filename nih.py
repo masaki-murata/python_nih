@@ -215,7 +215,7 @@ def make_dataset(df,
         labels = np.array(df_shuffle["Finding Labels"].str.contains("Effusion")*1.0)
         labels = to_categorical(labels[:data_num])
     
-    if if_save_npy:
+    if if_save_npy and (not os.path.exists(path_to_data)):
         np.save(path_to_data, data)
         np.save(path_to_labels, labels)
     
@@ -387,7 +387,7 @@ def train(input_shape=(128,128,1),
                                        if_rgb=if_rgb,
                                        if_normalize=if_normalize,
                                        if_load_npy=True,
-                                       if_save_npy=False,
+                                       if_save_npy=True,
                                        )
     val_data, val_label = class_balance(val_data, val_label)
     print(np.sum(val_label[:,1]==0), np.sum(val_label[:,1]==1))
@@ -408,11 +408,10 @@ def train(input_shape=(128,128,1),
                                                if_rgb=if_rgb,
                                                if_normalize=if_normalize,
                                                if_load_npy=True,
-                                               if_save_npy=False,
+                                               if_save_npy=True,
                                                )
 #        train_label = to_categorical(train_label)
     print(len(df_train), len(train_label))
-    sys.exit()
     
     # setting model
     print("---  start make_model  ---")
