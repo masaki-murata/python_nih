@@ -487,7 +487,7 @@ def train(input_shape=(128,128,1),
                 val_auc_0 = val_auc
                 test_pred = model_multiple_gpu.predict(test_data, batch_size=batch_size)
                 test_auc = auc(test_label, test_pred)
-            print("test_auc = ", test_auc)
+                print("test_auc = ", test_auc)
     
 train(batch_size=32,
       input_shape=(128,128,1),
