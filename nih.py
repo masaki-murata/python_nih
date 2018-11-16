@@ -209,7 +209,7 @@ def make_dataset(df,
         labels = np.load(path_to_labels)
 #    df_deplicate = pd.read_csv()
     else:
-        df = df[(df["Finding Labels"]=="No Finding") | (df["Finding Labels"].str.contains("Effusion"))]
+        df = df[(df["Finding Labels"]=="No Finding") | (df["Finding Labels"].str.contains("Nodule"))]
         data_num = min(data_num, len(df))
         df_shuffle = df.sample(frac=1)
         data = load_images(df_shuffle[:data_num], input_shape=input_shape, if_rgb=if_rgb, if_normalize=if_normalize)
@@ -378,7 +378,7 @@ def train(input_shape=(128,128,1),
 #        path_to_test_csv = path_to_test_csv[:-4]+"_duplicate.csv"
             
     # set validation data
-    print("---  start make_validation_dataset  ---")
+    print("---  start make_validation_test_dataset  ---")
     df_validation = pd.read_csv(path_to_group_csv % "validation")
     val_data, val_label = make_dataset(df_validation,
                                        group="validation",
@@ -392,7 +392,19 @@ def train(input_shape=(128,128,1),
                                        )
     val_data, val_label = class_balance(val_data, val_label)
     print(np.sum(val_label[:,1]==0), np.sum(val_label[:,1]==1))
-#    val_label = to_categorical(val_label)
+    df_test = pd.read_csv(path_to_group_csv % "test")
+    test_data, test_label = make_dataset(df_test,
+                                         group="test",
+                                         ratio=ratio,
+                                         input_shape=input_shape,
+                                         data_num=len(df_test),
+                                         if_rgb=if_rgb,
+                                         if_normalize=if_normalize,
+                                         if_load_npy=True,
+                                         if_save_npy=True,
+                                         )
+    test_data, test_label = class_balance(test_data, test_label)
+    print(np.sum(test_label[:,1]==0), np.sum(test_label[:,1]==1))
     
     # set generator for training data
     df_train = pd.read_csv(path_to_group_csv % "train")
@@ -437,6 +449,7 @@ def train(input_shape=(128,128,1),
     train_sick_num = len(train_data_sick)
     train_norm_num = len(train_data_norm)
     assert train_norm_num > train_sick_num
+    val_auc_0 = 0.85
     for epoch in range(1,epochs+1):
         if if_batch_from_df:
             model_multiple_gpu.fit_generator(train_gen,
@@ -464,6 +477,11 @@ def train(input_shape=(128,128,1),
             print(val_pred.shape)
             val_auc = auc(val_label, val_pred)
             print("val_auc = ", val_auc)
+            if val_auc > val_auc_0:
+                val_auc_0 = val_auc
+                test_pred = model_multiple_gpu.predict(test_data, batch_size=batch_size)
+                test_auc = auc(test_label, test_pred)
+                print("test_auc = ", test_auc)
     
 train(batch_size=32,
       input_shape=(128,128,1),
