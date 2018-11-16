@@ -210,7 +210,8 @@ def make_dataset(df,
         labels = np.load(path_to_labels)
 #    df_deplicate = pd.read_csv()
     else:
-        df = df[(df["Finding Labels"]=="No Finding") | (df["Finding Labels"].str.contains(pathology))]
+        df = df[(df["Finding Labels"]=="No Finding") | (df["Finding Labels"]==pathology)]
+#        df = df[(df["Finding Labels"]=="No Finding") | (df["Finding Labels"].str.contains(pathology))]
         data_num = min(data_num, len(df))
         df_shuffle = df.sample(frac=1)
         data = load_images(df_shuffle[:data_num], input_shape=input_shape, if_rgb=if_rgb, if_normalize=if_normalize)
