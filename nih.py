@@ -197,23 +197,24 @@ def make_dataset(df,
                  ratio=[0.7,0.15,0.15],
                  input_shape=(128, 128, 1),
                  data_num=128,
+                 pathology="Effusion",
                  if_rgb=False,
                  if_normalize=True,
                  if_load_npy=False,
                  if_save_npy=False,
                  ):
-    path_to_data = "../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) + "%s_data.npy" % group
-    path_to_labels = "../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) + "%s_labels.npy" % group
+    path_to_data = "../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) + "%s_%s_data.npy" % (group, pathology)
+    path_to_labels = "../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) + "%s_%s_labels.npy" % (group, pathology)
     if if_load_npy and os.path.exists(path_to_data):
         data = np.load(path_to_data)
         labels = np.load(path_to_labels)
 #    df_deplicate = pd.read_csv()
     else:
-        df = df[(df["Finding Labels"]=="No Finding") | (df["Finding Labels"].str.contains("Nodule"))]
+        df = df[(df["Finding Labels"]=="No Finding") | (df["Finding Labels"].str.contains(pathology))]
         data_num = min(data_num, len(df))
         df_shuffle = df.sample(frac=1)
         data = load_images(df_shuffle[:data_num], input_shape=input_shape, if_rgb=if_rgb, if_normalize=if_normalize)
-        labels = np.array(df_shuffle["Finding Labels"].str.contains("Effusion")*1.0)
+        labels = np.array(df_shuffle["Finding Labels"].str.contains(pathology)*1.0)
         labels = to_categorical(labels[:data_num])
     
     if if_save_npy and (not os.path.exists(path_to_data)):
@@ -358,6 +359,7 @@ def train(input_shape=(128,128,1),
           val_num=128,
           epochs=100,
           ratio=[0.7,0.15,0.15],
+          pathology="Effusion",
           if_transfer=True,
           if_rgb=False,
           if_batch_from_df=False,
@@ -385,6 +387,7 @@ def train(input_shape=(128,128,1),
                                        ratio=ratio,
                                        input_shape=input_shape,
                                        data_num=len(df_validation),
+                                       pathology=pathology,
                                        if_rgb=if_rgb,
                                        if_normalize=if_normalize,
                                        if_load_npy=True,
@@ -398,12 +401,13 @@ def train(input_shape=(128,128,1),
                                          ratio=ratio,
                                          input_shape=input_shape,
                                          data_num=len(df_test),
+                                         pathology=pathology,
                                          if_rgb=if_rgb,
                                          if_normalize=if_normalize,
                                          if_load_npy=True,
                                          if_save_npy=True,
                                          )
-    test_data, test_label = class_balance(test_data, test_label)
+#    test_data, test_label = class_balance(test_data, test_label)
     print(np.sum(test_label[:,1]==0), np.sum(test_label[:,1]==1))
     
     # set generator for training data
@@ -418,6 +422,7 @@ def train(input_shape=(128,128,1),
                                                ratio=ratio,
                                                input_shape=input_shape,
                                                data_num=len(df_train),
+                                               pathology=pathology,
                                                if_rgb=if_rgb,
                                                if_normalize=if_normalize,
                                                if_load_npy=True,
@@ -481,13 +486,14 @@ def train(input_shape=(128,128,1),
                 val_auc_0 = val_auc
                 test_pred = model_multiple_gpu.predict(test_data, batch_size=batch_size)
                 test_auc = auc(test_label, test_pred)
-                print("test_auc = ", test_auc)
+            print("test_auc = ", test_auc)
     
 train(batch_size=32,
       input_shape=(128,128,1),
       epochs=100,
       val_num=2048,
       ratio=[0.7,0.15,0.15],
+      pathology="Effusion",
       if_batch_from_df=False,
       if_duplicate=True,
       if_normalize=True,
