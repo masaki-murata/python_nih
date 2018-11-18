@@ -203,8 +203,9 @@ def make_dataset(df,
                  if_load_npy=False,
                  if_save_npy=False,
                  ):
-    path_to_data = "../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) + "%s_%s_data.npy" % (group, pathology)
-    path_to_labels = "../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) + "%s_%s_labels.npy" % (group, pathology)
+    size = input_shape[0]
+    path_to_data = "../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) + "%s_size%d_%s_data.npy" % (group, size, pathology)
+    path_to_labels = "../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) + "%s_size%d_%s_labels.npy" % (group, size, pathology)
     if if_load_npy and os.path.exists(path_to_data):
         data = np.load(path_to_data)
         labels = np.load(path_to_labels)
@@ -490,11 +491,11 @@ def train(input_shape=(128,128,1),
                 print("test_auc = ", test_auc)
     
 train(batch_size=32,
-      input_shape=(128,128,1),
+      input_shape=(256,256,1),
       epochs=100,
       val_num=2048,
       ratio=[0.7,0.15,0.15],
-      pathology="Pneumonia",
+      pathology="Mass",
       if_batch_from_df=False,
       if_duplicate=True,
       if_normalize=True,
