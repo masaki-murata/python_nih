@@ -369,6 +369,7 @@ def train(input_shape=(128,128,1),
           if_duplicate=True,
           nb_gpus=1,
           ):
+    print("train for ", pathology)
     path_to_csv_dir = "../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) 
     if not os.path.exists(path_to_csv_dir):
         grouping(if_duplicate=if_duplicate, ratio=ratio)
