@@ -456,7 +456,7 @@ def train(input_shape=(128,128,1),
     train_sick_num = len(train_data_sick)
     train_norm_num = len(train_data_norm)
     assert train_norm_num > train_sick_num
-    val_auc_0 = 0.85
+    val_auc_0 = 0
     for epoch in range(1,epochs+1):
         if if_batch_from_df:
             model_multiple_gpu.fit_generator(train_gen,
@@ -489,16 +489,23 @@ def train(input_shape=(128,128,1),
                 test_pred = model_multiple_gpu.predict(test_data, batch_size=batch_size)
                 test_auc = auc(test_label, test_pred)
                 print("test_auc = ", test_auc)
-    
-train(batch_size=32,
-      input_shape=(256,256,1),
-      epochs=100,
-      val_num=2048,
-      ratio=[0.7,0.15,0.15],
-      pathology="Mass",
-      if_batch_from_df=False,
-      if_duplicate=True,
-      if_normalize=True,
-      nb_gpus=1,
-      )
+                
+    return test_auc
 
+pathologies = ['Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Effusion', 'Emphysema', 'Fibrosis', 'Hernia', 'Infiltration', 'Mass', 'Nodule',
+               'Pleural_Thickening', 'Pneumonia', 'Pneumothorax']          
+
+test_aucs={}
+for pathology in pathologies:
+    test_aucs[pathology] = train(batch_size=32,
+                                 input_shape=(256,256,1),
+                                 epochs=100,
+                                 val_num=2048,
+                                 ratio=[0.7,0.15,0.15],
+                                 pathology=pathology,
+                                 if_batch_from_df=False,
+                                 if_duplicate=True,
+                                 if_normalize=True,
+                                 nb_gpus=1,
+                                 )
+    print(test_aucs)
