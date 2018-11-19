@@ -499,7 +499,7 @@ pathologies = ['Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Effusio
 test_aucs={}
 for pathology in pathologies:
     test_aucs[pathology] = train(batch_size=32,
-                                 input_shape=(256,256,1),
+                                 input_shape=(128,128,1),
                                  epochs=32,
                                  val_num=2048,
                                  ratio=[0.7,0.15,0.15],
