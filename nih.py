@@ -356,7 +356,10 @@ def train(input_shape=(128,128,1),
     print("train for ", pathology)
     path_to_csv_dir = "../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) 
     now = datetime.datetime.now()
-    path_to_model_save = "../nih_data/models/mm%02ddd%02d/%s.h5" % (now.month, now.day, pathology)
+    path_to_model_save = "../nih_data/models/mm%02ddd%02d/" % (now.month, now.day)
+    if not os.path.exists(path_to_model_save):
+        os.makedirs(path_to_model_save)
+    path_to_model_save = path_to_model_save+"%s.h5" % (pathology)
     if not os.path.exists(path_to_csv_dir):
         grouping(if_duplicate=if_duplicate, ratio=ratio)
     path_to_group_csv = path_to_csv_dir+ "%s.csv" 
