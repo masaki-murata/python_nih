@@ -7,7 +7,7 @@ Created on Mon Oct 29 16:57:22 2018
 
 import numpy as np
 import pandas as pd
-import os, csv, shutil, random, sys
+import os, csv, shutil, random, sys, datetime
 from keras.utils import to_categorical
 from PIL import Image
 from keras.optimizers import Adam, SGD
@@ -19,6 +19,7 @@ from keras.applications.vgg16 import VGG16
 from keras.applications.vgg19 import VGG19
 from keras.models import Sequential
 from keras import metrics
+
 
 import tensorflow as tf
 from keras.backend.tensorflow_backend import set_session
@@ -76,27 +77,6 @@ def set_gts(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murarta.csv",
     
     return gts
     
-#def load_images(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv",
-#                path_to_png_dir = "../nih_data/images/",
-#                path_to_images = "../nih_data/images.npy",
-#                image_num=128,
-#                if_save = False,
-#                if_shuffle = False,
-#                ):
-#    df = pd.read_csv(path_to_nih_data_csv)
-#    if if_shuffle:
-#        df = df.sample(frac=1)
-#    df = df[:image_num]
-#    images = np.zeros((len(df),1024,1024))
-#    count = 0
-#    for image_index in df['Image Index'].values:
-#        images[count]  = np.asarray(Image.open(path_to_png_dir+image_index).convert('L'))
-#        count += 1
-#    
-#    if if_save:
-#        np.save(path_to_images, images)
-#
-#    return images
     
 def load_images(df,
                 input_shape=(128, 128, 1),
@@ -371,6 +351,8 @@ def train(input_shape=(128,128,1),
           ):
     print("train for ", pathology)
     path_to_csv_dir = "../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) 
+    now = datetime.datetime.now()
+    path_to_model_save = "../nih_data/models/mm%02ddd%02d/%s.h5" % (now.month, now.day, pathology)
     if not os.path.exists(path_to_csv_dir):
         grouping(if_duplicate=if_duplicate, ratio=ratio)
     path_to_group_csv = path_to_csv_dir+ "%s.csv" 
@@ -491,6 +473,8 @@ def train(input_shape=(128,128,1),
                 test_auc = auc(test_label, test_pred)
                 print("test_auc = ", test_auc)
                 
+                model.save(path_to_model_save)
+                
     return test_auc
 
 pathologies = ['Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Effusion', 'Emphysema', 'Fibrosis', 'Hernia', 'Infiltration', 'Mass', 'Nodule',
@@ -502,7 +486,7 @@ for pathology in pathologies:
                                  input_shape=(128,128,1),
                                  epochs=32,
                                  val_num=2048,
-                                 ratio=[0.7,0.15,0.15],
+                                 ratio=[0.7,0.1,0.2],
                                  pathology=pathology,
                                  if_batch_from_df=False,
                                  if_duplicate=True,
