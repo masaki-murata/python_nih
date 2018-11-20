@@ -182,6 +182,7 @@ def make_dataset(df,
                  if_normalize=True,
                  if_load_npy=False,
                  if_save_npy=False,
+                 if_return_df=False,
                  ):
     size = input_shape[0]
     path_to_data = "../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) + "%s_size%d_%s_data.npy" % (group, size, pathology)
@@ -203,7 +204,10 @@ def make_dataset(df,
         np.save(path_to_data, data)
         np.save(path_to_labels, labels)
     
-    return data, labels
+    if if_return_df:
+        return data, labels, df_shuffle[:data_num]
+    else:
+        return data, labels
 
     
 def batch_iter_np(df,
