@@ -11,8 +11,7 @@ from keras import backend as K
 import nih
 import pandas as pd
 
-def grad_cam(data, label, 
-             layer_name,
+def grad_cam(layer_name,
              ratio,
              input_shape=(128,128,1),
              pathology="Effusion",
@@ -37,32 +36,34 @@ def grad_cam(data, label,
     path_to_save_cam = path_to_model[:-3]+"/cams/%s" # % image_index
     model = load_model(path_to_model)
     
-    predictions = model.predict(data)
-    class_idx = np.argmax(predictions, axis=1)
-    class_output = model.output[:, class_idx]
-
-    conv_output = model.get_layer(layer_name).output  # layer_nameのレイヤーのアウトプット
-    grads = K.gradients(class_output, conv_output)[0]  # gradients(loss, variables) で、variablesのlossに関しての勾配を返す
-    gradient_function = K.function([model.input], [conv_output, grads])  # model.inputを入力すると、conv_outputとgradsを出力する関数
+    for count in range(len(test_label)):
+        data = test_data[count]
+        predictions = model.predict(data)
+        class_idx = np.argmax(predictions[0])
+        class_output = model.output[:, class_idx]
     
-    output, grads_val = gradient_function([data])
-    output, grads_val = output[0], grads_val[0]
-
-    # 重みを平均化して、レイヤーのアウトプットに乗じる
-    weights = np.mean(grads_val, axis=(0, 1)) # global average pooling
-    cam = np.dot(output, weights)
+        conv_output = model.get_layer(layer_name).output  # layer_nameのレイヤーのアウトプット
+        grads = K.gradients(class_output, conv_output)[0]  # gradients(loss, variables) で、variablesのlossに関しての勾配を返す
+        gradient_function = K.function([model.input], [conv_output, grads])  # model.inputを入力すると、conv_outputとgradsを出力する関数
+        
+        output, grads_val = gradient_function([data])
+        output, grads_val = output[0], grads_val[0]
     
-    cam = np.maximum(cam, 0) 
-    cam = np.uint8(255*cam / cam.max())
-    cam = Image.fromarray(cam)
+        # 重みを平均化して、レイヤーのアウトプットに乗じる
+        weights = np.mean(grads_val, axis=(0, 1)) # global average pooling
+        cam = np.dot(output, weights)
+        
+        cam = np.maximum(cam, 0) 
+        cam = np.uint8(255*cam / cam.max())
+        cam = Image.fromarray(cam)
+        
+        cam.save(path_to_save_cam)
+        """
+        # 画像化してヒートマップにして合成
     
-    cam.save(path_to_save_cam)
-    """
-    # 画像化してヒートマップにして合成
-
-    cam = cv2.resize(cam, (200, 200), cv2.INTER_LINEAR) # 画像サイズは200で処理したので
-    cam = np.maximum(cam, 0) 
-    cam = cam / cam.max()
+        cam = cv2.resize(cam, (200, 200), cv2.INTER_LINEAR) # 画像サイズは200で処理したので
+        cam = np.maximum(cam, 0) 
+        cam = cam / cam.max()
 
     jetcam = cv2.applyColorMap(np.uint8(255 * cam), cv2.COLORMAP_JET)  # モノクロ画像に疑似的に色をつける
     jetcam = cv2.cvtColor(jetcam, cv2.COLOR_BGR2RGB)  # 色をRGBに変換
