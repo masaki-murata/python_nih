@@ -27,7 +27,7 @@ def make_bb_images(path_to_bb = "../nih_data/BBox_List_2017.csv",
         multiplicity = len(df_index)
         if multiplicity==1:
 #            pathology_unique_indices.append(pathology_index)
-            image = Image.open(path_to_images+pathology_index)
+            image = Image.open(path_to_images+pathology_index).convert('L')
             image = ImageOps.colorize(image, black=[0,0,0], white=[255,255,255])
             draw = ImageDraw.Draw(image)
 #            print(df_index.iloc[:,[2,3,4,5]].values[0])
