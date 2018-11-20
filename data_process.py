@@ -15,7 +15,7 @@ def make_bb_images(path_to_bb = "../nih_data/BBox_List_2017.csv",
     path_to_images = "../nih_data/images/"
     path_to_bb_images = "../nih_data/bb_images/" + pathology +"/"
     
-    if os.path.exists(path_to_bb_images):
+    if not os.path.exists(path_to_bb_images):
         os.makedirs(path_to_bb_images)
     df = pd.read_csv(path_to_bb)
     df_pathology = df[df["Finding Label"]==pathology]    
