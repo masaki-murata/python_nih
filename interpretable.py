@@ -33,13 +33,20 @@ def grad_cam(layer_name,
                                          if_return_df=True,
                                          )
 
-    path_to_save_cam = path_to_model[:-3]+"/cams/%s" # % image_index
+    path_to_save_cam = path_to_model[:-3]+"/cams/%s/%s" # % (TPFP, image_index)
     model = load_model(path_to_model)
     
     for count in range(len(test_label)):
         data = test_data[count]
         predictions = model.predict(data)
         class_idx = np.argmax(predictions[0])
+        if class_idx == 0:
+            continue
+        elif class_idx==1:
+            if test_label[count, class_idx]==1:
+                TPFP = "TP"
+            elif test_label[count, class_idx]==0:
+                TPFP = "FP"
         class_output = model.output[:, class_idx]
     
         conv_output = model.get_layer(layer_name).output  # layer_nameのレイヤーのアウトプット
@@ -57,7 +64,7 @@ def grad_cam(layer_name,
         cam = np.uint8(255*cam / cam.max())
         cam = Image.fromarray(cam)
         
-        cam.save(path_to_save_cam)
+        cam.save(path_to_save_cam % (TPFP, df_test["Image Index"][count]))
         """
         # 画像化してヒートマップにして合成
     
