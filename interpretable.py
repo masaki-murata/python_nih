@@ -16,10 +16,13 @@ def grad_cam(layer_name="block3_conv4",
              input_shape=(128,128,1),
              pathology="Effusion",
              path_to_model="../nih_data/models/mm11dd20/%s.h5",
+             if_duplicate=True,
              ):
     path_to_model=path_to_model % pathology
     path_to_csv_dir = "../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) 
     path_to_group_csv = path_to_csv_dir+ "%s.csv" 
+    if if_duplicate:
+        path_to_group_csv = path_to_group_csv[:-4]+"_duplicate.csv"
     df_test = pd.read_csv(path_to_group_csv % "test")
     test_data, test_label, df_test = nih.make_dataset(df_test,
                                          group="test",
@@ -79,7 +82,10 @@ def grad_cam(layer_name="block3_conv4",
     """
 
 #    return jetcam
+def main():
 
-grad_cam()
+    grad_cam()
 
+if __name__ == '__main__':
+    main()
     

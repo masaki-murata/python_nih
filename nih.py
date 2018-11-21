@@ -178,6 +178,7 @@ def make_dataset(df,
                  input_shape=(128, 128, 1),
                  data_num=128,
                  pathology="Effusion",
+                 path_to_group_csv="",
                  if_rgb=False,
                  if_normalize=True,
                  if_load_npy=False,
@@ -203,6 +204,7 @@ def make_dataset(df,
     if if_save_npy and (not os.path.exists(path_to_data)):
         np.save(path_to_data, data)
         np.save(path_to_labels, labels)
+        df_shuffle[:data_num].to_csv(path_to_group_csv[:-4] % group + "_" + pathology + ".csv")
     
     if if_return_df:
         return data, labels, df_shuffle[:data_num]
@@ -380,6 +382,7 @@ def train(input_shape=(128,128,1),
                                        input_shape=input_shape,
                                        data_num=len(df_validation),
                                        pathology=pathology,
+                                       path_to_group_csv=path_to_group_csv,
                                        if_rgb=if_rgb,
                                        if_normalize=if_normalize,
                                        if_load_npy=True,
@@ -394,6 +397,7 @@ def train(input_shape=(128,128,1),
                                          input_shape=input_shape,
                                          data_num=len(df_test),
                                          pathology=pathology,
+                                         path_to_group_csv=path_to_group_csv,
                                          if_rgb=if_rgb,
                                          if_normalize=if_normalize,
                                          if_load_npy=True,
@@ -415,6 +419,7 @@ def train(input_shape=(128,128,1),
                                                input_shape=input_shape,
                                                data_num=len(df_train),
                                                pathology=pathology,
+                                               path_to_group_csv=path_to_group_csv,
                                                if_rgb=if_rgb,
                                                if_normalize=if_normalize,
                                                if_load_npy=True,
@@ -484,20 +489,26 @@ def train(input_shape=(128,128,1),
                 
     return test_auc
 
-pathologies = ['Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Effusion', 'Emphysema', 'Fibrosis', 'Hernia', 'Infiltration', 'Mass', 'Nodule',
-               'Pleural_Thickening', 'Pneumonia', 'Pneumothorax']          
 
-test_aucs={}
-for pathology in pathologies:
-    test_aucs[pathology] = train(batch_size=32,
-                                 input_shape=(128,128,1),
-                                 epochs=32,
-                                 val_num=2048,
-                                 ratio=[0.7,0.1,0.2],
-                                 pathology=pathology,
-                                 if_batch_from_df=False,
-                                 if_duplicate=True,
-                                 if_normalize=True,
-                                 nb_gpus=1,
-                                 )
-    print(test_aucs)
+def main():
+    pathologies = ['Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Effusion', 'Emphysema', 'Fibrosis', 'Hernia', 'Infiltration', 'Mass', 'Nodule',
+                   'Pleural_Thickening', 'Pneumonia', 'Pneumothorax']          
+    
+    test_aucs={}
+    for pathology in pathologies:
+        test_aucs[pathology] = train(batch_size=32,
+                                     input_shape=(128,128,1),
+                                     epochs=32,
+                                     val_num=2048,
+                                     ratio=[0.7,0.1,0.2],
+                                     pathology=pathology,
+                                     if_batch_from_df=False,
+                                     if_duplicate=True,
+                                     if_normalize=True,
+                                     nb_gpus=1,
+                                     )
+        print(test_aucs)
+
+        
+if __name__ == '__main__':
+    main()        
