@@ -348,6 +348,7 @@ def train(input_shape=(128,128,1),
           epochs=100,
           ratio=[0.7,0.15,0.15],
           pathology="Effusion",
+          patience=8,
           if_transfer=True,
           if_rgb=False,
           if_batch_from_df=False,
@@ -451,8 +452,9 @@ def train(input_shape=(128,128,1),
     train_sick_num = len(train_data_sick)
     train_norm_num = len(train_data_norm)
     assert train_norm_num > train_sick_num
-    val_auc_0 = 0
+    val_auc_0, count_patience = 0, 0
     for epoch in range(1,epochs+1):
+        print("epoch = ", epoch)
         if if_batch_from_df:
             model_multiple_gpu.fit_generator(train_gen,
                                              steps_per_epoch=steps_per_epoch,
@@ -480,13 +482,17 @@ def train(input_shape=(128,128,1),
             val_auc = auc(val_label, val_pred)
             print("val_auc = ", val_auc)
             if val_auc > val_auc_0:
+                count_patience=0
                 val_auc_0 = val_auc
                 test_pred = model_multiple_gpu.predict(test_data, batch_size=batch_size)
                 test_auc = auc(test_label, test_pred)
                 print("test_auc = ", test_auc)
                 
                 model.save(path_to_model_save)
-                
+            else:
+                count_patience+=1
+                if count_patience>patience:
+                    sys.exit()
     return test_auc
 
 
@@ -502,6 +508,7 @@ def main():
                                      val_num=2048,
                                      ratio=[0.7,0.1,0.2],
                                      pathology=pathology,
+                                     patience=4,
                                      if_batch_from_df=False,
                                      if_duplicate=True,
                                      if_normalize=True,
