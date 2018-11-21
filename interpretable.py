@@ -11,12 +11,13 @@ from keras import backend as K
 import nih
 import pandas as pd
 
-def grad_cam(layer_name,
-             ratio,
+def grad_cam(layer_name="block3_conv4",
+             ratio=[0.7,0.1,0.2],
              input_shape=(128,128,1),
              pathology="Effusion",
-             path_to_model="",
+             path_to_model="../nih_data/models/mm11dd20/%s.h5",
              ):
+    path_to_model=path_to_model % pathology
     path_to_csv_dir = "../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) 
     path_to_group_csv = path_to_csv_dir+ "%s.csv" 
     df_test = pd.read_csv(path_to_group_csv % "test")
@@ -79,5 +80,6 @@ def grad_cam(layer_name,
 
 #    return jetcam
 
-    
+grad_cam()
+
     
