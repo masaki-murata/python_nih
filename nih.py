@@ -146,8 +146,8 @@ def grouping(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv",
     bb_indices = list(set(list( map(lambda x: x[:-7]+"000.png", bb_indices) )))
 #    test_num = len(df) - (train_num + validation_num)
     # BB のある患者は test に入れるので、df からそれらの患者を削除
-    df = df[~df["Image Index"].isin(bb_indices)]
-    df_shuffle = df.sample(frac=1)
+    df_nonbb = df[~df["Image Index"].isin(bb_indices)]
+    df_shuffle = df_nonbb.sample(frac=1)
     df_train, df_validation, df_test = df_shuffle[:train_num], df_shuffle[train_num:train_num+validation_num], df_shuffle[train_num+validation_num:]
     df_test = pd.concat([df_test, df[df["Image Index"].isin(bb_indices)]])
     assert total_num==(len(df_train)+len(df_validation)+len(df_test)), "{0},{1},{2},{3}".format(total_num, len(df_train), len(df_validation), len(df_test))
@@ -504,7 +504,7 @@ def train(input_shape=(128,128,1),
             else:
                 count_patience+=1
                 if count_patience>patience:
-                    sys.exit()
+                    break
     return test_auc
 
 
