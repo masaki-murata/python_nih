@@ -51,6 +51,8 @@ def make_cnn_ad(input_shape=(64,64,1),
     output = Dense(1, activation="sigmoid")(x)
     
     model = Model(input=input_img, output=output)
+    
+    return model
 
 def anomaly_detection(path_to_csv="",
                       input_shape=(64,64,1),
