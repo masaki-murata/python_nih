@@ -509,7 +509,9 @@ def train(input_shape=(128,128,1),
 
 
 def main():
-    pathologies = ['Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Effusion', 'Emphysema', 'Fibrosis', 'Hernia', 'Infiltration', 'Mass', 'Nodule',
+#    pathologies = ['Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Effusion', 'Emphysema', 'Fibrosis', 'Hernia', 'Infiltration', 'Mass', 'Nodule',
+#                   'Pleural_Thickening', 'Pneumonia', 'Pneumothorax']          
+    pathologies = ['Edema', 'Effusion', 'Atelectasis', 'Cardiomegaly', 'Consolidation', 'Emphysema', 'Fibrosis', 'Hernia', 'Infiltration', 'Mass', 'Nodule',
                    'Pleural_Thickening', 'Pneumonia', 'Pneumothorax']          
     
     test_aucs={}
@@ -520,7 +522,7 @@ def main():
                                      val_num=2048,
                                      ratio=[0.7,0.1,0.2],
                                      pathology=pathology,
-                                     patience=4,
+                                     patience=8,
                                      if_batch_from_df=False,
                                      if_duplicate=True,
                                      if_normalize=True,
