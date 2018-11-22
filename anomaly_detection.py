@@ -6,11 +6,62 @@ Created on Thu Nov 22 19:43:36 2018
 """
 
 from keras import backend as K
-def loss(y_true, y_pred, eps):
+import pandas as pd
+import numpy as np
+from keras.models import Model
+from keras.layers import Dense, Flatten, Input, Conv2D, BatchNormalization
+
+# import original module
+import nih
+
+import tensorflow as tf
+from keras.backend.tensorflow_backend import set_session
+if os.name=='posix':
+    config = tf.ConfigProto(
+        gpu_options=tf.GPUOptions(
+            visible_device_list="2", # specify GPU number
+            allow_growth=True
+        )
+    )
+    
+    set_session(tf.Session(config=config))
+
+
+def ad_loss(y_true, y_pred, eps):
     # y_true.shape=[batch_num, 1]
-    -K.sum( y_true*((1-eps)*K.log(y_pred)+eps*K.log(1-y_pred)) + (1-y_true)*((1-eps)*K.log(1-y_pred)+eps*K.log(y_pred)) )
+    return -K.sum( y_true*((1-eps)*K.log(y_pred)+eps*K.log(1-y_pred)) + (1-y_true)*((1-eps)*K.log(1-y_pred)+eps*K.log(y_pred)) )
+
+def make_cnn_ad(input_shape=(64,64,1),
+                ):
+    input_img = Input(shape=input_shape)
+    x = Conv2D(filters=4, kernel_size=3, padding="same", activation="relu")(input_img)
+    x = Conv2D(filters=4, kernel_size=3, strides=2, padding="valid", activation="relu")(x)
+    x = BatchNormalization()(x)
+    x = Conv2D(filters=16, kernel_size=3, padding="same", activation="relu")(x)
+    x = Conv2D(filters=16, kernel_size=3, strides=2, padding="valid", activation="relu")(x)
+    x = BatchNormalization()(x)
+    x = Conv2D(filters=64, kernel_size=3, padding="same", activation="relu")(x)
+    x = Conv2D(filters=64, kernel_size=3, strides=2, padding="valid", activation="relu")(x)
+    x = BatchNormalization()(x)
+    x = Conv2D(filters=128, kernel_size=3, padding="same", activation="relu")(x)
+    x = Conv2D(filters=128, kernel_size=3, strides=2, padding="valid", activation="relu")(x)
+    x = BatchNormalization()(x)
+
+    x = Dense(256, activation="relu")(x)
+    output = Dense(1, activation="sigmoid")(x)
+    
+    model = Model(input=input_img, output=output)
 
 def anomaly_detection(path_to_csv="",
+                      input_shape=(64,64,1),
+                      eps=0.01,
                       ):
     # load data and labels
     df = pd.read_csv(path_to_csv)
+    data = nih.load_images(df, input_shape=input_shape)
+    assert len(df)==len(data)
+    labels = np.ones((len(data),1))
+
+
+
+    
