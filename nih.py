@@ -511,7 +511,7 @@ def train(input_shape=(128,128,1),
 def main():
 #    pathologies = ['Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Effusion', 'Emphysema', 'Fibrosis', 'Hernia', 'Infiltration', 'Mass', 'Nodule',
 #                   'Pleural_Thickening', 'Pneumonia', 'Pneumothorax']          
-    pathologies = ['Edema', 'Effusion', 'Atelectasis', 'Cardiomegaly', 'Consolidation', 'Emphysema', 'Fibrosis', 'Hernia', 'Infiltration', 'Mass', 'Nodule',
+    pathologies = ['Effusion', 'Edema', 'Atelectasis', 'Cardiomegaly', 'Consolidation', 'Emphysema', 'Fibrosis', 'Hernia', 'Infiltration', 'Mass', 'Nodule',
                    'Pleural_Thickening', 'Pneumonia', 'Pneumothorax']          
     
     test_aucs={}
