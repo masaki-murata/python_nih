@@ -150,7 +150,7 @@ def grouping(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv",
     df_shuffle = df.sample(frac=1)
     df_train, df_validation, df_test = df_shuffle[:train_num], df_shuffle[train_num:train_num+validation_num], df_shuffle[train_num+validation_num:]
     df_test = pd.concat([df_test, df[df["Image Index"].isin(bb_indices)]])
-    assert total_num==(len(df_train)+len(df_validation)+len(df_test)), "{0},{1},{2},{3}".format(len(total_num), len(df_train), len(df_validation), len(df_test))
+    assert total_num==(len(df_train)+len(df_validation)+len(df_test)), "{0},{1},{2},{3}".format(total_num, len(df_train), len(df_validation), len(df_test))
     
     if if_duplicate:
         # 重複を含んだリストを読み込む
