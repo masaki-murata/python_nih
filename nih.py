@@ -130,7 +130,7 @@ def grouping(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv",
 #             path_to_validation_csv = "../nih_data/Data_Entry_2017_validation.csv",
 #             path_to_test_csv = "../nih_data/Data_Entry_2017_test.csv",
              if_duplicate=True,
-             ratio = [0.8, 0.1, 0.1],
+             ratio = [0.7, 0.1, 0.2],
 #             if_save = False,
              ):
     path_to_save_dir = "../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) 
@@ -139,9 +139,16 @@ def grouping(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv",
     
     df = pd.read_csv(path_to_nih_data_csv)
     train_num, validation_num = int(ratio[0]*len(df)), int(ratio[1]*len(df))
+    
+    df_bb = pd.read_csv(path_to_bb)
+    bb_indices = df_bb["Image Index"].values
+    bb_indices = list(set(list( map(lambda x: x[:-7]+"000.png", bb_indices) )))
 #    test_num = len(df) - (train_num + validation_num)
+    # BB のある患者は test に入れるので、df からそれらの患者を削除
+    df = df[~df["Image Index"].isin(bb_indices)]
     df_shuffle = df.sample(frac=1)
     df_train, df_validation, df_test = df_shuffle[:train_num], df_shuffle[train_num:train_num+validation_num], df_shuffle[train_num+validation_num:]
+    df_test = pd.concat(df_test, df[df["Image Index"].isin(bb_indices)])
     
     if if_duplicate:
         # 重複を含んだリストを読み込む
