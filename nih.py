@@ -167,7 +167,7 @@ def grouping(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv",
 #        path_to_train_csv = path_to_train_csv[:-4]+"_duplicate.csv"
 #        path_to_validation_csv = path_to_validation_csv[:-4]+"_duplicate.csv"
 #        path_to_test_csv = path_to_test_csv[:-4]+"_duplicate.csv"
-    assert len(df_duplicate)==len(df_train)+len(df_validation)+len(df_test)
+    assert len(df_duplicate)==(len(df_train)+len(df_validation)+len(df_test)), print(len(df_duplicate), len(df_train), len(df_validation), len(df_test))
     # save to csv
     df_train.to_csv(path_to_group_csv % "train")
     df_validation.to_csv(path_to_group_csv % "validation")
