@@ -148,7 +148,7 @@ def grouping(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv",
     df = df[~df["Image Index"].isin(bb_indices)]
     df_shuffle = df.sample(frac=1)
     df_train, df_validation, df_test = df_shuffle[:train_num], df_shuffle[train_num:train_num+validation_num], df_shuffle[train_num+validation_num:]
-    df_test = pd.concat(df_test, df[df["Image Index"].isin(bb_indices)])
+    df_test = pd.concat([df_test, df[df["Image Index"].isin(bb_indices)]])
     
     if if_duplicate:
         # 重複を含んだリストを読み込む
