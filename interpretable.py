@@ -8,14 +8,30 @@ from keras.models import load_model
 import numpy as np
 from PIL import Image
 from keras import backend as K
-import nih
 import pandas as pd
+import os
+
+# import original module
+import nih
+
+
+import tensorflow as tf
+from keras.backend.tensorflow_backend import set_session
+if os.name=='posix':
+    config = tf.ConfigProto(
+        gpu_options=tf.GPUOptions(
+            visible_device_list="2", # specify GPU number
+            allow_growth=True
+        )
+    )
+    
+    set_session(tf.Session(config=config))
 
 def grad_cam(layer_name="block3_conv4",
              ratio=[0.7,0.1,0.2],
              input_shape=(128,128,1),
              pathology="Effusion",
-             path_to_model="../nih_data/models/mm11dd20/%s.h5",
+             path_to_model="../nih_data/models/mm11dd21/%s.h5",
              if_duplicate=True,
              ):
     path_to_model=path_to_model % pathology
@@ -30,6 +46,7 @@ def grad_cam(layer_name="block3_conv4",
                                          input_shape=input_shape,
                                          data_num=len(df_test),
                                          pathology=pathology,
+                                         path_to_group_csv=path_to_group_csv,
                                          if_rgb=False,
                                          if_normalize=True,
                                          if_load_npy=True,
@@ -37,11 +54,18 @@ def grad_cam(layer_name="block3_conv4",
                                          if_return_df=True,
                                          )
 
-    path_to_save_cam = path_to_model[:-3]+"/cams/%s/%s" # % (TPFP, image_index)
+#    path_to_save_cam = path_to_model[:-3]+"/cams/%s/%s" # % (TPFP, image_index)
+    path_to_save_cam = path_to_model[:-3]+"/cams/%s/" # % (TPFP)
+    if not os.path.exists(path_to_save_cam % "TP"):
+        os.makedirs(path_to_save_cam % "TP")
+    if not os.path.exists(path_to_save_cam % "FP"):
+        os.makedirs(path_to_save_cam % "FP")
+    path_to_save_cam = path_to_save_cam + "%s"
     model = load_model(path_to_model)
     
     for count in range(len(test_label)):
         data = test_data[count]
+        data = data.reshape((1,)+data.shape)
         predictions = model.predict(data)
         class_idx = np.argmax(predictions[0])
         if class_idx == 0:
@@ -62,11 +86,13 @@ def grad_cam(layer_name="block3_conv4",
     
         # 重みを平均化して、レイヤーのアウトプットに乗じる
         weights = np.mean(grads_val, axis=(0, 1)) # global average pooling
-        cam = np.dot(output, weights)
+#        print("output.shape={0}, weights.shape={1}".format(output.shape, weights.shape))
+        cam = np.sum(output*weights.reshape((1,1)+weights.shape), axis=2)
+#        cam = np.dot(output, weights)
         
         cam = np.maximum(cam, 0) 
         cam = np.uint8(255*cam / cam.max())
-        cam = Image.fromarray(cam)
+        cam = Image.fromarray(cam).resize((512,512))
         
         cam.save(path_to_save_cam % (TPFP, df_test["Image Index"][count]))
         """

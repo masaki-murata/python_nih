@@ -12,7 +12,8 @@ from keras.utils import to_categorical
 from PIL import Image
 from keras.optimizers import Adam, SGD
 from keras.callbacks import CSVLogger, EarlyStopping, ModelCheckpoint
-from keras.utils.training_utils import multi_gpu_model
+#from keras.utils.training_utils import multi_gpu_model
+from keras.utils import multi_gpu_model
 from keras.models import Model
 from keras.layers import Dense, Flatten, Input, Conv2D, BatchNormalization
 from keras.applications.vgg16 import VGG16
@@ -123,6 +124,7 @@ def move_images(path_to_original_dir="/mnt/nas-public/nih-cxp-dataset/images/",
     
         
 def grouping(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv",
+             path_to_bb = "../nih_data/BBox_List_2017.csv",
 #             path_to_save_dir = "../nih_data/ratio_t%.2fv%.2ft%.2f/",
 #             path_to_train_csv = "../nih_data/Data_Entry_2017_train.csv",
 #             path_to_validation_csv = "../nih_data/Data_Entry_2017_validation.csv",
@@ -191,6 +193,7 @@ def make_dataset(df,
     if if_load_npy and os.path.exists(path_to_data):
         data = np.load(path_to_data)
         labels = np.load(path_to_labels)
+        df_shuffle = pd.read_csv(path_to_group_csv[:-4] % group + "_" + pathology + ".csv")
 #    df_deplicate = pd.read_csv()
     else:
         df = df[(df["Finding Labels"]=="No Finding") | (df["Finding Labels"]==pathology)]
