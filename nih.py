@@ -361,6 +361,7 @@ def train(input_shape=(128,128,1),
           ratio=[0.7,0.15,0.15],
           pathology="Effusion",
           patience=8,
+          path_to_model_save="",
           if_transfer=True,
           if_rgb=False,
           if_batch_from_df=False,
@@ -368,10 +369,13 @@ def train(input_shape=(128,128,1),
           if_duplicate=True,
           nb_gpus=1,
           ):
+    if type(input_shape)==int:
+        input_shape=(input_shape,input_shape,1)
     print("train for ", pathology)
     path_to_csv_dir = "../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) 
     now = datetime.datetime.now()
-    path_to_model_save = "../nih_data/models/mm%02ddd%02d/" % (now.month, now.day)
+    if len(path_to_model_save)==0:
+        path_to_model_save = "../nih_data/models/mm%02ddd%02d/" % (now.month, now.day)
     if not os.path.exists(path_to_model_save):
         os.makedirs(path_to_model_save)
     path_to_model_save = path_to_model_save+"%s.h5" % (pathology)
@@ -507,28 +511,79 @@ def train(input_shape=(128,128,1),
                     break
     return test_auc
 
+def train_pathologies(pathologies=[],
+                      input_shape=(128,128,1),
+                      batch_size=32,
+                      val_num=128,
+                      epochs=100,
+                      ratio=[0.7,0.15,0.15],
+                      patience=8,
+                      if_transfer=True,
+                      if_rgb=False,
+                      if_batch_from_df=False,
+                      if_normalize=True,
+                      if_duplicate=True,
+                      nb_gpus=1,
+                      ):
+    now = datetime.datetime.now()
+    path_to_model_save = "../nih_data/models/mm%02ddd%02d/" % (now.month, now.day)
+    
+    df = pd.DataFrame(columns=["pathology", "test_auc"])
+    count=0
+    for pathology in pathologies:
+        test_auc = train(batch_size=batch_size,
+                         input_shape=input_shape,
+                         epochs=epochs,
+                         val_num=val_num,
+                         ratio=ratio,
+                         pathology=pathology,
+                         patience=patience,
+                         path_to_model_save=path_to_model_save,
+                         if_batch_from_df=if_batch_from_df,
+                         if_duplicate=if_duplicate,
+                         if_normalize=if_normalize,
+                         nb_gpus=nb_gpus,
+                         )
+        df[count] = [pathology, test_auc]
+    
+    df.to_csv(path_to_model_save+"test_aucs.csv", index=False)
+#    print(df)
+    
+    return df
 
 def main():
-#    pathologies = ['Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Effusion', 'Emphysema', 'Fibrosis', 'Hernia', 'Infiltration', 'Mass', 'Nodule',
-#                   'Pleural_Thickening', 'Pneumonia', 'Pneumothorax']          
-    pathologies = ['Effusion', 'Edema', 'Atelectasis', 'Cardiomegaly', 'Consolidation', 'Emphysema', 'Fibrosis', 'Hernia', 'Infiltration', 'Mass', 'Nodule',
+    pathologies = ['Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Effusion', 'Emphysema', 'Fibrosis', 'Hernia', 'Infiltration', 'Mass', 'Nodule',
                    'Pleural_Thickening', 'Pneumonia', 'Pneumothorax']          
-    
-    test_aucs={}
-    for pathology in pathologies:
-        test_aucs[pathology] = train(batch_size=32,
-                                     input_shape=(256,256,1),
-                                     epochs=32,
-                                     val_num=2048,
-                                     ratio=[0.7,0.1,0.2],
-                                     pathology=pathology,
-                                     patience=8,
-                                     if_batch_from_df=False,
-                                     if_duplicate=True,
-                                     if_normalize=True,
-                                     nb_gpus=1,
-                                     )
-        print(test_aucs)
+#    pathologies = ['Effusion', 'Edema', 'Atelectasis', 'Cardiomegaly', 'Consolidation', 'Fibrosis', 'Hernia', 'Infiltration', 'Mass',
+#                   'Pneumonia',]          
+    for input_shape in [128, 256, 512]:
+        train_pathologies(pathologies=pathologies,
+                          batch_size=32,
+                          input_shape=128,
+                          epochs=32,
+                          val_num=2048,
+                          ratio=[0.7,0.1,0.2],
+                          patience=8,
+                          if_batch_from_df=False,
+                          if_duplicate=True,
+                          if_normalize=True,
+                          nb_gpus=1,
+                          )
+#    test_aucs={}
+#    for pathology in pathologies:
+#        test_aucs[pathology] = train(batch_size=32,
+#                                     input_shape=(256,256,1),
+#                                     epochs=32,
+#                                     val_num=2048,
+#                                     ratio=[0.7,0.1,0.2],
+#                                     pathology=pathology,
+#                                     patience=8,
+#                                     if_batch_from_df=False,
+#                                     if_duplicate=True,
+#                                     if_normalize=True,
+#                                     nb_gpus=1,
+#                                     )
+#        print(test_aucs)
 
         
 if __name__ == '__main__':
