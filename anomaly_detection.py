@@ -71,6 +71,7 @@ def anomaly_detection(path_to_csv="",
               batch_size=batch_size,
               epochs=32)
 
+anomaly_detection(path_to_csv="../nih_data/Data_Entry_2017.csv")
 
 
     
