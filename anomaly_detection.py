@@ -57,12 +57,19 @@ def make_cnn_ad(input_shape=(64,64,1),
 def anomaly_detection(path_to_csv="",
                       input_shape=(64,64,1),
                       eps=0.01,
+                      batch_size=32,
                       ):
     # load data and labels
     df = pd.read_csv(path_to_csv)
     data = nih.load_images(df, input_shape=input_shape)
     assert len(df)==len(data)
     labels = np.ones((len(data),1))
+    
+    model = make_cnn_ad(input_shape=input_shape)
+    
+    model.fit(data, labels,
+              batch_size=batch_size,
+              epochs=32)
 
 
 
