@@ -157,21 +157,21 @@ class CAM:
     
     # nn の出力を出す
     def predict(self):
-        test_data, test_label, df_test = self.load_test(self)
-        model = load_model(self.path_to_model)
-        predictions = model.predict(test_data, batch_size=self.batch_size)
+        self.test_data, self.test_label, self.df_test = self.load_test(self)
+        self.model = load_model(self.path_to_model)
+        self.predictions = model.predict(self.test_data, batch_size=self.batch_size)
         
-        return model, predictions
+#        return model, predictions
     
     def grad_cam(self):
-        model, predictions = self.predict(self)
-        mask_predictions = predictions[:,1] > 0.5
+        self.model, predictions = self.predict(self)
+        mask_predictions = self.predictions[:,1] > 0.5
         class_output = model.output[:, 1]
-        conv_output = model.get_layer(self.layer_name).output  # layer_nameのレイヤーのアウトプット
+        conv_output = self.model.get_layer(self.layer_name).output  # layer_nameのレイヤーのアウトプット
         grads = K.gradients(class_output, conv_output)[0]  # gradients(loss, variables) で、variablesのlossに関しての勾配を返す
-        gradient_function = K.function([model.input], [conv_output, grads])  # model.inputを入力すると、conv_outputとgradsを出力する関数
+        gradient_function = K.function([self.model.input], [conv_output, grads])  # model.inputを入力すると、conv_outputとgradsを出力する関数
         
-        output, grads_val = gradient_function([data])
+        output, grads_val = gradient_function([self.test_data])
         # 重みを平均化して、レイヤーのアウトプットに乗じる
         weights = np.mean(grads_val, axis=(0, 1)) # global average pooling
 #        print("output.shape={0}, weights.shape={1}".format(output.shape, weights.shape))
