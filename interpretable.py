@@ -172,7 +172,12 @@ class CAM:
         gradient_function = K.function([model.input], [conv_output, grads])  # model.inputを入力すると、conv_outputとgradsを出力する関数
         
         output, grads_val = gradient_function([data])
-#    return jetcam
+        # 重みを平均化して、レイヤーのアウトプットに乗じる
+        weights = np.mean(grads_val, axis=(0, 1)) # global average pooling
+#        print("output.shape={0}, weights.shape={1}".format(output.shape, weights.shape))
+        cam = np.sum(output*weights.reshape((1,1)+weights.shape), axis=2)
+
+
 def main():
 
     grad_cam()
