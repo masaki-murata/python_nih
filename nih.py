@@ -561,18 +561,28 @@ def main():
                    'Pleural_Thickening', 'Pneumonia', 'Pneumothorax']          
 #    pathologies = ['Effusion', 'Edema', 'Atelectasis', 'Cardiomegaly', 'Consolidation', 'Fibrosis', 'Hernia', 'Infiltration', 'Mass',
 #                   'Pneumonia',]          
+    batch_size=32
+    epochs=32
+    val_num=2048
+    ratio=[0.7,0.1,0.2]
+    patience=8
+    if_batch_from_df=False
+    if_duplicate=True
+    if_normalize=True
+    nb_gpus=1
+    
     for input_shape in [128, 256, 512]:
         train_pathologies(pathologies=pathologies,
-                          batch_size=32,
-                          input_shape=128,
-                          epochs=32,
-                          val_num=2048,
-                          ratio=[0.7,0.1,0.2],
-                          patience=8,
-                          if_batch_from_df=False,
-                          if_duplicate=True,
-                          if_normalize=True,
-                          nb_gpus=1,
+                          batch_size=batch_size,
+                          input_shape=input_shape,
+                          epochs=epochs,
+                          val_num=val_num,
+                          ratio=ratio,
+                          patience=patience,
+                          if_batch_from_df=if_batch_from_df,
+                          if_duplicate=if_duplicate,
+                          if_normalize=if_normalize,
+                          nb_gpus=nb_gpus,
                           )
 #    test_aucs={}
 #    for pathology in pathologies:
