@@ -71,7 +71,9 @@ def anomaly_detection(path_to_csv="",
     model = make_cnn_ad(input_shape=input_shape)
     model.summary()
     opt_generator = Adam(lr=1e-3, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
-    model.compile(loss='binary_crossentropy', optimizer=opt_generator, metrics=['acc'])
+    def loss(y_true, y_pred):
+        return ad_loss(y_true, y_pred, eps)
+    model.compile(loss=loss, optimizer=opt_generator, metrics=['acc'])
     
     model.fit(data, labels,
               batch_size=batch_size,
