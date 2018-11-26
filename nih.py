@@ -529,6 +529,9 @@ def train_pathologies(pathologies=[],
         input_shape=(input_shape,input_shape,1)
     now = datetime.datetime.now()
     path_to_model_save = "../nih_data/models/mm%02ddd%02d_size%d/" % (now.month, now.day, input_shape[0])
+    shutil.copyfile("./nih.py", path_to_model_save+"nih.py")
+#    shutil.copyfile("./data_process.py", path_to_model_save+"data_process.py")
+    
     
     df = pd.DataFrame(columns=["pathology", "test_auc"])
     count=0
