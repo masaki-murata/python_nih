@@ -112,6 +112,7 @@ class CAM:
                  path_to_model, 
                  pathology, 
                  input_shape,
+                 batch_size,
                  ratio=[0.7,0.1,0.2],
                  if_duplicate=True,
                  ):
@@ -121,8 +122,9 @@ class CAM:
         self.ratio=ratio
         self.if_duplicate=if_duplicate
         self.input_shape=input_shape
+        self.batch_size=batch_size
     
-    # テストデータをロードする関数（未完）
+    # テストデータをロードする関数
     def load_test(self):
 #        path_to_model=self.path_to_model % self.pathology
         path_to_csv_dir = "../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(self.ratio) 
@@ -143,6 +145,7 @@ class CAM:
                                              if_save_npy=True,
                                              if_return_df=True,
                                              )
+        return test_data, test_label, df_test 
     
     def make_dir(self):
         path_to_save_cam = self.path_to_model[:-3]+"/cams/%s/" # % (TPFP)
@@ -151,7 +154,17 @@ class CAM:
         if not os.path.exists(path_to_save_cam % "FP"):
             os.makedirs(path_to_save_cam % "FP")
         path_to_save_cam = path_to_save_cam + "%s"
+    
+    # nn をロード（未完）
+    def predict(self):
+        test_data, test_label, df_test = self.load_test(self)
+        model = load_model(self.path_to_model)
+        predictions = model.predict(test_data, batch_size=self.batch_size)
         
+        return predictions
+    
+    def grad_cam(self):
+        pass
 #    return jetcam
 def main():
 
