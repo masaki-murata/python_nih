@@ -155,7 +155,7 @@ class CAM:
             os.makedirs(path_to_save_cam % "FP")
         path_to_save_cam = path_to_save_cam + "%s"
     
-    # nn をロード（未完）
+    # nn の出力を出す
     def predict(self):
         test_data, test_label, df_test = self.load_test(self)
         model = load_model(self.path_to_model)
@@ -164,7 +164,11 @@ class CAM:
         return predictions
     
     def grad_cam(self):
-        pass
+        conv_output = model.get_layer(self.layer_name).output  # layer_nameのレイヤーのアウトプット
+        grads = K.gradients(class_output, conv_output)[0]  # gradients(loss, variables) で、variablesのlossに関しての勾配を返す
+        gradient_function = K.function([model.input], [conv_output, grads])  # model.inputを入力すると、conv_outputとgradsを出力する関数
+        
+        output, grads_val = gradient_function([data])
 #    return jetcam
 def main():
 
