@@ -49,7 +49,7 @@ def make_cnn_ad(input_shape=(64,64,1),
     x = Conv2D(filters=128, kernel_size=3, strides=2, padding="valid", activation="relu")(x)
     x = BatchNormalization()(x)
 
-    x = Flatten()
+    x = Flatten()(x)
     x = Dense(256, activation="relu")(x)
     output = Dense(1, activation="sigmoid")(x)
     
