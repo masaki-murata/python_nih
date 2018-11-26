@@ -59,7 +59,7 @@ def make_cnn_ad(input_shape=(64,64,1),
 
 def anomaly_detection(path_to_csv="",
                       input_shape=(64,64,1),
-                      eps=0.01,
+                      eps=0.1,
                       batch_size=32,
                       ):
     # load data and labels
@@ -77,7 +77,7 @@ def anomaly_detection(path_to_csv="",
               batch_size=batch_size,
               epochs=32)
 
-anomaly_detection(path_to_csv="../nih_data/Data_Entry_2017.csv")
+anomaly_detection(path_to_csv="../nih_data/Data_Entry_2017.csv", eps=0.1)
 
 
     
