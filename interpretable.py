@@ -106,7 +106,9 @@ def grad_cam(layer_name="block3_conv4",
     jetcam = cv2.cvtColor(jetcam, cv2.COLOR_BGR2RGB)  # 色をRGBに変換
     jetcam = (np.float32(jetcam) + x / 2)   # もとの画像に合成
     """
-
+class CAM:
+    def __init__(self, layer_name):
+        self.layer_name=layer_name
 #    return jetcam
 def main():
 
