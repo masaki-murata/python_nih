@@ -551,7 +551,7 @@ def train_pathologies(pathologies=[],
                          if_normalize=if_normalize,
                          nb_gpus=nb_gpus,
                          )
-        df[count] = [pathology, test_auc]
+        df.loc[count] = [pathology, test_auc]
     
     df.to_csv(path_to_model_save+"test_aucs.csv", index=False)
 #    print(df)
