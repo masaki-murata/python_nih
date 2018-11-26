@@ -107,8 +107,51 @@ def grad_cam(layer_name="block3_conv4",
     jetcam = (np.float32(jetcam) + x / 2)   # もとの画像に合成
     """
 class CAM:
-    def __init__(self, layer_name):
+    def __init__(self, 
+                 layer_name, 
+                 path_to_model, 
+                 pathology, 
+                 input_shape,
+                 ratio=[0.7,0.1,0.2],
+                 if_duplicate=True,
+                 ):
         self.layer_name=layer_name
+        self.path_to_model=path_to_model
+        self.pathology=pathology
+        self.ratio=ratio
+        self.if_duplicate=if_duplicate
+        self.input_shape=input_shape
+    
+    # テストデータをロードする関数（未完）
+    def load_test(self):
+#        path_to_model=self.path_to_model % self.pathology
+        path_to_csv_dir = "../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(self.ratio) 
+        path_to_group_csv = path_to_csv_dir+ "%s.csv" 
+        if self.if_duplicate:
+            path_to_group_csv = path_to_group_csv[:-4]+"_duplicate.csv"
+        df_test = pd.read_csv(path_to_group_csv % "test")
+        test_data, test_label, df_test = nih.make_dataset(df_test,
+                                             group="test",
+                                             ratio=self.ratio,
+                                             input_shape=self.input_shape,
+                                             data_num=len(df_test),
+                                             pathology=self.pathology,
+                                             path_to_group_csv=path_to_group_csv,
+                                             if_rgb=False,
+                                             if_normalize=True,
+                                             if_load_npy=True,
+                                             if_save_npy=True,
+                                             if_return_df=True,
+                                             )
+    
+    def make_dir(self):
+        path_to_save_cam = self.path_to_model[:-3]+"/cams/%s/" # % (TPFP)
+        if not os.path.exists(path_to_save_cam % "TP"):
+            os.makedirs(path_to_save_cam % "TP")
+        if not os.path.exists(path_to_save_cam % "FP"):
+            os.makedirs(path_to_save_cam % "FP")
+        path_to_save_cam = path_to_save_cam + "%s"
+        
 #    return jetcam
 def main():
 
