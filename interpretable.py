@@ -159,16 +159,16 @@ class CAM:
     def predict(self):
         self.test_data, self.test_label, self.df_test = self.load_test(self)
         self.model = load_model(self.path_to_model)
-        self.predictions = model.predict(self.test_data, batch_size=self.batch_size)
+        self.predictions = self.model.predict(self.test_data, batch_size=self.batch_size)
         
 #        return model, predictions
     
     def grad_cam(self):
-        self.model, predictions = self.predict(self)
+        self.predict(self)
         mask_predictions = self.predictions[:,1] > 0.5
-        class_output = model.output[:, 1]
+        class_output = self.model.output[:, 1]
         conv_output = self.model.get_layer(self.layer_name).output  # layer_nameのレイヤーのアウトプット
-        grads = K.gradients(class_output, conv_output)[0]  # gradients(loss, variables) で、variablesのlossに関しての勾配を返す
+        grads = K.gradients(class_output, conv_output)  # gradients(loss, variables) で、variablesのlossに関しての勾配を返す
         gradient_function = K.function([self.model.input], [conv_output, grads])  # model.inputを入力すると、conv_outputとgradsを出力する関数
         
         output, grads_val = gradient_function([self.test_data])
