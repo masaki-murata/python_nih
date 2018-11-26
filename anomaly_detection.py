@@ -10,6 +10,8 @@ import pandas as pd
 import numpy as np
 from keras.models import Model
 from keras.layers import Dense, Flatten, Input, Conv2D, BatchNormalization
+from keras.optimizers import Adam, SGD
+import os
 
 # import original module
 import nih
@@ -47,6 +49,7 @@ def make_cnn_ad(input_shape=(64,64,1),
     x = Conv2D(filters=128, kernel_size=3, strides=2, padding="valid", activation="relu")(x)
     x = BatchNormalization()(x)
 
+    x = Flatten()
     x = Dense(256, activation="relu")(x)
     output = Dense(1, activation="sigmoid")(x)
     
@@ -66,6 +69,7 @@ def anomaly_detection(path_to_csv="",
     labels = np.ones((len(data),1))
     
     model = make_cnn_ad(input_shape=input_shape)
+    model.summary()
     opt_generator = Adam(lr=1e-3, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
     model.compile(loss='binary_crossentropy', optimizer=opt_generator, metrics=['acc'])
     

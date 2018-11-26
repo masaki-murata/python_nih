@@ -161,9 +161,12 @@ class CAM:
         model = load_model(self.path_to_model)
         predictions = model.predict(test_data, batch_size=self.batch_size)
         
-        return predictions
+        return model, predictions
     
     def grad_cam(self):
+        model, predictions = self.predict(self)
+        mask_predictions = predictions[:,1] > 0.5
+        class_output = model.output[:, 1]
         conv_output = model.get_layer(self.layer_name).output  # layer_nameのレイヤーのアウトプット
         grads = K.gradients(class_output, conv_output)[0]  # gradients(loss, variables) で、variablesのlossに関しての勾配を返す
         gradient_function = K.function([model.input], [conv_output, grads])  # model.inputを入力すると、conv_outputとgradsを出力する関数
