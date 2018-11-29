@@ -116,6 +116,7 @@ class CAM:
                  input_shape,
                  batch_size,
                  if_load_npy,
+                 if_save_npy,
                  ratio=[0.7,0.1,0.2],
                  if_duplicate=True,
                  ):
@@ -127,6 +128,7 @@ class CAM:
         self.input_shape=input_shape
         self.batch_size=batch_size
         self.if_load_npy=if_load_npy
+        self.if_save_npy=if_save_npy
     
     # テストデータをロードする関数
     def load_test(self):
@@ -145,8 +147,8 @@ class CAM:
                                              path_to_group_csv=path_to_group_csv,
                                              if_rgb=False,
                                              if_normalize=True,
-                                             if_load_npy=False,
-                                             if_save_npy=True,
+                                             if_load_npy=self.if_load_npy,
+                                             if_save_npy=self.if_save_npy,
                                              if_return_df=True,
                                              )
         return test_data, test_label, df_test 
@@ -183,8 +185,18 @@ class CAM:
 
 
 def main():
-
-    grad_cam(input_shape=(256,256,1),layer_name="block4_conv4")
+    
+    interpretable = CAM(layer_name="block3_conv4",
+                         ratio=[0.7,0.1,0.2],
+                         input_shape=(256,256,1),
+                         batch_size=32,
+                         pathology="Effusion",
+                         path_to_model="../nih_data/models/mm11dd26_size256/%s.h5",
+                         if_load_npy=False,
+                         if_save_npy=False,
+                         )
+    interpretable.grad_cam()
+#    grad_cam(input_shape=(256,256,1),layer_name="block4_conv4")
 
 if __name__ == '__main__':
     main()
