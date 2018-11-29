@@ -31,7 +31,7 @@ def grad_cam(layer_name="block3_conv4",
              ratio=[0.7,0.1,0.2],
              input_shape=(128,128,1),
              pathology="Effusion",
-             path_to_model="../nih_data/models/mm11dd21/%s.h5",
+             path_to_model="../nih_data/models/mm11dd26_size128/%s.h5",
              if_duplicate=True,
              ):
     path_to_model=path_to_model % pathology
@@ -39,7 +39,7 @@ def grad_cam(layer_name="block3_conv4",
     path_to_group_csv = path_to_csv_dir+ "%s.csv" 
     if if_duplicate:
         path_to_group_csv = path_to_group_csv[:-4]+"_duplicate.csv"
-    df_test = pd.read_csv(path_to_group_csv % "test")
+    df_test = pd.read_csv(path_to_group_csv % "test")[:10]
     test_data, test_label, df_test = nih.make_dataset(df_test,
                                          group="test",
                                          ratio=ratio,
@@ -62,6 +62,7 @@ def grad_cam(layer_name="block3_conv4",
         os.makedirs(path_to_save_cam % "FP")
     path_to_save_cam = path_to_save_cam + "%s"
     model = load_model(path_to_model)
+    model.summary()
     
     for count in range(len(test_label)):
         data = test_data[count]
