@@ -211,7 +211,7 @@ def make_dataset(df,
         df_shuffle = df.sample(frac=1)
         data = load_images(df_shuffle[:data_num], input_shape=input_shape, if_rgb=if_rgb, if_normalize=if_normalize)
         labels = np.array(df_shuffle["Finding Labels"].str.contains(pathology)*1.0)
-        labels = to_categorical(labels[:data_num])
+        labels = to_categorical(labels[:data_num], num_classes=2)
     
     if if_save_npy and (not os.path.exists(path_to_data)):
         np.save(path_to_data, data)

@@ -39,7 +39,7 @@ def grad_cam(layer_name="block3_conv4",
     path_to_group_csv = path_to_csv_dir+ "%s.csv" 
     if if_duplicate:
         path_to_group_csv = path_to_group_csv[:-4]+"_duplicate.csv"
-    df_test = pd.read_csv(path_to_group_csv % "test")[:10]
+    df_test = pd.read_csv(path_to_group_csv % "test")[:50]
     test_data, test_label, df_test = nih.make_dataset(df_test,
                                          group="test",
                                          ratio=ratio,
@@ -49,11 +49,12 @@ def grad_cam(layer_name="block3_conv4",
                                          path_to_group_csv=path_to_group_csv,
                                          if_rgb=False,
                                          if_normalize=True,
-                                         if_load_npy=True,
-                                         if_save_npy=True,
+                                         if_load_npy=False,
+                                         if_save_npy=False,
                                          if_return_df=True,
                                          )
-
+    print(test_data.shape, test_label.shape, len(df_test))
+#    print(test_label)
 #    path_to_save_cam = path_to_model[:-3]+"/cams/%s/%s" # % (TPFP, image_index)
     path_to_save_cam = path_to_model[:-3]+"/cams/%s/" # % (TPFP)
     if not os.path.exists(path_to_save_cam % "TP"):
@@ -95,7 +96,7 @@ def grad_cam(layer_name="block3_conv4",
         cam = np.uint8(255*cam / cam.max())
         cam = Image.fromarray(cam).resize((512,512))
         
-        cam.save(path_to_save_cam % (TPFP, df_test["Image Index"][count]))
+        cam.save(path_to_save_cam % (TPFP, df_test["Image Index"].values[count]))
         """
         # 画像化してヒートマップにして合成
     
