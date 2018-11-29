@@ -573,7 +573,7 @@ def main():
     if_normalize=True
     nb_gpus=1
     
-    for input_shape in [128, 256, 512]:
+    for input_shape in [512]:
         train_pathologies(pathologies=pathologies,
                           batch_size=batch_size,
                           input_shape=input_shape,
