@@ -31,7 +31,7 @@ def grad_cam(layer_name="block3_conv4",
              ratio=[0.7,0.1,0.2],
              input_shape=(128,128,1),
              pathology="Effusion",
-             path_to_model="../nih_data/models/mm11dd26_size128/%s.h5",
+             path_to_model="../nih_data/models/mm11dd26_size256/%s.h5",
              if_duplicate=True,
              ):
     path_to_model=path_to_model % pathology
@@ -182,7 +182,7 @@ class CAM:
 
 def main():
 
-    grad_cam()
+    grad_cam(input_shape=(256,256,1),layer_name="block4_conv4")
 
 if __name__ == '__main__':
     main()
