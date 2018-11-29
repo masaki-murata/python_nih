@@ -115,6 +115,7 @@ class CAM:
                  pathology, 
                  input_shape,
                  batch_size,
+                 if_load_npy,
                  ratio=[0.7,0.1,0.2],
                  if_duplicate=True,
                  ):
@@ -125,6 +126,7 @@ class CAM:
         self.if_duplicate=if_duplicate
         self.input_shape=input_shape
         self.batch_size=batch_size
+        self.if_load_npy=if_load_npy
     
     # テストデータをロードする関数
     def load_test(self):
@@ -143,7 +145,7 @@ class CAM:
                                              path_to_group_csv=path_to_group_csv,
                                              if_rgb=False,
                                              if_normalize=True,
-                                             if_load_npy=True,
+                                             if_load_npy=False,
                                              if_save_npy=True,
                                              if_return_df=True,
                                              )
