@@ -86,6 +86,7 @@ def grad_cam(layer_name="block3_conv4",
         gradient_function = K.function([model.input], [conv_output, grads])  # model.inputを入力すると、conv_outputとgradsを出力する関数
         
         output, grads_val = gradient_function([data])
+        print(output.shape)
         output, grads_val = output[0], grads_val[0]
     
         # 重みを平均化して、レイヤーのアウトプットに乗じる
@@ -139,7 +140,7 @@ class CAM:
         path_to_group_csv = path_to_csv_dir+ "%s.csv" 
         if self.if_duplicate:
             path_to_group_csv = path_to_group_csv[:-4]+"_duplicate.csv"
-        df_test = pd.read_csv(path_to_group_csv % "test")
+        df_test = pd.read_csv(path_to_group_csv % "test")[:50]
         test_data, test_label, df_test = nih.make_dataset(df_test,
                                              group="test",
                                              ratio=self.ratio,
@@ -182,10 +183,14 @@ class CAM:
         gradient_function = K.function([self.model.input], [conv_output, grads])  # model.inputを入力すると、conv_outputとgradsを出力する関数
         
         output, grads_val = gradient_function([self.test_data])
+        print(output.shape)
         # 重みを平均化して、レイヤーのアウトプットに乗じる
-        weights = np.mean(grads_val, axis=(0, 1)) # global average pooling
+#        weights = np.mean(grads_val, axis=(0, 1))
+        weights = np.mean(grads_val, axis=(1, 2)) # global average pooling
+        print(weights.shape)
 #        print("output.shape={0}, weights.shape={1}".format(output.shape, weights.shape))
-        cam = np.sum(output*weights.reshape((1,1)+weights.shape), axis=2)
+        cam = np.sum(output*weights.reshape((weights.shape[0],1,1,weights.shape[-1])), axis=2)
+        print(cam.shape)
 
 
 def main():
