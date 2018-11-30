@@ -81,7 +81,7 @@ def grad_cam(layer_name="block3_conv4",
     
         conv_output = model.get_layer(layer_name).output  # layer_nameのレイヤーのアウトプット
         grads = K.gradients(class_output, conv_output)  # gradients(loss, variables) で、variablesのlossに関しての勾配を返す
-        print(type(grads))
+#        print(grads)
         grads = grads[0]
         gradient_function = K.function([model.input], [conv_output, grads])  # model.inputを入力すると、conv_outputとgradsを出力する関数
         
@@ -178,7 +178,7 @@ class CAM:
         mask_predictions = self.predictions[:,1] > 0.5
         class_output = self.model.output[:, 1]
         conv_output = self.model.get_layer(self.layer_name).output  # layer_nameのレイヤーのアウトプット
-        grads = K.gradients(class_output, conv_output)  # gradients(loss, variables) で、variablesのlossに関しての勾配を返す
+        grads = K.gradients(class_output, conv_output)[0]  # gradients(loss, variables) で、variablesのlossに関しての勾配を返す
         gradient_function = K.function([self.model.input], [conv_output, grads])  # model.inputを入力すると、conv_outputとgradsを出力する関数
         
         output, grads_val = gradient_function([self.test_data])
@@ -190,17 +190,17 @@ class CAM:
 
 def main():
     
-#    interpretable = CAM(layer_name="block3_conv4",
-#                         ratio=[0.7,0.1,0.2],
-#                         input_shape=(256,256,1),
-#                         batch_size=32,
-#                         pathology="Effusion",
-#                         path_to_model="../nih_data/models/mm11dd26_size256/%s.h5",
-#                         if_load_npy=False,
-#                         if_save_npy=False,
-#                         )
-#    interpretable.grad_cam()
-    grad_cam(input_shape=(256,256,1),layer_name="block4_conv4")
+    interpretable = CAM(layer_name="block3_conv4",
+                         ratio=[0.7,0.1,0.2],
+                         input_shape=(256,256,1),
+                         batch_size=32,
+                         pathology="Effusion",
+                         path_to_model="../nih_data/models/mm11dd26_size256/%s.h5",
+                         if_load_npy=False,
+                         if_save_npy=False,
+                         )
+    interpretable.grad_cam()
+#    grad_cam(input_shape=(256,256,1),layer_name="block4_conv4")
 
 if __name__ == '__main__':
     main()
