@@ -161,16 +161,18 @@ class CAM:
             os.makedirs(path_to_save_cam % "FP")
         path_to_save_cam = path_to_save_cam + "%s"
     
+    """ 将来的には nn の学習も入れたい """
     # nn の出力を出す
     def predict(self):
-        self.test_data, self.test_label, self.df_test = self.load_test(self)
-        self.model = load_model(self.path_to_model)
+        self.test_data, self.test_label, self.df_test = self.load_test()
+        self.model = load_model(self.path_to_model % self.pathology)
         self.predictions = self.model.predict(self.test_data, batch_size=self.batch_size)
         
 #        return model, predictions
     
     def grad_cam(self):
-        self.predict(self)
+        self.predict()
+        print(self.predictions.shape)
         mask_predictions = self.predictions[:,1] > 0.5
         class_output = self.model.output[:, 1]
         conv_output = self.model.get_layer(self.layer_name).output  # layer_nameのレイヤーのアウトプット
