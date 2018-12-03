@@ -169,7 +169,9 @@ class CAM:
     def predict(self):
         self.test_data, self.test_label, self.df_test = self.load_test()
         self.model = load_model(self.path_to_model % self.pathology)
+        print("aho")
         self.predictions = self.model.predict(self.test_data, batch_size=self.batch_size)
+        
         
 #        return model, predictions
     def save_cam(self, cams):
@@ -181,30 +183,33 @@ class CAM:
         
     
     def grad_cam(self):
-        start_index=0
         self.predict()
         mask_predictions = self.predictions[:,1] > 0.5
-        end_index=min(self.batch_size, len(mask_predictions))
+#        print(mask_predictions.shape)
         class_output = self.model.output[:, 1]
         conv_output = self.model.get_layer(self.layer_name).output  # layer_nameのレイヤーのアウトプット
         grads = K.gradients(class_output, conv_output)[0]  # gradients(loss, variables) で、variablesのlossに関しての勾配を返す
         gradient_function = K.function([self.model.input], [conv_output, grads])  # model.inputを入力すると、conv_outputとgradsを出力する関数
+        start_index=0
+        end_index=min(self.batch_size, len(mask_predictions))
         while start_index < end_index:
-#            print(self.predictions.shape)
-#            print(grads)
-            
+#            print(self.test_data.shape)
             output, grads_val = gradient_function([self.test_data[start_index:end_index]])
-            print(output.shape)
+            print("output.shape =", output.shape)
             # 重みを平均化して、レイヤーのアウトプットに乗じる
     #        weights = np.mean(grads_val, axis=(0, 1))
             weights = np.mean(grads_val, axis=(1, 2)) # global average pooling
             print("weights.shape = ", weights.shape)
     #        print("output.shape={0}, weights.shape={1}".format(output.shape, weights.shape))
-            cams = np.sum(output*weights.reshape((weights.shape[0],1,1,weights.shape[-1])), axis=2)
+            cams = np.sum(output*weights.reshape((weights.shape[0],1,1,weights.shape[-1])), axis=3)
             print(cams.shape)
             start_index=start_index+self.batch_size
             end_index=min(start_index, len(mask_predictions))
-
+            
+    def grad_cam_murata(self):
+        self.predict()
+        mask_predictions = self.predictions[:,1] > 0.5
+        class_output = self.model.output[:, 1]
 
 def main():
     
