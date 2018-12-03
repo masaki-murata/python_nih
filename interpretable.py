@@ -172,6 +172,13 @@ class CAM:
         self.predictions = self.model.predict(self.test_data, batch_size=self.batch_size)
         
 #        return model, predictions
+    def save_cam(self, cams):
+        for cam in cams:
+            cam = np.maximum(cam, 0) 
+            cam = np.uint8(255*cam / cam.max())
+            cam = Image.fromarray(cam).resize((512,512))
+#            cam.save(path_to_save_cam % (TPFP, df_test["Image Index"].values[count]))
+        
     
     def grad_cam(self):
         start_index=0
@@ -186,15 +193,15 @@ class CAM:
 #            print(self.predictions.shape)
 #            print(grads)
             
-            output, grads_val = gradient_function([self.test_data])
+            output, grads_val = gradient_function([self.test_data[start_index:end_index]])
             print(output.shape)
             # 重みを平均化して、レイヤーのアウトプットに乗じる
     #        weights = np.mean(grads_val, axis=(0, 1))
             weights = np.mean(grads_val, axis=(1, 2)) # global average pooling
-            print(weights.shape)
+            print("weights.shape = ", weights.shape)
     #        print("output.shape={0}, weights.shape={1}".format(output.shape, weights.shape))
-            cam = np.sum(output*weights.reshape((weights.shape[0],1,1,weights.shape[-1])), axis=2)
-            print(cam.shape)
+            cams = np.sum(output*weights.reshape((weights.shape[0],1,1,weights.shape[-1])), axis=2)
+            print(cams.shape)
             start_index=start_index+self.batch_size
             end_index=min(start_index, len(mask_predictions))
 
