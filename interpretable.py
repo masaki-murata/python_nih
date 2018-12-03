@@ -174,23 +174,29 @@ class CAM:
 #        return model, predictions
     
     def grad_cam(self):
+        start_index=0
         self.predict()
-        print(self.predictions.shape)
         mask_predictions = self.predictions[:,1] > 0.5
+        end_index=min(self.batch_size, len(mask_predictions))
         class_output = self.model.output[:, 1]
         conv_output = self.model.get_layer(self.layer_name).output  # layer_nameのレイヤーのアウトプット
         grads = K.gradients(class_output, conv_output)[0]  # gradients(loss, variables) で、variablesのlossに関しての勾配を返す
         gradient_function = K.function([self.model.input], [conv_output, grads])  # model.inputを入力すると、conv_outputとgradsを出力する関数
-        
-        output, grads_val = gradient_function([self.test_data])
-        print(output.shape)
-        # 重みを平均化して、レイヤーのアウトプットに乗じる
-#        weights = np.mean(grads_val, axis=(0, 1))
-        weights = np.mean(grads_val, axis=(1, 2)) # global average pooling
-        print(weights.shape)
-#        print("output.shape={0}, weights.shape={1}".format(output.shape, weights.shape))
-        cam = np.sum(output*weights.reshape((weights.shape[0],1,1,weights.shape[-1])), axis=2)
-        print(cam.shape)
+        while start_index < end_index:
+#            print(self.predictions.shape)
+#            print(grads)
+            
+            output, grads_val = gradient_function([self.test_data])
+            print(output.shape)
+            # 重みを平均化して、レイヤーのアウトプットに乗じる
+    #        weights = np.mean(grads_val, axis=(0, 1))
+            weights = np.mean(grads_val, axis=(1, 2)) # global average pooling
+            print(weights.shape)
+    #        print("output.shape={0}, weights.shape={1}".format(output.shape, weights.shape))
+            cam = np.sum(output*weights.reshape((weights.shape[0],1,1,weights.shape[-1])), axis=2)
+            print(cam.shape)
+            start_index=start_index+self.batch_size
+            end_index=min(start_index, len(mask_predictions))
 
 
 def main():
