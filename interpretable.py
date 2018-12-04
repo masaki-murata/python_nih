@@ -227,6 +227,7 @@ class CAM:
 #            print(cams.shape)
             start_index=start_index+self.batch_size
             end_index=min(start_index+self.batch_size, len(mask_predictions))
+        print(end_index, len(mask_predictions))
 
             
     def grad_cam_murata(self):
@@ -249,7 +250,7 @@ class CAM:
     #        print("output.shape={0}, weights.shape={1}".format(output.shape, weights.shape))
             grads_val = np.maximum(grads_val,0)
             cams = np.sum(output*grads_val, axis=3)
-            self.save_cam(cams=cams, start_index=start_index)
+            self.save_cam(method="grad_cam_murata",cams=cams, start_index=start_index)
 #            print(cams.shape)
             start_index=start_index+self.batch_size
             end_index=min(start_index, len(mask_predictions))
@@ -266,7 +267,7 @@ def main():
                          if_load_npy=False,
                          if_save_npy=True,
                          )
-    interpretable.grad_cam()
+    interpretable.grad_cam_murata()
 #    grad_cam(input_shape=(256,256,1),layer_name="block4_conv4")
 
 if __name__ == '__main__':
