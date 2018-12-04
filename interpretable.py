@@ -210,6 +210,25 @@ class CAM:
         self.predict()
         mask_predictions = self.predictions[:,1] > 0.5
         class_output = self.model.output[:, 1]
+        conv_output = self.model.get_layer(self.layer_name).output  # layer_nameのレイヤーのアウトプット
+        grads = K.gradients(class_output, conv_output)[0]  # gradients(loss, variables) で、variablesのlossに関しての勾配を返す
+        gradient_function = K.function([self.model.input], [conv_output, grads])  # model.inputを入力すると、conv_outputとgradsを出力する関数
+        start_index=0
+        end_index=min(self.batch_size, len(mask_predictions))
+        while start_index < end_index:
+#            print(self.test_data.shape)
+            output, grads_val = gradient_function([self.test_data[start_index:end_index]])
+            print("output.shape =", output.shape)
+            # 重みを平均化して、レイヤーのアウトプットに乗じる
+    #        weights = np.mean(grads_val, axis=(0, 1))
+#            weights = np.mean(grads_val, axis=(1, 2)) # global average pooling
+            print("weights.shape = ", grads_val.shape)
+    #        print("output.shape={0}, weights.shape={1}".format(output.shape, weights.shape))
+            cams = np.sum(output*grads_val, axis=3)
+            print(cams.shape)
+            start_index=start_index+self.batch_size
+            end_index=min(start_index, len(mask_predictions))
+
 
 def main():
     
@@ -222,7 +241,7 @@ def main():
                          if_load_npy=False,
                          if_save_npy=False,
                          )
-    interpretable.grad_cam()
+    interpretable.grad_cam_murata()
 #    grad_cam(input_shape=(256,256,1),layer_name="block4_conv4")
 
 if __name__ == '__main__':
