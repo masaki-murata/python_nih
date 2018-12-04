@@ -191,9 +191,10 @@ class CAM:
             elif self.test_label[count, 1]==0:
                 TPFP = "FP"
             cam = np.maximum(cam, 0) 
-            cam = 255*cam / np.max(cam)
+            if np.max(cam) > 0:
+                cam = 255*cam / np.max(cam)
 #            cam = np.uint8(255*cam / np.max(cam.max))
-            cam.dtype = "uint8"
+            cam.astype(np.uint8)
             cam = Image.fromarray(cam).resize((512,512))
             cam.save(path_to_save_cam % (TPFP, self.df_test["Image Index"].values[count]))
             count+=1
@@ -250,7 +251,7 @@ class CAM:
 #            print(cams.shape)
             start_index=start_index+self.batch_size
             end_index=min(start_index, len(mask_predictions))
-
+        print(end_index, len(mask_predictions))
 
 def main():
     
