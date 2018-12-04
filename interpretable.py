@@ -124,8 +124,8 @@ class CAM:
                  if_duplicate=True,
                  ):
         self.layer_name=layer_name
-        self.path_to_model=path_to_model
         self.pathology=pathology
+        self.path_to_model=path_to_model % pathology
         self.ratio=ratio
         self.if_duplicate=if_duplicate
         self.input_shape=input_shape
@@ -168,18 +168,32 @@ class CAM:
     # nn の出力を出す
     def predict(self):
         self.test_data, self.test_label, self.df_test = self.load_test()
-        self.model = load_model(self.path_to_model % self.pathology)
+        self.model = load_model(self.path_to_model)
         print("aho")
         self.predictions = self.model.predict(self.test_data, batch_size=self.batch_size)
         
         
 #        return model, predictions
-    def save_cam(self, cams):
+    def save_cam(self, cams, start_index):
+        path_to_save_cam = self.path_to_model[:-3]+"/cams/%s/" # % (TPFP)
+        if start_index==0:
+            if not os.path.exists(path_to_save_cam % "TP"):
+                os.makedirs(path_to_save_cam % "TP")
+            if not os.path.exists(path_to_save_cam % "FP"):
+                os.makedirs(path_to_save_cam % "FP")
+        path_to_save_cam = path_to_save_cam + "%s"
+        count=start_index
         for cam in cams:
+            if self.test_label[count, 1]==1:
+                TPFP = "TP"
+            elif self.test_label[count, 1]==0:
+                TPFP = "FP"
             cam = np.maximum(cam, 0) 
             cam = np.uint8(255*cam / cam.max())
             cam = Image.fromarray(cam).resize((512,512))
-#            cam.save(path_to_save_cam % (TPFP, df_test["Image Index"].values[count]))
+            print(path_to_save_cam)
+            cam.save(path_to_save_cam % (TPFP, self.df_test["Image Index"].values[count]))
+            count+=1
         
     
     def grad_cam(self):
@@ -225,6 +239,7 @@ class CAM:
             print("weights.shape = ", grads_val.shape)
     #        print("output.shape={0}, weights.shape={1}".format(output.shape, weights.shape))
             cams = np.sum(output*grads_val, axis=3)
+            self.save_cam(cams=cams, start_index=start_index)
             print(cams.shape)
             start_index=start_index+self.batch_size
             end_index=min(start_index, len(mask_predictions))
