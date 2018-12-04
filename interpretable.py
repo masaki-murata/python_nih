@@ -140,7 +140,7 @@ class CAM:
         path_to_group_csv = path_to_csv_dir+ "%s.csv" 
         if self.if_duplicate:
             path_to_group_csv = path_to_group_csv[:-4]+"_duplicate.csv"
-        df_test = pd.read_csv(path_to_group_csv % "test")
+        df_test = pd.read_csv(path_to_group_csv % "test")#[:50]
         test_data, test_label, df_test = nih.make_dataset(df_test,
                                              group="test",
                                              ratio=self.ratio,
@@ -195,8 +195,9 @@ class CAM:
                 cam = 255*cam / np.max(cam)
 #            cam = np.uint8(255*cam / np.max(cam.max))
             cam.astype(np.uint8)
-            cam = Image.fromarray(cam).resize((512,512))
-            print(count)
+#            print(cam.shape)
+            cam = Image.fromarray(cam).resize((512,512)).convert('L')
+#            print(count)
             cam.save(path_to_save_cam % (TPFP, self.df_test["Image Index"].values[count]))
             count+=1
         
