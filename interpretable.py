@@ -253,7 +253,7 @@ class CAM:
             self.save_cam(method="grad_cam_murata",cams=cams, start_index=start_index)
 #            print(cams.shape)
             start_index=start_index+self.batch_size
-            end_index=min(start_index, len(mask_predictions))
+            end_index=min(start_index+self.batch_size, len(mask_predictions))
         print(end_index, len(mask_predictions))
 
 def main():
