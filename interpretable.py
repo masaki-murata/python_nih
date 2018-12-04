@@ -258,7 +258,7 @@ class CAM:
 
 def main():
     
-    interpretable = CAM(layer_name="block5_conv4",
+    interpretable = CAM(layer_name="block5_pool",
                          ratio=[0.7,0.1,0.2],
                          input_shape=(256,256,1),
                          batch_size=32,
@@ -267,7 +267,7 @@ def main():
                          if_load_npy=False,
                          if_save_npy=True,
                          )
-    interpretable.grad_cam()
+    interpretable.grad_cam_murata()
 #    grad_cam(input_shape=(256,256,1),layer_name="block4_conv4")
 
 if __name__ == '__main__':
