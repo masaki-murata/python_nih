@@ -177,7 +177,7 @@ class CAM:
         
 #        return model, predictions
     def save_cam(self, method, cams, start_index):
-        path_to_save_cam = self.path_to_model[:-3]+"/cams/"+method+self.layer_name+"/%s/" # % (TPFP)
+        path_to_save_cam = self.path_to_model[:-3]+"/cams/" + method + "_" + self.layer_name+"/%s/" # % (TPFP)
         if start_index==0:
             if not os.path.exists(path_to_save_cam % "TP"):
                 os.makedirs(path_to_save_cam % "TP")
@@ -207,20 +207,22 @@ class CAM:
         gradient_function = K.function([self.model.input], [conv_output, grads])  # model.inputを入力すると、conv_outputとgradsを出力する関数
         start_index=0
         end_index=min(self.batch_size, len(mask_predictions))
+        print("start_index = ", start_index)
         while start_index < end_index:
 #            print(self.test_data.shape)
             output, grads_val = gradient_function([self.test_data[start_index:end_index]])
 #            print("output.shape =", output.shape)
-            # 重みを平均化して、レイヤーのアウトプットに乗じる
-    #        weights = np.mean(grads_val, axis=(0, 1))
+#             重みを平均化して、レイヤーのアウトプットに乗じる
+#            weights = np.mean(grads_val, axis=(0, 1))
             weights = np.mean(grads_val, axis=(1, 2)) # global average pooling
-#            print("weights.shape = ", weights.shape)
+            print("weights.shape = ", weights.shape)
     #        print("output.shape={0}, weights.shape={1}".format(output.shape, weights.shape))
             cams = np.sum(output*weights.reshape((weights.shape[0],1,1,weights.shape[-1])), axis=3)
             self.save_cam(method="grad_cam", cams=cams, start_index=start_index)
 #            print(cams.shape)
             start_index=start_index+self.batch_size
             end_index=min(start_index, len(mask_predictions))
+
             
     def grad_cam_murata(self):
         self.predict()
@@ -256,7 +258,7 @@ def main():
                          pathology="Effusion",
                          path_to_model="../nih_data/models/mm11dd26_size256/%s.h5",
                          if_load_npy=False,
-                         if_save_npy=False,
+                         if_save_npy=True,
                          )
     interpretable.grad_cam()
 #    grad_cam(input_shape=(256,256,1),layer_name="block4_conv4")
