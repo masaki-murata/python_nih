@@ -196,6 +196,7 @@ class CAM:
 #            cam = np.uint8(255*cam / np.max(cam.max))
             cam.astype(np.uint8)
             cam = Image.fromarray(cam).resize((512,512))
+            print(count)
             cam.save(path_to_save_cam % (TPFP, self.df_test["Image Index"].values[count]))
             count+=1
         
