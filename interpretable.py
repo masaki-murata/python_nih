@@ -267,7 +267,7 @@ def main():
                          if_load_npy=False,
                          if_save_npy=True,
                          )
-    interpretable.grad_cam_murata()
+    interpretable.grad_cam()
 #    grad_cam(input_shape=(256,256,1),layer_name="block4_conv4")
 
 if __name__ == '__main__':
