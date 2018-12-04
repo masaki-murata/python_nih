@@ -125,7 +125,7 @@ class CAM:
                  ):
         self.layer_name=layer_name
         self.pathology=pathology
-        self.path_to_model=path_to_model % pathology
+        self.path_to_model=path_to_model % (pathology, self.layer_name)
         self.ratio=ratio
         self.if_duplicate=if_duplicate
         self.input_shape=input_shape
@@ -140,7 +140,7 @@ class CAM:
         path_to_group_csv = path_to_csv_dir+ "%s.csv" 
         if self.if_duplicate:
             path_to_group_csv = path_to_group_csv[:-4]+"_duplicate.csv"
-        df_test = pd.read_csv(path_to_group_csv % "test")[:50]
+        df_test = pd.read_csv(path_to_group_csv % "test")
         test_data, test_label, df_test = nih.make_dataset(df_test,
                                              group="test",
                                              ratio=self.ratio,
@@ -155,21 +155,23 @@ class CAM:
                                              if_return_df=True,
                                              )
         return test_data, test_label, df_test 
-    
-    def make_dir(self):
-        path_to_save_cam = self.path_to_model[:-3]+"/cams/%s/" # % (TPFP)
-        if not os.path.exists(path_to_save_cam % "TP"):
-            os.makedirs(path_to_save_cam % "TP")
-        if not os.path.exists(path_to_save_cam % "FP"):
-            os.makedirs(path_to_save_cam % "FP")
-        path_to_save_cam = path_to_save_cam + "%s"
+#    
+#    def make_dir(self):
+#        path_to_save_cam = self.path_to_model[:-3]+"/cams/%s/" # % (TPFP)
+#        if not os.path.exists(path_to_save_cam % "TP"):
+#            os.makedirs(path_to_save_cam % "TP")
+#        if not os.path.exists(path_to_save_cam % "FP"):
+#            os.makedirs(path_to_save_cam % "FP")
+#        path_to_save_cam = path_to_save_cam + "%s"
     
     """ 将来的には nn の学習も入れたい """
     # nn の出力を出す
     def predict(self):
         self.test_data, self.test_label, self.df_test = self.load_test()
         self.model = load_model(self.path_to_model)
-        print("aho")
+        self.model.summary()
+        print(self.layer_name)
+#        print("aho")
         self.predictions = self.model.predict(self.test_data, batch_size=self.batch_size)
         
         
@@ -191,7 +193,6 @@ class CAM:
             cam = np.maximum(cam, 0) 
             cam = np.uint8(255*cam / cam.max())
             cam = Image.fromarray(cam).resize((512,512))
-            print(path_to_save_cam)
             cam.save(path_to_save_cam % (TPFP, self.df_test["Image Index"].values[count]))
             count+=1
         
@@ -209,14 +210,15 @@ class CAM:
         while start_index < end_index:
 #            print(self.test_data.shape)
             output, grads_val = gradient_function([self.test_data[start_index:end_index]])
-            print("output.shape =", output.shape)
+#            print("output.shape =", output.shape)
             # 重みを平均化して、レイヤーのアウトプットに乗じる
     #        weights = np.mean(grads_val, axis=(0, 1))
             weights = np.mean(grads_val, axis=(1, 2)) # global average pooling
-            print("weights.shape = ", weights.shape)
+#            print("weights.shape = ", weights.shape)
     #        print("output.shape={0}, weights.shape={1}".format(output.shape, weights.shape))
             cams = np.sum(output*weights.reshape((weights.shape[0],1,1,weights.shape[-1])), axis=3)
-            print(cams.shape)
+            self.save_cam(cams=cams, start_index=start_index)
+#            print(cams.shape)
             start_index=start_index+self.batch_size
             end_index=min(start_index, len(mask_predictions))
             
@@ -232,31 +234,31 @@ class CAM:
         while start_index < end_index:
 #            print(self.test_data.shape)
             output, grads_val = gradient_function([self.test_data[start_index:end_index]])
-            print("output.shape =", output.shape)
+#            print("output.shape =", output.shape)
             # 重みを平均化して、レイヤーのアウトプットに乗じる
     #        weights = np.mean(grads_val, axis=(0, 1))
 #            weights = np.mean(grads_val, axis=(1, 2)) # global average pooling
-            print("weights.shape = ", grads_val.shape)
+#            print("weights.shape = ", grads_val.shape)
     #        print("output.shape={0}, weights.shape={1}".format(output.shape, weights.shape))
             cams = np.sum(output*grads_val, axis=3)
             self.save_cam(cams=cams, start_index=start_index)
-            print(cams.shape)
+#            print(cams.shape)
             start_index=start_index+self.batch_size
             end_index=min(start_index, len(mask_predictions))
 
 
 def main():
     
-    interpretable = CAM(layer_name="block3_conv4",
+    interpretable = CAM(layer_name="block4_conv4",
                          ratio=[0.7,0.1,0.2],
                          input_shape=(256,256,1),
                          batch_size=32,
                          pathology="Effusion",
-                         path_to_model="../nih_data/models/mm11dd26_size256/%s.h5",
+                         path_to_model="../nih_data/models/mm11dd26_size256/%s/%s.h5",
                          if_load_npy=False,
                          if_save_npy=False,
                          )
-    interpretable.grad_cam_murata()
+    interpretable.grad_cam()
 #    grad_cam(input_shape=(256,256,1),layer_name="block4_conv4")
 
 if __name__ == '__main__':
