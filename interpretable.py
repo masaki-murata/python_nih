@@ -215,13 +215,13 @@ class CAM:
 #             重みを平均化して、レイヤーのアウトプットに乗じる
 #            weights = np.mean(grads_val, axis=(0, 1))
             weights = np.mean(grads_val, axis=(1, 2)) # global average pooling
-            print("weights.shape = ", weights.shape)
+#            print("weights.shape = ", weights.shape)
     #        print("output.shape={0}, weights.shape={1}".format(output.shape, weights.shape))
             cams = np.sum(output*weights.reshape((weights.shape[0],1,1,weights.shape[-1])), axis=3)
             self.save_cam(method="grad_cam", cams=cams, start_index=start_index)
 #            print(cams.shape)
             start_index=start_index+self.batch_size
-            end_index=min(start_index, len(mask_predictions))
+            end_index=min(start_index+self.batch_size, len(mask_predictions))
 
             
     def grad_cam_murata(self):
