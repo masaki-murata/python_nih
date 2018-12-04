@@ -125,7 +125,7 @@ class CAM:
                  ):
         self.layer_name=layer_name
         self.pathology=pathology
-        self.path_to_model=path_to_model % (pathology, self.layer_name)
+        self.path_to_model=path_to_model % (pathology)
         self.ratio=ratio
         self.if_duplicate=if_duplicate
         self.input_shape=input_shape
@@ -176,8 +176,8 @@ class CAM:
         
         
 #        return model, predictions
-    def save_cam(self, cams, start_index):
-        path_to_save_cam = self.path_to_model[:-3]+"/cams/%s/" # % (TPFP)
+    def save_cam(self, method, cams, start_index):
+        path_to_save_cam = self.path_to_model[:-3]+"/cams/"+method+self.layer_name+"/%s/" # % (TPFP)
         if start_index==0:
             if not os.path.exists(path_to_save_cam % "TP"):
                 os.makedirs(path_to_save_cam % "TP")
@@ -217,7 +217,7 @@ class CAM:
 #            print("weights.shape = ", weights.shape)
     #        print("output.shape={0}, weights.shape={1}".format(output.shape, weights.shape))
             cams = np.sum(output*weights.reshape((weights.shape[0],1,1,weights.shape[-1])), axis=3)
-            self.save_cam(cams=cams, start_index=start_index)
+            self.save_cam(method="grad_cam", cams=cams, start_index=start_index)
 #            print(cams.shape)
             start_index=start_index+self.batch_size
             end_index=min(start_index, len(mask_predictions))
@@ -254,7 +254,7 @@ def main():
                          input_shape=(256,256,1),
                          batch_size=32,
                          pathology="Effusion",
-                         path_to_model="../nih_data/models/mm11dd26_size256/%s/%s.h5",
+                         path_to_model="../nih_data/models/mm11dd26_size256/%s.h5",
                          if_load_npy=False,
                          if_save_npy=False,
                          )
