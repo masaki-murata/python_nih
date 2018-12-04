@@ -191,7 +191,9 @@ class CAM:
             elif self.test_label[count, 1]==0:
                 TPFP = "FP"
             cam = np.maximum(cam, 0) 
-            cam = np.uint8(255*cam / cam.max())
+            cam = 255*cam / np.max(cam.max)
+#            cam = np.uint8(255*cam / np.max(cam.max))
+            cam.dtype = "uint8"
             cam = Image.fromarray(cam).resize((512,512))
             cam.save(path_to_save_cam % (TPFP, self.df_test["Image Index"].values[count]))
             count+=1
@@ -242,6 +244,7 @@ class CAM:
 #            weights = np.mean(grads_val, axis=(1, 2)) # global average pooling
 #            print("weights.shape = ", grads_val.shape)
     #        print("output.shape={0}, weights.shape={1}".format(output.shape, weights.shape))
+            grads_val = np.maximum(grads_val,0)
             cams = np.sum(output*grads_val, axis=3)
             self.save_cam(cams=cams, start_index=start_index)
 #            print(cams.shape)
