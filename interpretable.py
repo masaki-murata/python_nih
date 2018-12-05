@@ -120,6 +120,7 @@ class CAM:
                  batch_size,
                  if_load_npy,
                  if_save_npy,
+                 cam_method,
                  ratio=[0.7,0.1,0.2],
                  if_duplicate=True,
                  ):
@@ -132,6 +133,7 @@ class CAM:
         self.batch_size=batch_size
         self.if_load_npy=if_load_npy
         self.if_save_npy=if_save_npy
+        self.cam_method=cam_method
     
     # テストデータをロードする関数
     def load_test(self):
@@ -196,7 +198,7 @@ class CAM:
 #            cam = np.uint8(255*cam / np.max(cam.max))
             cam.astype(np.uint8)
 #            print(cam.shape)
-            cam = Image.fromarray(cam).resize((512,512)).convert('L')
+            cam = Image.fromarray(cam).resize((1024,1024)).convert('L')
 #            print(count)
             cam.save(path_to_save_cam % (TPFP, self.df_test["Image Index"].values[count]))
             count+=1
@@ -255,19 +257,33 @@ class CAM:
             start_index=start_index+self.batch_size
             end_index=min(start_index+self.batch_size, len(mask_predictions))
         print(end_index, len(mask_predictions))
+        
+    def cam(self):
+        if self.cam_method == "grad_cam":
+            self.grad_cam()
+        if self.cam_method == "grad_cam_murata":
+            self.grad_cam_murata()
+
 
 def main():
+    layer_names = ["block4_conv4", "block5_conv4", "block5_pool"]
+    cam_methods = ["grad_cam", "grad_cam_murata"]
+    pathology="Effusion"
     
-    interpretable = CAM(layer_name="block5_pool",
-                         ratio=[0.7,0.1,0.2],
-                         input_shape=(256,256,1),
-                         batch_size=32,
-                         pathology="Effusion",
-                         path_to_model="../nih_data/models/mm11dd26_size256/%s.h5",
-                         if_load_npy=False,
-                         if_save_npy=True,
-                         )
-    interpretable.grad_cam_murata()
+    for layer_name in layer_names:
+        for cam_method in cam_methods:
+            print(cam_method, layer_name)
+            interpretable = CAM(layer_name=layer_name,
+                                 ratio=[0.7,0.1,0.2],
+                                 input_shape=(256,256,1),
+                                 batch_size=32,
+                                 pathology=pathology,
+                                 path_to_model="../nih_data/models/mm11dd26_size256/%s.h5",
+                                 if_load_npy=False,
+                                 if_save_npy=True,
+                                 cam_method=cam_method,
+                                 )
+            interpretable.cam()
 #    grad_cam(input_shape=(256,256,1),layer_name="block4_conv4")
 
 if __name__ == '__main__':
