@@ -285,7 +285,7 @@ class CAM:
 
 def main():
     layer_names = ["block4_conv4", "block5_conv4", "block5_pool"]
-    cam_methods = ["grad_cam+"]
+    cam_methods = ["grad_cam+2"]
     pathology="Effusion"
     
 #            print(cam_method, layer_name)
