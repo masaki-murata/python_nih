@@ -172,7 +172,7 @@ class CAM:
         self.test_data, self.test_label, self.df_test = self.load_test()
         self.model = load_model(self.path_to_model)
         self.model.summary()
-        print(self.layer_name)
+#        print(self.layer_name)
 #        print("aho")
         self.predictions = self.model.predict(self.test_data, batch_size=self.batch_size)
         
