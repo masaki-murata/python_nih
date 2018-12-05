@@ -124,7 +124,7 @@ class CAM:
                  ratio=[0.7,0.1,0.2],
                  if_duplicate=True,
                  ):
-        self.layer_name=layer_name
+        self.layer_names=layer_names
         self.pathology=pathology
         self.path_to_model=path_to_model % (pathology)
         self.ratio=ratio
@@ -133,7 +133,7 @@ class CAM:
         self.batch_size=batch_size
         self.if_load_npy=if_load_npy
         self.if_save_npy=if_save_npy
-        self.cam_method=cam_method
+        self.cam_methods=cam_methods
     
     # テストデータをロードする関数
     def load_test(self):
@@ -178,8 +178,8 @@ class CAM:
         
         
 #        return model, predictions
-    def save_cam(self, cams, start_index):
-        path_to_save_cam = self.path_to_model[:-3]+"/cams/" + self.cam_method + "_" + self.layer_name+"/%s/" # % (TPFP)
+    def save_cam(self, layer_name, cam_method, cams, start_index):
+        path_to_save_cam = self.path_to_model[:-3]+"/cams/" + cam_method + "_" + layer_name+"/%s/" # % (TPFP)
         if start_index==0:
             if not os.path.exists(path_to_save_cam % "TP"):
                 os.makedirs(path_to_save_cam % "TP")
@@ -204,12 +204,12 @@ class CAM:
             count+=1
         
     
-    def grad_cam(self):
-        self.predict()
+    def grad_cam_single(self, layer_name, cam_method):
+#        self.predict()
         mask_predictions = self.predictions[:,1] > 0.5
 #        print(mask_predictions.shape)
         class_output = self.model.output[:, 1]
-        conv_output = self.model.get_layer(self.layer_name).output  # layer_nameのレイヤーのアウトプット
+        conv_output = self.model.get_layer(layer_name).output  # layer_nameのレイヤーのアウトプット
         grads = K.gradients(class_output, conv_output)[0]  # gradients(loss, variables) で、variablesのlossに関しての勾配を返す
         gradient_function = K.function([self.model.input], [conv_output, grads])  # model.inputを入力すると、conv_outputとgradsを出力する関数
         start_index=0
@@ -221,25 +221,32 @@ class CAM:
 #            print("output.shape =", output.shape)
 #             重みを平均化して、レイヤーのアウトプットに乗じる
 #            weights = np.mean(grads_val, axis=(0, 1))
-            if self.cam_method=="grad_cam":
+            if cam_method=="grad_cam":
                 weights = np.mean(grads_val, axis=(1, 2)) # global average pooling
                 weights = weights.reshape((weights.shape[0],1,1,weights.shape[-1]))
-            elif self.cam_method=="grad_cam+":
+            elif cam_method=="grad_cam+":
                 weights = np.mean(grads_val, axis=(1, 2)) # global average pooling
                 weights = np.maximum(weights, 0)
                 weights = weights.reshape((weights.shape[0],1,1,weights.shape[-1]))
-            elif self.cam_method=="grad_cam+2":
+            elif cam_method=="grad_cam+2":
                 weights = np.mean(np.maximum(grads_val,0), axis=(1, 2)) # global average pooling
                 weights = weights.reshape((weights.shape[0],1,1,weights.shape[-1]))
-            elif self.cam_method=="grad_cam_murata":
+            elif cam_method=="grad_cam_murata":
                 weights = np.maximum(grads_val,0)
 #            print("weights.shape = ", weights.shape)
             cams = np.sum(output*weights, axis=3)
-            self.save_cam(cams=cams, start_index=start_index)
+            self.save_cam(layer_name, cam_method, cams=cams, start_index=start_index)
 #            print(cams.shape)
             start_index=start_index+self.batch_size
             end_index=min(start_index+self.batch_size, len(mask_predictions))
         print(end_index, len(mask_predictions))
+        
+    def grad_cam(self):
+        self.predict()
+        for layer_name in self.layer_names:
+            for cam_method in self.cam_methods:
+                self.grad_cam_single(layer_name, cam_method)
+       
 
     """        
     def grad_cam_murata(self):
@@ -281,20 +288,18 @@ def main():
     cam_methods = ["grad_cam+"]
     pathology="Effusion"
     
-    for layer_name in layer_names:
-        for cam_method in cam_methods:
-            print(cam_method, layer_name)
-            interpretable = CAM(layer_name=layer_name,
-                                 ratio=[0.7,0.1,0.2],
-                                 input_shape=(256,256,1),
-                                 batch_size=32,
-                                 pathology=pathology,
-                                 path_to_model="../nih_data/models/mm11dd26_size256/%s.h5",
-                                 if_load_npy=False,
-                                 if_save_npy=True,
-                                 cam_method=cam_method,
-                                 )
-            interpretable.grad_cam()
+#            print(cam_method, layer_name)
+    interpretable = CAM(layer_names=layer_names,
+                         ratio=[0.7,0.1,0.2],
+                         input_shape=(256,256,1),
+                         batch_size=32,
+                         pathology=pathology,
+                         path_to_model="../nih_data/models/mm11dd26_size256/%s.h5",
+                         if_load_npy=True,
+                         if_save_npy=True,
+                         cam_methods=cam_methods,
+                         )
+    interpretable.grad_cam()
 #    grad_cam(input_shape=(256,256,1),layer_name="block4_conv4")
 
 if __name__ == '__main__':
