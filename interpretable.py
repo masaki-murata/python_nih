@@ -178,8 +178,8 @@ class CAM:
         
         
 #        return model, predictions
-    def save_cam(self, method, cams, start_index):
-        path_to_save_cam = self.path_to_model[:-3]+"/cams/" + method + "_" + self.layer_name+"/%s/" # % (TPFP)
+    def save_cam(self, cams, start_index):
+        path_to_save_cam = self.path_to_model[:-3]+"/cams/" + self.cam_method + "_" + self.layer_name+"/%s/" # % (TPFP)
         if start_index==0:
             if not os.path.exists(path_to_save_cam % "TP"):
                 os.makedirs(path_to_save_cam % "TP")
@@ -221,17 +221,24 @@ class CAM:
 #            print("output.shape =", output.shape)
 #             重みを平均化して、レイヤーのアウトプットに乗じる
 #            weights = np.mean(grads_val, axis=(0, 1))
-            weights = np.mean(grads_val, axis=(1, 2)) # global average pooling
+            if self.cam_method=="grad_cam":
+                weights = np.mean(grads_val, axis=(1, 2)) # global average pooling
+                weights.reshape((weights.shape[0],1,1,weights.shape[-1]))
+            elif self.cam_method=="grad_cam+":
+                weights = np.mean(grads_val, axis=(1, 2)) # global average pooling
+                weights = np.maximum(weights, 0)
+                weights.reshape((weights.shape[0],1,1,weights.shape[-1]))
+            elif self.cam_method=="grad_cam_murata":
+                weights = np.maximum(grads_val,0)
 #            print("weights.shape = ", weights.shape)
-    #        print("output.shape={0}, weights.shape={1}".format(output.shape, weights.shape))
-            cams = np.sum(output*weights.reshape((weights.shape[0],1,1,weights.shape[-1])), axis=3)
-            self.save_cam(method="grad_cam", cams=cams, start_index=start_index)
+            cams = np.sum(output*weights, axis=3)
+            self.save_cam(cams=cams, start_index=start_index)
 #            print(cams.shape)
             start_index=start_index+self.batch_size
             end_index=min(start_index+self.batch_size, len(mask_predictions))
         print(end_index, len(mask_predictions))
 
-            
+    """        
     def grad_cam_murata(self):
         self.predict()
         mask_predictions = self.predictions[:,1] > 0.5
@@ -263,11 +270,12 @@ class CAM:
             self.grad_cam()
         if self.cam_method == "grad_cam_murata":
             self.grad_cam_murata()
+    """
 
 
 def main():
     layer_names = ["block4_conv4", "block5_conv4", "block5_pool"]
-    cam_methods = ["grad_cam", "grad_cam_murata"]
+    cam_methods = ["grad_cam+"]
     pathology="Effusion"
     
     for layer_name in layer_names:
@@ -283,7 +291,7 @@ def main():
                                  if_save_npy=True,
                                  cam_method=cam_method,
                                  )
-            interpretable.cam()
+            interpretable.grad_cam()
 #    grad_cam(input_shape=(256,256,1),layer_name="block4_conv4")
 
 if __name__ == '__main__':
