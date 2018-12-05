@@ -228,6 +228,9 @@ class CAM:
                 weights = np.mean(grads_val, axis=(1, 2)) # global average pooling
                 weights = np.maximum(weights, 0)
                 weights = weights.reshape((weights.shape[0],1,1,weights.shape[-1]))
+            elif self.cam_method=="grad_cam+2":
+                weights = np.mean(np.maximum(grads_val,0), axis=(1, 2)) # global average pooling
+                weights = weights.reshape((weights.shape[0],1,1,weights.shape[-1]))
             elif self.cam_method=="grad_cam_murata":
                 weights = np.maximum(grads_val,0)
 #            print("weights.shape = ", weights.shape)
