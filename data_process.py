@@ -65,7 +65,7 @@ def move_cam_pngs(cam_method, layer_name, pathology,
 
 def main():
     layer_names = ["block4_conv4", "block5_conv4", "block5_pool"]
-    cam_methods = ["grad_cam+"]
+    cam_methods = ["grad_cam+2"]
     pathology="Effusion"
 #    for layer_name, cam_method in zip(layer_names, cam_methods):
     for layer_name in layer_names:

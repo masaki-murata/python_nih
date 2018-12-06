@@ -245,6 +245,7 @@ class CAM:
         self.predict()
         for layer_name in self.layer_names:
             for cam_method in self.cam_methods:
+                print( "layer_name = {0}, cam_method = {1}".format(layer_name,cam_method) )
                 self.grad_cam_single(layer_name, cam_method)
        
 
