@@ -62,7 +62,7 @@ def move_cam_pngs(cam_method, layer_name, pathology,
             shutil.copyfile(path_to_cam_pngs+png, path_to_cam_moved+png[:-4]+"_cam.png")
             shutil.copyfile(path_to_bb_murata+png, path_to_cam_moved+png)
     
-def glue_cams(cam_method, layer_name, pathology,
+def glue_cams(cam_method, layer_name, pathology, size,
               path_to_cam_pngs="../nih_data/models/mm11dd26_size256/%s/cams/%s_%s/murata_select/",  # % (pathology, cam_method, layer_name) 
               path_to_cams = "../nih_data/models/mm11dd26_size256/%s/cams/%s_%s.png",  # % (pathology, cam_method, layer_name) 
               ):
@@ -77,17 +77,17 @@ def glue_cams(cam_method, layer_name, pathology,
     assert len(pngs) == len(cam_pngs), print( len(pngs), len(cam_pngs) )
     row_num = int(np.sqrt(len(pngs)*2))
     column_num = int( len(pngs)*2.0 / row_num - 0.01) + 1
-    canvas = Image.new("RGB", (column_num*128, row_num*128))
+    canvas = Image.new("RGB", (column_num*size, row_num*size))
     print(row_num, column_num, len(pngs))
     r,c = 0,0
     for i in range(len(pngs)):
         print(r,c)
 #        img = Image.open(path_to_cam_pngs % (pathology, cam_method, layer_name) +pngs[i]).convert('L').resize((128,128))
 #        img_cam = Image.open(path_to_cam_pngs % (pathology, cam_method, layer_name) +cam_pngs[i]).convert('L').resize((128,128))
-        img = Image.open(path_to_cam_pngs % (pathology, cam_method, layer_name) +pngs[i]).resize((128,128))
-        img_cam = Image.open(path_to_cam_pngs % (pathology, cam_method, layer_name) +cam_pngs[i]).resize((128,128))
-        canvas.paste(img, (c*128, r*128))
-        canvas.paste(img_cam, ((c+1)*128, r*128))
+        img = Image.open(path_to_cam_pngs % (pathology, cam_method, layer_name) +pngs[i]).resize((size,size))
+        img_cam = Image.open(path_to_cam_pngs % (pathology, cam_method, layer_name) +cam_pngs[i]).resize((size,size))
+        canvas.paste(img, (c*size, r*size))
+        canvas.paste(img_cam, ((c+1)*size, r*size))
         if c==column_num-1:
             r+=1
             c=0
@@ -104,11 +104,12 @@ def main():
     layer_names = ["block4_conv4", "block5_conv4", "block5_pool"]
     cam_methods = ["grad_cam", "grad_cam+", "grad_cam+2", "grad_cam_murata"]
     pathology="Effusion"
+    size = 1024
 #    for layer_name, cam_method in zip(layer_names, cam_methods):
     for layer_name in layer_names:
         for cam_method in cam_methods:
             print(layer_name, cam_method)
-            glue_cams(cam_method, layer_name, pathology)
+            glue_cams(cam_method, layer_name, pathology, size)
 #    pathologies = ['Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Effusion', 'Emphysema', 'Fibrosis', 'Hernia', 'Infiltration', 'Mass', 'Nodule',
 #                   'Pleural_Thickening', 'Pneumonia', 'Pneumothorax']          
 #                   
