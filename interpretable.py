@@ -113,14 +113,14 @@ def grad_cam(layer_name="block3_conv4",
     """
 class CAM:
     def __init__(self, 
-                 layer_name, 
+                 layer_names, 
                  path_to_model, 
                  pathology, 
                  input_shape,
                  batch_size,
                  if_load_npy,
                  if_save_npy,
-                 cam_method,
+                 cam_methods,
                  ratio=[0.7,0.1,0.2],
                  if_duplicate=True,
                  ):
