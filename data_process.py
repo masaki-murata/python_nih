@@ -76,19 +76,20 @@ def glue_cams(cam_method, layer_name, pathology, size,
     pngs.sort(), cam_pngs.sort()
     assert len(pngs) == len(cam_pngs), print( len(pngs), len(cam_pngs) )
     row_num = int(np.sqrt(len(pngs)*2))
-    column_num = int( len(pngs)*2.0 / row_num - 0.01) + 1
+    column_num = int( len(pngs)*2.0 / row_num - 0.01) + 2
+    row_num -= 1
     canvas = Image.new("RGB", (column_num*size, row_num*size))
-    print(row_num, column_num, len(pngs))
+    print(column_num, row_num, 2*len(pngs))
     r,c = 0,0
     for i in range(len(pngs)):
-        print(r,c)
+        print(c,r)
 #        img = Image.open(path_to_cam_pngs % (pathology, cam_method, layer_name) +pngs[i]).convert('L').resize((128,128))
 #        img_cam = Image.open(path_to_cam_pngs % (pathology, cam_method, layer_name) +cam_pngs[i]).convert('L').resize((128,128))
         img = Image.open(path_to_cam_pngs % (pathology, cam_method, layer_name) +pngs[i]).resize((size,size))
         img_cam = Image.open(path_to_cam_pngs % (pathology, cam_method, layer_name) +cam_pngs[i]).resize((size,size))
         canvas.paste(img, (c*size, r*size))
         canvas.paste(img_cam, ((c+1)*size, r*size))
-        if c==column_num-1:
+        if c==column_num-2:
             r+=1
             c=0
         else:
