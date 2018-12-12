@@ -18,6 +18,12 @@ from keras.models import Model
 from keras.layers import Dense, Flatten, Input, Conv2D, BatchNormalization
 from keras.applications.vgg16 import VGG16
 from keras.applications.vgg19 import VGG19
+from keras.applications.densenet import DenseNet121
+from keras.applications.densenet import DenseNet169
+from keras.applications.densenet import DenseNet201
+from keras.applications.inception_v3 import InceptionV3
+from keras.applications.resnet50 import ResNet50
+from keras.applications.xception import Xception
 from keras.models import Sequential
 from keras import metrics
 from keras.preprocessing.image import ImageDataGenerator
@@ -248,10 +254,25 @@ def batch_iter_np(df,
     
     return data_generator(), steps_per_epoch
 
-def make_model(input_shape=(128, 128, 1)):
+def make_model(network, input_shape=(128, 128, 1)):
     input_img = Input(shape=input_shape)
     x = Conv2D(filters=3, kernel_size=3, padding="same", activation="relu")(input_img)
-    transfer = VGG19(include_top=False, weights=None, input_tensor=x)
+    if network=="VGG16":
+        transfer = VGG16(include_top=False, weights=None, input_tensor=x)
+    if network=="VGG19":
+        transfer = VGG19(include_top=False, weights=None, input_tensor=x)
+    if network=="DenseNet121":
+        transfer = DenseNet121(include_top=False, weights=None, input_tensor=x)
+    if network=="DenseNet169":
+        transfer = DenseNet169(include_top=False, weights=None, input_tensor=x)
+    if network=="DenseNet201":
+        transfer = DenseNet201(include_top=False, weights=None, input_tensor=x)
+    if network=="InceptionV3":
+        transfer = InceptionV3(include_top=False, weights=None, input_tensor=x)
+    if network=="ResNet50":
+        transfer = ResNet50(include_top=False, weights=None, input_tensor=x)
+    if network=="Xception":
+        transfer = Xception(include_top=False, weights=None, input_tensor=x)
 #    x = Conv2D(filters=8, kernel_size=3, padding="same", activation="relu")(input_img)
 #    x = Conv2D(filters=8, kernel_size=3, strides=2, padding="valid", activation="relu")(x)
 #    x = BatchNormalization()(x)
@@ -357,6 +378,7 @@ def class_balance(data, labels):
     return data_epoch, labels_epoch
 
 def train(input_shape=(128,128,1),
+          network="",
           batch_size=32,
           val_num=128,
           epochs=100,
@@ -378,7 +400,7 @@ def train(input_shape=(128,128,1),
     path_to_csv_dir = "../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) 
     now = datetime.datetime.now()
     if len(path_to_model_save)==0:
-        path_to_model_save = "../nih_data/models/mm%02ddd%02d/" % (now.month, now.day)
+        path_to_model_save = "../nih_data/models/mm%02ddd%02d_%s/" % (now.month, now.day, network)
     if not os.path.exists(path_to_model_save):
         os.makedirs(path_to_model_save)
     path_to_model_save = path_to_model_save+"%s.h5" % (pathology)
@@ -454,7 +476,7 @@ def train(input_shape=(128,128,1),
                                  )    
     # setting model
     print("---  start make_model  ---")
-    model = make_model(input_shape=input_shape)
+    model = make_model(network, input_shape=input_shape)
     if int(nb_gpus) > 1:
         model_multiple_gpu = multi_gpu_model(model, gpus=nb_gpus)
     else:
@@ -576,7 +598,8 @@ def main():
     
 #    pathologies = ['Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Effusion', 'Emphysema', 'Fibrosis', 'Hernia', 'Infiltration', 'Mass', 'Nodule',
 #                   'Pleural_Thickening', 'Pneumonia', 'Pneumothorax']          
-    pathologies = ['Edema', 'Effusion', 'Consolidation', 'Atelectasis', 'Hernia', 'Cardiomegaly', 'Infiltration', 'Fibrosis']          
+    pathologies = ['Edema', 'Effusion', 'Consolidation', 'Atelectasis', 'Hernia', 'Cardiomegaly', 'Infiltration', 'Fibrosis']
+    network="DenseNet121"
     batch_size=32
     epochs=32
     val_num=2048
@@ -590,6 +613,7 @@ def main():
     
     for input_shape in [256]:
         train_pathologies(pathologies=pathologies,
+                          network=network,
                           batch_size=batch_size,
                           input_shape=input_shape,
                           epochs=epochs,
