@@ -20,6 +20,7 @@ from keras.applications.vgg16 import VGG16
 from keras.applications.vgg19 import VGG19
 from keras.models import Sequential
 from keras import metrics
+from keras.preprocessing.image import ImageDataGenerator
 
 
 import tensorflow as tf
@@ -338,6 +339,7 @@ def auc(y_true, y_pred):
 #def weighted_crossentropy(y_true, y_pred):
 #    y_pred[y_true]
 
+# 正常・異常が一対一になるように
 def class_balance(data, labels):
     data_norm = data[labels[:,1]==0]
     data_sick = data[labels[:,1]==1]
@@ -367,6 +369,7 @@ def train(input_shape=(128,128,1),
           if_batch_from_df=False,
           if_normalize=True,
           if_duplicate=True,
+          if_augment=False,
           nb_gpus=1,
           ):
     if type(input_shape)==int:
@@ -423,7 +426,7 @@ def train(input_shape=(128,128,1),
 #    test_data, test_label = class_balance(test_data, test_label)
     print(np.sum(test_label[:,1]==0), np.sum(test_label[:,1]==1))
     
-    # set generator for training data
+    # set generator or dataset for training
     df_train = pd.read_csv(path_to_group_csv % "train")
     if if_batch_from_df:
         train_gen , steps_per_epoch= batch_iter_np(df_train,
@@ -444,7 +447,11 @@ def train(input_shape=(128,128,1),
                                                )
 #        train_label = to_categorical(train_label)
     print(len(df_train), len(train_label))
-    
+    datagen = ImageDataGenerator(rotation_range=5,
+                                 width_shift_range=0.2,
+                                 height_shift_range=0.2,
+                                 zoom_range=0.1,
+                                 )    
     # setting model
     print("---  start make_model  ---")
     model = make_model(input_shape=input_shape)
@@ -487,12 +494,16 @@ def train(input_shape=(128,128,1),
 #            shuffle_indices = np.random.permutation(np.arange(len(train_label_epoch)))
 #            train_data_epoch = train_data_epoch[shuffle_indices]
 #            train_label_epoch = train_label_epoch[shuffle_indices]
-            model_multiple_gpu.fit(train_data_epoch, train_labels_epoch,
-    #                               steps_per_epoch=steps_per_epoch,
-                                   epochs=1,
-#                                   class_weight=class_weight,
-                                   validation_data=(val_data,val_label),
-                                   )
+            if if_augment:
+                model.fit_generator(datagen.flow(train_data_epoch, train_labels_epoch, batch_size=batch_size),
+                                    steps_per_epoch=len(train_data_epoch) / batch_size, epochs=1)
+            else:
+                model_multiple_gpu.fit(train_data_epoch, train_labels_epoch,
+        #                               steps_per_epoch=steps_per_epoch,
+                                       epochs=1,
+    #                                   class_weight=class_weight,
+                                       validation_data=(val_data,val_label),
+                                       )
             val_pred = model_multiple_gpu.predict(val_data, batch_size=batch_size)
             print(val_pred.shape)
             val_auc = auc(val_label, val_pred)
@@ -511,6 +522,7 @@ def train(input_shape=(128,128,1),
                     break
     return test_auc
 
+
 def train_pathologies(pathologies=[],
                       input_shape=(128,128,1),
                       batch_size=32,
@@ -523,6 +535,7 @@ def train_pathologies(pathologies=[],
                       if_batch_from_df=False,
                       if_normalize=True,
                       if_duplicate=True,
+                      if_augment=False,
                       nb_gpus=1,
                       ):
     if type(input_shape)==int:
@@ -549,6 +562,7 @@ def train_pathologies(pathologies=[],
                          if_batch_from_df=if_batch_from_df,
                          if_duplicate=if_duplicate,
                          if_normalize=if_normalize,
+                         if_augment=if_augment,
                          nb_gpus=nb_gpus,
                          )
         df.loc[count] = [pathology, test_auc]
@@ -559,10 +573,10 @@ def train_pathologies(pathologies=[],
     return df
 
 def main():
-    pathologies = ['Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Effusion', 'Emphysema', 'Fibrosis', 'Hernia', 'Infiltration', 'Mass', 'Nodule',
-                   'Pleural_Thickening', 'Pneumonia', 'Pneumothorax']          
-#    pathologies = ['Effusion', 'Edema', 'Atelectasis', 'Cardiomegaly', 'Consolidation', 'Fibrosis', 'Hernia', 'Infiltration', 'Mass',
-#                   'Pneumonia',]          
+    
+#    pathologies = ['Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Effusion', 'Emphysema', 'Fibrosis', 'Hernia', 'Infiltration', 'Mass', 'Nodule',
+#                   'Pleural_Thickening', 'Pneumonia', 'Pneumothorax']          
+    pathologies = ['Edema', 'Effusion', 'Consolidation', 'Atelectasis', 'Hernia', 'Cardiomegaly', 'Infiltration', 'Fibrosis']          
     batch_size=32
     epochs=32
     val_num=2048
@@ -571,9 +585,10 @@ def main():
     if_batch_from_df=False
     if_duplicate=True
     if_normalize=True
+    if_augment=True
     nb_gpus=1
     
-    for input_shape in [512]:
+    for input_shape in [256]:
         train_pathologies(pathologies=pathologies,
                           batch_size=batch_size,
                           input_shape=input_shape,
@@ -584,6 +599,7 @@ def main():
                           if_batch_from_df=if_batch_from_df,
                           if_duplicate=if_duplicate,
                           if_normalize=if_normalize,
+                          if_augment=if_augment,
                           nb_gpus=nb_gpus,
                           )
 #    test_aucs={}
