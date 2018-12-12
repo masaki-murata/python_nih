@@ -599,12 +599,12 @@ def main():
 #    pathologies = ['Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Effusion', 'Emphysema', 'Fibrosis', 'Hernia', 'Infiltration', 'Mass', 'Nodule',
 #                   'Pleural_Thickening', 'Pneumonia', 'Pneumothorax']          
     pathologies = ['Edema', 'Effusion', 'Consolidation', 'Atelectasis', 'Hernia', 'Cardiomegaly', 'Infiltration', 'Fibrosis']
-    network="DenseNet121"
-    batch_size=32
-    epochs=32
+    network="VGG19"
+    batch_size=64
+    epochs=128
     val_num=2048
     ratio=[0.7,0.1,0.2]
-    patience=8
+    patience=16
     if_batch_from_df=False
     if_duplicate=True
     if_normalize=True
