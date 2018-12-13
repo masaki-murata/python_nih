@@ -192,6 +192,7 @@ def grouping(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv",
 
 def make_dataset(df,
                  group="train",
+                 path_to_image_dir="",
                  ratio=[0.7,0.15,0.15],
                  input_shape=(128, 128, 1),
                  data_num=128,
@@ -216,7 +217,7 @@ def make_dataset(df,
 #        df = df[(df["Finding Labels"]=="No Finding") | (df["Finding Labels"].str.contains(pathology))]
         data_num = min(data_num, len(df))
         df_shuffle = df.sample(frac=1)
-        data = load_images(df_shuffle[:data_num], input_shape=input_shape, if_rgb=if_rgb, if_normalize=if_normalize)
+        data = load_images(df_shuffle[:data_num], path_to_image_dir=path_to_image_dir, input_shape=input_shape, if_rgb=if_rgb, if_normalize=if_normalize)
         labels = np.array(df_shuffle["Finding Labels"].str.contains(pathology)*1.0)
         labels = to_categorical(labels[:data_num], num_classes=2)
     
@@ -232,6 +233,7 @@ def make_dataset(df,
 
     
 def batch_iter_np(df,
+                  path_to_image_dir="",
                   input_shape=(128,128,1),
                   batch_size=32,
                   if_rgb=False,
@@ -247,7 +249,7 @@ def batch_iter_np(df,
                 start_index = batch_num * batch_size
                 end_index = min((batch_num + 1) * batch_size, data_num)
                 df_epoch = df_shuffle[start_index:end_index]
-                data = load_images(df_epoch, input_shape=input_shape, if_rgb=if_rgb, if_normalize=if_normalize)
+                data = load_images(df_epoch, path_to_image_dir=path_to_image_dir, input_shape=input_shape, if_rgb=if_rgb, if_normalize=if_normalize)
                 labels = load_gts(df_epoch)
                 
                 yield data, labels
@@ -379,6 +381,7 @@ def class_balance(data, labels):
 
 def train(input_shape=(128,128,1),
           network="",
+          path_to_image_dir="",
           batch_size=32,
           val_num=128,
           epochs=100,
@@ -420,6 +423,7 @@ def train(input_shape=(128,128,1),
     df_validation = pd.read_csv(path_to_group_csv % "validation")
     val_data, val_label = make_dataset(df_validation,
                                        group="validation",
+                                       path_to_image_dir=path_to_image_dir,
                                        ratio=ratio,
                                        input_shape=input_shape,
                                        data_num=len(df_validation),
@@ -435,6 +439,7 @@ def train(input_shape=(128,128,1),
     df_test = pd.read_csv(path_to_group_csv % "test")
     test_data, test_label = make_dataset(df_test,
                                          group="test",
+                                         path_to_image_dir=path_to_image_dir,
                                          ratio=ratio,
                                          input_shape=input_shape,
                                          data_num=len(df_test),
@@ -457,6 +462,7 @@ def train(input_shape=(128,128,1),
     else:
         train_data, train_label = make_dataset(df_train,
                                                group="train",
+                                               path_to_image_dir=path_to_image_dir,
                                                ratio=ratio,
                                                input_shape=input_shape,
                                                data_num=len(df_train),
@@ -547,6 +553,7 @@ def train(input_shape=(128,128,1),
 
 def train_pathologies(pathologies=[],
                       network="",
+                      path_to_image_dir="",
                       input_shape=(128,128,1),
                       batch_size=32,
                       val_num=128,
@@ -576,6 +583,7 @@ def train_pathologies(pathologies=[],
     for pathology in pathologies:
         test_auc = train(batch_size=batch_size,
                          network=network,
+                         path_to_image_dir=path_to_image_dir,
                          input_shape=input_shape,
                          epochs=epochs,
                          val_num=val_num,
@@ -602,6 +610,7 @@ def main():
 #                   'Pleural_Thickening', 'Pneumonia', 'Pneumothorax']          
     pathologies = ['Edema', 'Effusion', 'Consolidation', 'Atelectasis', 'Hernia', 'Cardiomegaly', 'Infiltration', 'Fibrosis']
     network="VGG19"
+    path_to_image_dir="/lustre/jh170036h/share/chestxray_nihcc/images"
     batch_size=64
     epochs=128
     val_num=2048
@@ -616,6 +625,7 @@ def main():
     for input_shape in [256]:
         train_pathologies(pathologies=pathologies,
                           network=network,
+                          path_to_image_dir=path_to_image_dir,
                           batch_size=batch_size,
                           input_shape=input_shape,
                           epochs=epochs,
