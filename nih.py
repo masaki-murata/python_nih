@@ -28,6 +28,9 @@ from keras.models import Sequential
 from keras import metrics
 from keras.preprocessing.image import ImageDataGenerator
 
+base_dir = os.getcwd()
+if not re.search("nih_python", base_dir):
+    base_dir = base_dir + "/xray/nih_python/"
 
 import tensorflow as tf
 from keras.backend.tensorflow_backend import set_session
@@ -73,9 +76,9 @@ if os.name=='posix' and if_DLB:
 
 
 # ground truth を作る関数
-def set_gts(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murarta.csv",
-            path_to_png_dir = "../nih_data/pngs/",
-            path_to_gts = "../nih_data/gts.npy",
+def set_gts(path_to_nih_data_csv = base_dir+"../nih_data/Data_Entry_2017_murarta.csv",
+            path_to_png_dir = base_dir+"../nih_data/pngs/",
+            path_to_gts = base_dir+"../nih_data/gts.npy",
             if_save = False,
             ):
     
@@ -89,7 +92,7 @@ def set_gts(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murarta.csv",
     
 def load_images(df,
                 input_shape=(128, 128, 1),
-                path_to_image_dir = "../nih_data/images/",
+                path_to_image_dir = base_dir+"../nih_data/images/",
                 if_rgb=False,
                 if_normalize=True,
                 ):
@@ -120,19 +123,19 @@ def load_gts(df,
     
 # Follow up が 0 のデータを抽出    
 def move_images(path_to_original_dir="/mnt/nas-public/nih-cxp-dataset/images/",
-                path_to_moved_dir="../nih_data/images/",
-                path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv",
+                path_to_moved_dir=base_dir+"../nih_data/images/",
+                path_to_nih_data_csv = base_dir+"../nih_data/Data_Entry_2017_murata.csv",
                 if_duplicate=True,
                 ):
     if if_duplicate:
-        path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv"
+        path_to_nih_data_csv = base_dir+"../nih_data/Data_Entry_2017_murata.csv"
     df = pd.read_csv(path_to_nih_data_csv)
     for image_index in df['Image Index'].values:
         shutil.copyfile(path_to_original_dir+image_index, path_to_moved_dir+image_index)
     
         
-def grouping(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv",
-             path_to_bb = "../nih_data/BBox_List_2017.csv",
+def grouping(path_to_nih_data_csv = base_dir+"../nih_data/Data_Entry_2017_murata.csv",
+             path_to_bb = base_dir+"../nih_data/BBox_List_2017.csv",
 #             path_to_save_dir = "../nih_data/ratio_t%.2fv%.2ft%.2f/",
 #             path_to_train_csv = "../nih_data/Data_Entry_2017_train.csv",
 #             path_to_validation_csv = "../nih_data/Data_Entry_2017_validation.csv",
@@ -141,7 +144,7 @@ def grouping(path_to_nih_data_csv = "../nih_data/Data_Entry_2017_murata.csv",
              ratio = [0.7, 0.1, 0.2],
 #             if_save = False,
              ):
-    path_to_save_dir = "../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) 
+    path_to_save_dir = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) 
     os.makedirs(path_to_save_dir)
     path_to_group_csv = path_to_save_dir+ "%s.csv"
     
@@ -206,8 +209,8 @@ def make_dataset(df,
                  if_return_df=False,
                  ):
     size = input_shape[0]
-    path_to_data = "../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) + "%s_size%d_%s_data.npy" % (group, size, pathology)
-    path_to_labels = "../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) + "%s_size%d_%s_labels.npy" % (group, size, pathology)
+    path_to_data = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) + "%s_size%d_%s_data.npy" % (group, size, pathology)
+    path_to_labels = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) + "%s_size%d_%s_labels.npy" % (group, size, pathology)
     if if_load_npy and os.path.exists(path_to_data):
         data = np.load(path_to_data)
         labels = np.load(path_to_labels)
@@ -401,10 +404,10 @@ def train(input_shape=(128,128,1),
     if type(input_shape)==int:
         input_shape=(input_shape,input_shape,1)
     print("train for ", pathology)
-    path_to_csv_dir = "../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) 
+    path_to_csv_dir = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) 
     now = datetime.datetime.now()
     if len(path_to_model_save)==0:
-        path_to_model_save = "../nih_data/models/mm%02ddd%02d_%s/" % (now.month, now.day, network)
+        path_to_model_save = base_dir+"../nih_data/models/mm%02ddd%02d_%s/" % (now.month, now.day, network)
     if not os.path.exists(path_to_model_save):
         os.makedirs(path_to_model_save)
     path_to_model_save = path_to_model_save+"%s.h5" % (pathology)
@@ -572,12 +575,12 @@ def train_pathologies(pathologies=[],
     if type(input_shape)==int:
         input_shape=(input_shape,input_shape,1)
     now = datetime.datetime.now()
-    path_to_model_save = "../nih_data/models/mm%02ddd%02d_size%d/" % (now.month, now.day, input_shape[0])
-    print(os.getcwd())
-    os.mkdir("../nih_data/models")
+    path_to_model_save = base_dir+"../nih_data/models/mm%02ddd%02d_size%d/" % (now.month, now.day, input_shape[0])
+#    print(os.getcwd())
+#    os.mkdir("../nih_data/models")
     if not os.path.exists(path_to_model_save):
         os.makedirs(path_to_model_save)
-    shutil.copyfile("./nih.py", path_to_model_save+"nih.py")
+    shutil.copyfile(base_dir+"./nih.py", path_to_model_save+"nih.py")
 #    shutil.copyfile("./data_process.py", path_to_model_save+"data_process.py")
     
     
@@ -613,8 +616,8 @@ def main():
 #                   'Pleural_Thickening', 'Pneumonia', 'Pneumothorax']          
     arg_nih={}
     arg_nih['pathologies']=['Edema', 'Effusion', 'Consolidation', 'Atelectasis', 'Hernia', 'Cardiomegaly', 'Infiltration', 'Fibrosis']
-    arg_nih['network']="VGG19"
-    arg_nih['path_to_image_dir']="/lustre/jh170036h/share/chestxray_nihcc/images" 
+    arg_nih['network']="DenseNet121"
+    arg_nih['path_to_image_dir']=base_dir+"../nih_data/images/"
     arg_nih['batch_size']=64
     arg_nih['epochs']=128    
     arg_nih['val_num']=2048
