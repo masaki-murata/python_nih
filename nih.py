@@ -546,6 +546,7 @@ def train(input_shape=(128,128,1),
 
 
 def train_pathologies(pathologies=[],
+                      network="",
                       input_shape=(128,128,1),
                       batch_size=32,
                       val_num=128,
@@ -574,6 +575,7 @@ def train_pathologies(pathologies=[],
     count=0
     for pathology in pathologies:
         test_auc = train(batch_size=batch_size,
+                         network=network,
                          input_shape=input_shape,
                          epochs=epochs,
                          val_num=val_num,
