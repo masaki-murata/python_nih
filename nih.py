@@ -7,7 +7,7 @@ Created on Mon Oct 29 16:57:22 2018
 
 import numpy as np
 import pandas as pd
-import os, csv, shutil, random, sys, datetime
+import os, csv, shutil, random, sys, datetime, re
 from keras.utils import to_categorical
 from PIL import Image
 from keras.optimizers import Adam, SGD
@@ -31,7 +31,8 @@ from keras.preprocessing.image import ImageDataGenerator
 
 import tensorflow as tf
 from keras.backend.tensorflow_backend import set_session
-if os.name=='posix':
+if_DLB=False
+if os.name=='posix' and if_DLB:
     config = tf.ConfigProto(
         gpu_options=tf.GPUOptions(
             visible_device_list="2", # specify GPU number
@@ -608,35 +609,103 @@ def main():
     
 #    pathologies = ['Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Effusion', 'Emphysema', 'Fibrosis', 'Hernia', 'Infiltration', 'Mass', 'Nodule',
 #                   'Pleural_Thickening', 'Pneumonia', 'Pneumothorax']          
-    pathologies = ['Edema', 'Effusion', 'Consolidation', 'Atelectasis', 'Hernia', 'Cardiomegaly', 'Infiltration', 'Fibrosis']
-    network="VGG19"
-    path_to_image_dir="/lustre/jh170036h/share/chestxray_nihcc/images"
-    batch_size=64
-    epochs=128
-    val_num=2048
-    ratio=[0.7,0.1,0.2]
-    patience=16
-    if_batch_from_df=False
-    if_duplicate=True
-    if_normalize=True
-    if_augment=True
-    nb_gpus=1
+    arg_nih={}
+    arg_nih['pathologies']=['Edema', 'Effusion', 'Consolidation', 'Atelectasis', 'Hernia', 'Cardiomegaly', 'Infiltration', 'Fibrosis']
+    arg_nih['network']="VGG19"
+    arg_nih['path_to_image_dir']="/lustre/jh170036h/share/chestxray_nihcc/images" 
+    arg_nih['batch_size']=64
+    arg_nih['epochs']=128    
+    arg_nih['val_num']=2048
+    arg_nih['patience']=16
+    arg_nih['nb_gpus']=1
+    arg_nih['ratio_train']=0.7
+    arg_nih['ratio_validation']=0.1
+    arg_nih['if_batch_from_df']=False
+    arg_nih['if_duplicate']=True
+    arg_nih['if_normalize']=True
+    arg_nih['if_augment']=True
+
+    int_args = ['batch_size', 'epochs', 'val_num', 'patience', 'nb_gpus']
+    float_args = ['ratio_train', 'ratio_validation']
+    str_args = ['network', "path_to_image_dir"]
+    list_args = ['pathologies']
+    bool_args = ['if_batch_from_df', 'if_duplicate', 'if_normalize', 'if_augment']
+    total_args=int_args+str_args+bool_args+list_args+float_args
+
+#    pathologies = ['Edema', 'Effusion', 'Consolidation', 'Atelectasis', 'Hernia', 'Cardiomegaly', 'Infiltration', 'Fibrosis']
+#    network="VGG19"
+#    path_to_image_dir="/lustre/jh170036h/share/chestxray_nihcc/images"
+#    batch_size=64
+#    epochs=128
+#    val_num=2048
+#    ratio=[0.7,0.1,0.2]
+#    patience=16
+#    if_batch_from_df=False
+#    if_duplicate=True
+#    if_normalize=True
+#    if_augment=True
+#    nb_gpus=1
+    
+    def read_comandline(arg_dict, 
+                        str_args, int_args, bool_args, list_args, float_args,
+                        arg_name, comandline):
+        if re.match('^'+arg_name, comandline):
+    #        value = re.search('(?<=^'+arg_name+'=)\S+', comandline).group(0)
+            if arg_name in str_args:
+                value = re.search('(?<=^'+arg_name+'=)\S+', comandline).group(0)
+                arg_dict[arg_name] = str(value)
+            elif arg_name in int_args:
+                value = re.search('(?<=^'+arg_name+'=)\d+', comandline).group(0)
+                arg_dict[arg_name] = int(value)
+            elif arg_name in float_args:
+                value = re.search('(?<=^'+arg_name+'=)\S+', comandline).group(0)
+                arg_dict[arg_name] = float(value)
+            elif arg_name in bool_args:
+                value = re.search('(?<=^'+arg_name+'=)\w+', comandline).group(0)
+                if value == "True":
+#                    arg_dict['if_list'][arg_name] = True
+                    arg_dict[arg_name] = True
+                else:
+#                    arg_dict['if_list'][arg_name] = False
+                    arg_dict[arg_name] = False
+            elif arg_name in list_args:
+                value = re.search('(?<=^'+arg_name+'=)\w+', comandline).group(0)
+                arg_dict[arg_name].append(value)
+                arg_dict[arg_name]=list(set(arg_dict[arg_name]))
+#            elif arg_name in func_args:
+#                value = re.search('(?<=^'+arg_name+'=)\w+', comandline).group(0)
+#                if value == "True":
+#                    arg_dict[arg_name] = True
+#                else:
+#                    arg_dict[arg_name] = False
+    
+    argvs=sys.argv[1:]
+    argc=len(argvs)
+    if argc > 0:
+        for arg_index in range(argc):
+            arg_input = argvs[arg_index]
+            for arg_name in total_args:
+                read_comandline(arg_nih, 
+                                str_args, int_args, bool_args, list_args, float_args,
+                                arg_name, arg_input)
+    arg_nih['ratio']=[arg_nih['ratio_train'], arg_nih['ratio_validation'], 1-arg_nih['ratio_train']-arg_nih['ratio_validation']]
+    
     
     for input_shape in [256]:
-        train_pathologies(pathologies=pathologies,
-                          network=network,
-                          path_to_image_dir=path_to_image_dir,
-                          batch_size=batch_size,
-                          input_shape=input_shape,
-                          epochs=epochs,
-                          val_num=val_num,
-                          ratio=ratio,
-                          patience=patience,
-                          if_batch_from_df=if_batch_from_df,
-                          if_duplicate=if_duplicate,
-                          if_normalize=if_normalize,
-                          if_augment=if_augment,
-                          nb_gpus=nb_gpus,
+        train_pathologies(pathologies=arg_nih['pathologies'],
+                          network=arg_nih['network'],
+                          path_to_image_dir=arg_nih['path_to_image_dir'],
+                          batch_size=arg_nih['batch_size'],
+                          input_shape=arg_nih['input_shape'],
+                          epochs=arg_nih['epochs'],
+                          val_num=arg_nih['val_num'],
+                          ratio=arg_nih['ratio'],
+                          patience=arg_nih['patience'],
+                          if_batch_from_df=arg_nih['if_batch_from_df'],
+                          if_duplicate=arg_nih['if_duplicate'],
+                          if_normalize=arg_nih['if_normalize'],
+                          if_augment=arg_nih['if_augment'],
+                          nb_gpus=arg_nih['nb_gpus'],
                           )
 #    test_aucs={}
 #    for pathology in pathologies:
