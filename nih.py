@@ -618,6 +618,7 @@ def main():
     arg_nih['val_num']=2048
     arg_nih['patience']=16
     arg_nih['nb_gpus']=1
+    arg_nih['input_shape']=256
     arg_nih['ratio_train']=0.7
     arg_nih['ratio_validation']=0.1
     arg_nih['if_batch_from_df']=False
@@ -625,7 +626,7 @@ def main():
     arg_nih['if_normalize']=True
     arg_nih['if_augment']=True
 
-    int_args = ['batch_size', 'epochs', 'val_num', 'patience', 'nb_gpus']
+    int_args = ['batch_size', 'epochs', 'val_num', 'patience', 'nb_gpus', 'input_shape']
     float_args = ['ratio_train', 'ratio_validation']
     str_args = ['network', "path_to_image_dir"]
     list_args = ['pathologies']
@@ -691,22 +692,22 @@ def main():
     arg_nih['ratio']=[arg_nih['ratio_train'], arg_nih['ratio_validation'], 1-arg_nih['ratio_train']-arg_nih['ratio_validation']]
     
     
-    for input_shape in [256]:
-        train_pathologies(pathologies=arg_nih['pathologies'],
-                          network=arg_nih['network'],
-                          path_to_image_dir=arg_nih['path_to_image_dir'],
-                          batch_size=arg_nih['batch_size'],
-                          input_shape=arg_nih['input_shape'],
-                          epochs=arg_nih['epochs'],
-                          val_num=arg_nih['val_num'],
-                          ratio=arg_nih['ratio'],
-                          patience=arg_nih['patience'],
-                          if_batch_from_df=arg_nih['if_batch_from_df'],
-                          if_duplicate=arg_nih['if_duplicate'],
-                          if_normalize=arg_nih['if_normalize'],
-                          if_augment=arg_nih['if_augment'],
-                          nb_gpus=arg_nih['nb_gpus'],
-                          )
+#    for input_shape in [256]:
+    train_pathologies(pathologies=arg_nih['pathologies'],
+                      network=arg_nih['network'],
+                      path_to_image_dir=arg_nih['path_to_image_dir'],
+                      batch_size=arg_nih['batch_size'],
+                      input_shape=arg_nih['input_shape'],
+                      epochs=arg_nih['epochs'],
+                      val_num=arg_nih['val_num'],
+                      ratio=arg_nih['ratio'],
+                      patience=arg_nih['patience'],
+                      if_batch_from_df=arg_nih['if_batch_from_df'],
+                      if_duplicate=arg_nih['if_duplicate'],
+                      if_normalize=arg_nih['if_normalize'],
+                      if_augment=arg_nih['if_augment'],
+                      nb_gpus=arg_nih['nb_gpus'],
+                      )
 #    test_aucs={}
 #    for pathology in pathologies:
 #        test_aucs[pathology] = train(batch_size=32,
