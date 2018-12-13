@@ -575,7 +575,7 @@ def train_pathologies(pathologies=[],
     if type(input_shape)==int:
         input_shape=(input_shape,input_shape,1)
     now = datetime.datetime.now()
-    path_to_model_save = base_dir+"../nih_data/models/mm%02ddd%02d_size%d/" % (now.month, now.day, input_shape[0])
+    path_to_model_save = base_dir+"../nih_data/models/mm%02ddd%02d_size%d_%s/" % (now.month, now.day, input_shape[0], network)
 #    print(os.getcwd())
 #    os.mkdir("../nih_data/models")
     if not os.path.exists(path_to_model_save):
