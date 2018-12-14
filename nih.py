@@ -376,8 +376,8 @@ def class_balance(data, labels):
     indices = np.hstack((norm_indices, sick_indices))
     np.random.shuffle(indices)
     
-    data = data[indices]
-    labels = labels[indices]
+#    data = data[indices]
+#    labels = labels[indices]
 #    
 #    data_norm = data[labels[:,1]==0]
 #    data_sick = data[labels[:,1]==1]
@@ -392,7 +392,7 @@ def class_balance(data, labels):
 #    data_epoch = data_epoch[shuffle_indices]
 #    labels_epoch = labels_epoch[shuffle_indices]
     
-    return data, labels
+    return data[indices], labels[indices]
 
 def train(input_shape=(128,128,1),
           network="",
