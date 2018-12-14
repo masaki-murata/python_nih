@@ -530,6 +530,7 @@ def train(input_shape=(128,128,1),
                                              validation_data=(val_data,val_label),
                                              )
         else:
+            print("train_data.shape = ", train_data.shape)            
             train_data_epoch, train_labels_epoch = class_balance(train_data, train_label)
             print("train_data_epoch.shape = ", train_data_epoch.shape)
 #            norm_indices = np.random.randint(train_norm_num, train_sick_num)
