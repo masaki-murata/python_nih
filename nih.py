@@ -373,7 +373,8 @@ def class_balance(data, labels):
     sick_num = len(sick_indices)
 #    norm_num, sick_num = len(norm_indices), len(sick_indices)
     norm_indices = np.random.choice(norm_indices, sick_num, replace=False)
-    indices = np.random.shuffle(np.hstack((norm_indices, sick_indices)))
+    indices = np.hstack((norm_indices, sick_indices))
+    np.random.shuffle(indices)
     
     data = data[indices]
     labels = labels[indices]
