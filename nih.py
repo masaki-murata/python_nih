@@ -590,22 +590,22 @@ def train(input_shape=(128,128,1),
     #                                   class_weight=class_weight,
                                        validation_data=(val_data,val_label),
                                        )
-            val_pred = model_multiple_gpu.predict(val_data, batch_size=batch_size)
-            print(val_pred.shape)
-            val_auc = auc(val_label, val_pred)
-            print("val_auc = ", val_auc)
-            if val_auc > val_auc_0:
-                count_patience=0
-                val_auc_0 = val_auc
-                test_pred = model_multiple_gpu.predict(test_data, batch_size=batch_size)
-                test_auc = auc(test_label, test_pred)
-                print("test_auc = ", test_auc)
-                
-                model.save(path_to_model_save)
-            else:
-                count_patience+=1
-                if count_patience>patience:
-                    break
+        val_pred = model_multiple_gpu.predict(val_data, batch_size=batch_size)
+        print(val_pred.shape)
+        val_auc = auc(val_label, val_pred)
+        print("val_auc = ", val_auc)
+        if val_auc > val_auc_0:
+            count_patience=0
+            val_auc_0 = val_auc
+            test_pred = model_multiple_gpu.predict(test_data, batch_size=batch_size)
+            test_auc = auc(test_label, test_pred)
+            print("test_auc = ", test_auc)
+            
+            model.save(path_to_model_save)
+        else:
+            count_patience+=1
+            if count_patience>patience:
+                break
     return test_auc
 
 
