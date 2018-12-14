@@ -399,6 +399,7 @@ def train(input_shape=(128,128,1),
           if_normalize=True,
           if_duplicate=True,
           if_augment=False,
+          if_train=True,
           nb_gpus=1,
           ):
     if type(input_shape)==int:
@@ -484,6 +485,8 @@ def train(input_shape=(128,128,1),
                                  height_shift_range=0.2,
                                  zoom_range=0.1,
                                  )    
+    if not if_train:
+        return 0
     # setting model
     print("---  start make_model  ---")
     model = make_model(network, input_shape=input_shape)
@@ -570,6 +573,7 @@ def train_pathologies(pathologies=[],
                       if_normalize=True,
                       if_duplicate=True,
                       if_augment=False,
+                      if_train=True,
                       nb_gpus=1,
                       ):
     if type(input_shape)==int:
@@ -601,6 +605,7 @@ def train_pathologies(pathologies=[],
                          if_duplicate=if_duplicate,
                          if_normalize=if_normalize,
                          if_augment=if_augment,
+                         if_train=if_train,
                          nb_gpus=nb_gpus,
                          )
         df.loc[count] = [pathology, test_auc]
@@ -630,12 +635,13 @@ def main():
     arg_nih['if_duplicate']=True
     arg_nih['if_normalize']=True
     arg_nih['if_augment']=True
+    arg_nih['if_train']=True
 
     int_args = ['batch_size', 'epochs', 'val_num', 'patience', 'nb_gpus', 'input_shape']
     float_args = ['ratio_train', 'ratio_validation']
     str_args = ['network', "path_to_image_dir"]
     list_args = ['pathologies']
-    bool_args = ['if_batch_from_df', 'if_duplicate', 'if_normalize', 'if_augment']
+    bool_args = ['if_batch_from_df', 'if_duplicate', 'if_normalize', 'if_augment', 'if_train']
     total_args=int_args+str_args+bool_args+list_args+float_args
 
 #    pathologies = ['Edema', 'Effusion', 'Consolidation', 'Atelectasis', 'Hernia', 'Cardiomegaly', 'Infiltration', 'Fibrosis']
@@ -711,6 +717,7 @@ def main():
                       if_duplicate=arg_nih['if_duplicate'],
                       if_normalize=arg_nih['if_normalize'],
                       if_augment=arg_nih['if_augment'],
+                      if_train=arg_nih['if_train'],
                       nb_gpus=arg_nih['nb_gpus'],
                       )
 #    test_aucs={}
