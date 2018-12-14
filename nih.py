@@ -368,20 +368,30 @@ def auc(y_true, y_pred):
 
 # 正常・異常が一対一になるように
 def class_balance(data, labels):
-    data_norm = data[labels[:,1]==0]
-    data_sick = data[labels[:,1]==1]
-    norm_num, sick_num = len(data_norm), len(data_sick)
+    norm_indices = np.where(labels[:,1]==0)[0]
+    sick_indices = np.where(labels[:,1]==1)[0]
+    sick_num = len(sick_indices)
+#    norm_num, sick_num = len(norm_indices), len(sick_indices)
+    norm_indices = np.random.choice(norm_indices, sick_num, replace=False)
+    indices = np.random.shuffle(np.hstack((norm_indices, sick_indices)))
     
-    norm_indices = np.random.randint(norm_num, size=sick_num)
-    data_norm_select = data_norm[norm_indices]
-    data_epoch = np.vstack((data_norm_select, data_sick))
-    labels_epoch = np.vstack(( np.tile(np.array([1,0]), (sick_num,1)), \
-                                               np.tile(np.array([0,1]), (sick_num,1)) ))
-    shuffle_indices = np.random.permutation(np.arange(len(labels_epoch)))
-    data_epoch = data_epoch[shuffle_indices]
-    labels_epoch = labels_epoch[shuffle_indices]
+    data = data[indices]
+    labels = labels[indices]
+#    
+#    data_norm = data[labels[:,1]==0]
+#    data_sick = data[labels[:,1]==1]
+#    norm_num, sick_num = len(data_norm), len(data_sick)
+#    
+#    norm_indices = np.random.randint(norm_num, size=sick_num)
+#    data_norm_select = data_norm[norm_indices]
+#    data_epoch = np.vstack((data_norm_select, data_sick))
+#    labels_epoch = np.vstack(( np.tile(np.array([1,0]), (sick_num,1)), \
+#                                               np.tile(np.array([0,1]), (sick_num,1)) ))
+#    shuffle_indices = np.random.permutation(np.arange(len(labels_epoch)))
+#    data_epoch = data_epoch[shuffle_indices]
+#    labels_epoch = labels_epoch[shuffle_indices]
     
-    return data_epoch, labels_epoch
+    return data, labels
 
 def train(input_shape=(128,128,1),
           network="",
