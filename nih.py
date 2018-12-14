@@ -515,11 +515,11 @@ def train(input_shape=(128,128,1),
     model.compile(loss="categorical_crossentropy", optimizer=sgd, metrics=[metrics.categorical_accuracy])
     
     # start training
-    train_data_sick = train_data[train_label[:,1]==1]
-    train_data_norm = train_data[train_label[:,1]==0]
-    train_sick_num = len(train_data_sick)
-    train_norm_num = len(train_data_norm)
-    assert train_norm_num > train_sick_num
+#    train_data_sick = train_data[train_label[:,1]==1]
+#    train_data_norm = train_data[train_label[:,1]==0]
+#    train_sick_num = len(train_data_sick)
+#    train_norm_num = len(train_data_norm)
+#    assert train_norm_num > train_sick_num
     val_auc_0, count_patience = 0, 0
     for epoch in range(1,epochs+1):
         print("epoch = ", epoch)
@@ -541,7 +541,7 @@ def train(input_shape=(128,128,1),
 #            train_label_epoch = train_label_epoch[shuffle_indices]
             if if_augment:
                 model.fit_generator(datagen.flow(train_data_epoch, train_labels_epoch, batch_size=batch_size),
-                                    steps_per_epoch=len(train_data_epoch) / batch_size, epochs=1)
+                                    steps_per_epoch=int(len(train_data_epoch) / batch_size), epochs=1)
             else:
                 model_multiple_gpu.fit(train_data_epoch, train_labels_epoch,
         #                               steps_per_epoch=steps_per_epoch,
