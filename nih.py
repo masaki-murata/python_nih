@@ -236,7 +236,7 @@ def make_dataset(df,
         return data, labels
 
     
-def batch_iter_np(df,
+def batch_iter_df(df,
                   path_to_image_dir="",
                   input_shape=(128,128,1),
                   batch_size=32,
@@ -259,6 +259,33 @@ def batch_iter_np(df,
                 yield data, labels
     
     return data_generator(), steps_per_epoch
+
+def batch_iter(data, labels,
+               batch_size=32,
+               ):
+    norm_indices = np.where(labels[:,1]==0)[0]
+    sick_indices = np.where(labels[:,1]==1)[0]
+    sick_num = len(sick_indices)
+#    norm_num, sick_num = len(norm_indices), len(sick_indices)
+    norm_indices = np.random.choice(norm_indices, sick_num, replace=False)
+    indices = np.hstack((norm_indices, sick_indices))
+    np.random.shuffle(indices)
+    data_num = len(indices)
+    steps_per_epoch = int( (data_num - 1) / batch_size ) + 1
+    def data_generator():
+        while True:
+            for batch_num in range(steps_per_epoch):
+                start_index = batch_num * batch_size
+                end_index = min((batch_num + 1) * batch_size, data_num)
+                batch_indices = indices[start_index:end_index]
+#                df_epoch = df_shuffle[start_index:end_index]
+#                data = load_images(df_epoch, path_to_image_dir=path_to_image_dir, input_shape=input_shape, if_rgb=if_rgb, if_normalize=if_normalize)
+#                labels = load_gts(df_epoch)
+                
+                yield data[batch_indices], labels[batch_indices]
+    
+    return data_generator(), steps_per_epoch
+
 
 def make_model(network, input_shape=(128, 128, 1)):
     input_img = Input(shape=input_shape)
@@ -313,22 +340,22 @@ def make_model(network, input_shape=(128, 128, 1)):
     
 
     # 転移学習用のモデルを作る関数
-def make_model_transfer(input_shape=(128, 128, 1)):
-    input_tensor = Input(shape=(1024, 1024, 3))
-    vgg16 = VGG16(include_top=False, weights='imagenet', input_tensor=input_tensor)
-    for layer in vgg16.layers:
-        layer.trainable = False
-    top_model = Sequential()
-    top_model.add(Flatten(input_shape=vgg16.output_shape[1:]))
-    top_model.add(Dense(256, activation='relu'))
-#    top_model.add(Dropout(0.5))
-    top_model.add(Dense(1, activation='sigmoid'))
-
-    model = Model(input=vgg16.input, output=top_model(vgg16.output))
-    
-    model.summary()
-    
-    return model
+#def make_model_transfer(input_shape=(128, 128, 1)):
+#    input_tensor = Input(shape=(1024, 1024, 3))
+#    vgg16 = VGG16(include_top=False, weights='imagenet', input_tensor=input_tensor)
+#    for layer in vgg16.layers:
+#        layer.trainable = False
+#    top_model = Sequential()
+#    top_model.add(Flatten(input_shape=vgg16.output_shape[1:]))
+#    top_model.add(Dense(256, activation='relu'))
+##    top_model.add(Dropout(0.5))
+#    top_model.add(Dense(1, activation='sigmoid'))
+#
+#    model = Model(input=vgg16.input, output=top_model(vgg16.output))
+#    
+#    model.summary()
+#    
+#    return model
 
 
 def auc(y_true, y_pred):
@@ -411,6 +438,7 @@ def train(input_shape=(128,128,1),
           if_duplicate=True,
           if_augment=False,
           if_train=True,
+          if_datagen=True,
           nb_gpus=1,
           ):
     if type(input_shape)==int:
@@ -472,9 +500,9 @@ def train(input_shape=(128,128,1),
     # set generator or dataset for training
     df_train = pd.read_csv(path_to_group_csv % "train")
     if if_batch_from_df:
-        train_gen , steps_per_epoch= batch_iter_np(df_train,
+        train_gen , steps_per_epoch= batch_iter_df(df_train,
                                                    batch_size=batch_size
-                                                   )
+                                                   )        
     else:
         train_data, train_label = make_dataset(df_train,
                                                group="train",
@@ -489,6 +517,9 @@ def train(input_shape=(128,128,1),
                                                if_load_npy=True,
                                                if_save_npy=True,
                                                )
+        if if_datagen:
+            train_gen , steps_per_epoch= batch_iter(train_data, train_label, batch_size=batch_size)
+
 #        train_label = to_categorical(train_label)
     print(len(df_train), len(train_label))
     datagen = ImageDataGenerator(rotation_range=5,
@@ -513,7 +544,7 @@ def train(input_shape=(128,128,1),
 #    class_weight = {0:np.sum(train_label[:,1])/float(len(train_label)), 1:np.sum(train_label[:,0])/float(len(train_label))}
 #    print("class_weight = ", class_weight)
 #    model_multi_gpu.compile(loss='binary_crossentropy', optimizer=opt_generator)
-    model.compile(loss="categorical_crossentropy", optimizer=sgd, metrics=[metrics.categorical_accuracy])
+    model_multiple_gpu.compile(loss="categorical_crossentropy", optimizer=sgd, metrics=[metrics.categorical_accuracy])
     
     # start training
 #    train_data_sick = train_data[train_label[:,1]==1]
@@ -530,6 +561,13 @@ def train(input_shape=(128,128,1),
                                              epochs=1,
                                              validation_data=(val_data,val_label),
                                              )
+        elif if_datagen:
+            model_multiple_gpu.fit_generator(train_gen,
+                                             steps_per_epoch=steps_per_epoch,
+                                             epochs=1,
+                                             validation_data=(val_data,val_label),
+                                             )
+            
         else:
             print("train_data.shape = ", train_data.shape)            
             train_data_epoch, train_labels_epoch = class_balance(train_data, train_label)
@@ -543,8 +581,8 @@ def train(input_shape=(128,128,1),
 #            train_data_epoch = train_data_epoch[shuffle_indices]
 #            train_label_epoch = train_label_epoch[shuffle_indices]
             if if_augment:
-                model.fit_generator(datagen.flow(train_data_epoch, train_labels_epoch, batch_size=batch_size),
-                                    steps_per_epoch=int(len(train_data_epoch) / batch_size), epochs=1)
+                model_multiple_gpu.fit_generator(datagen.flow(train_data_epoch, train_labels_epoch, batch_size=batch_size),
+                                                 steps_per_epoch=int(len(train_data_epoch) / batch_size), epochs=1)
             else:
                 model_multiple_gpu.fit(train_data_epoch, train_labels_epoch,
         #                               steps_per_epoch=steps_per_epoch,
@@ -587,6 +625,7 @@ def train_pathologies(pathologies=[],
                       if_duplicate=True,
                       if_augment=False,
                       if_train=True,
+                      if_datagen=True,
                       nb_gpus=1,
                       ):
     if type(input_shape)==int:
@@ -619,6 +658,7 @@ def train_pathologies(pathologies=[],
                          if_normalize=if_normalize,
                          if_augment=if_augment,
                          if_train=if_train,
+                         if_datagen=if_datagen,
                          nb_gpus=nb_gpus,
                          )
         df.loc[count] = [pathology, test_auc]
@@ -649,12 +689,13 @@ def main():
     arg_nih['if_normalize']=True
     arg_nih['if_augment']=True
     arg_nih['if_train']=True
+    arg_nih['if_datagen']=True
 
     int_args = ['batch_size', 'epochs', 'val_num', 'patience', 'nb_gpus', 'input_shape']
     float_args = ['ratio_train', 'ratio_validation']
     str_args = ['network', "path_to_image_dir"]
     list_args = ['pathologies']
-    bool_args = ['if_batch_from_df', 'if_duplicate', 'if_normalize', 'if_augment', 'if_train']
+    bool_args = ['if_batch_from_df', 'if_duplicate', 'if_normalize', 'if_augment', 'if_train', 'if_datagen']
     total_args=int_args+str_args+bool_args+list_args+float_args
 
 #    pathologies = ['Edema', 'Effusion', 'Consolidation', 'Atelectasis', 'Hernia', 'Cardiomegaly', 'Infiltration', 'Fibrosis']
@@ -731,6 +772,7 @@ def main():
                       if_normalize=arg_nih['if_normalize'],
                       if_augment=arg_nih['if_augment'],
                       if_train=arg_nih['if_train'],
+                      if_datagen=arg_nih['if_datagen'],
                       nb_gpus=arg_nih['nb_gpus'],
                       )
 #    test_aucs={}
