@@ -136,7 +136,7 @@ def move_images(path_to_original_dir="/mnt/nas-public/nih-cxp-dataset/images/",
         
 def grouping(path_to_nih_data_csv = base_dir+"../nih_data/Data_Entry_2017_murata.csv",
              path_to_bb = base_dir+"../nih_data/BBox_List_2017.csv",
-#             path_to_save_dir = "../nih_data/ratio_t%.2fv%.2ft%.2f/",
+             path_to_save_dir = "",
 #             path_to_train_csv = "../nih_data/Data_Entry_2017_train.csv",
 #             path_to_validation_csv = "../nih_data/Data_Entry_2017_validation.csv",
 #             path_to_test_csv = "../nih_data/Data_Entry_2017_test.csv",
@@ -144,8 +144,9 @@ def grouping(path_to_nih_data_csv = base_dir+"../nih_data/Data_Entry_2017_murata
              ratio = [0.7, 0.1, 0.2],
 #             if_save = False,
              ):
-    path_to_save_dir = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) 
-    os.makedirs(path_to_save_dir)
+#    path_to_save_dir = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) 
+    if not os.path.exists(path_to_save_dir):
+        os.makedirs(path_to_save_dir)
     path_to_group_csv = path_to_save_dir+ "%s.csv"
     
     df = pd.read_csv(path_to_nih_data_csv)
@@ -165,7 +166,7 @@ def grouping(path_to_nih_data_csv = base_dir+"../nih_data/Data_Entry_2017_murata
     
     if if_duplicate:
         # 重複を含んだリストを読み込む
-        df_duplicate = pd.read_csv("../nih_data/Data_Entry_2017.csv")
+        df_duplicate = pd.read_csv(base_dir+"../nih_data/Data_Entry_2017.csv")
         # 患者リストを作成
         train_ids = list(df_train["Patient ID"].values)
         validation_ids = list(df_validation["Patient ID"].values)
@@ -194,7 +195,7 @@ def grouping(path_to_nih_data_csv = base_dir+"../nih_data/Data_Entry_2017_murata
     
 #    return train_ids, validation_ids, test_ids
 
-def make_dataset(df,
+def make_dataset(df=[],
                  group="train",
                  path_to_image_dir="",
                  ratio=[0.7,0.15,0.15],
@@ -207,32 +208,42 @@ def make_dataset(df,
                  if_load_npy=False,
                  if_save_npy=False,
                  if_return_df=False,
+                 if_load_df=False,
                  ):
     size = input_shape[0]
     path_to_data = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) + "%s_size%d_%s_data.npy" % (group, size, pathology)
     path_to_labels = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) + "%s_size%d_%s_labels.npy" % (group, size, pathology)
+#    path_to_group_csv = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) + "%s_%s.csv" % (group, pathology)
+    path_to_group_csv = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) + "%s.csv" % (group)
+    if if_load_df and os.path.exists(path_to_group_csv[:-4]+"_%s.csv" % pathology):
+        df = pd.read_csv(path_to_group_csv[:-4]+"_%s.csv" % pathology)
+#        elif os.path.exists(path_to_group_csv[:-4]+"_%s.csv" % pathology):
+#            df = pd.read_csv(path_to_group_csv)
+        
     if if_load_npy and os.path.exists(path_to_data):
         data = np.load(path_to_data)
         labels = np.load(path_to_labels)
-        df_shuffle = pd.read_csv(path_to_group_csv[:-4] % group + "_" + pathology + ".csv")
 #    df_deplicate = pd.read_csv()
     else:
+        print("len(df), data_num =", len(df), data_num)
+        print("df[Finding Labels], pathology = ", df["Finding Labels"], pathology)
         df = df[(df["Finding Labels"]=="No Finding") | (df["Finding Labels"]==pathology)]
 #        df = df[(df["Finding Labels"]=="No Finding") | (df["Finding Labels"].str.contains(pathology))]
         data_num = min(data_num, len(df))
         print("len(df), data_num =", len(df), data_num)
-        df_shuffle = df.sample(frac=1)
-        data = load_images(df_shuffle[:data_num], path_to_image_dir=path_to_image_dir, input_shape=input_shape, if_rgb=if_rgb, if_normalize=if_normalize)
-        labels = np.array(df_shuffle["Finding Labels"].str.contains(pathology)*1.0)
+#        df_shuffle = df.sample(frac=1)
+        data = load_images(df[:data_num], path_to_image_dir=path_to_image_dir, input_shape=input_shape, if_rgb=if_rgb, if_normalize=if_normalize)
+        labels = np.array(df["Finding Labels"].str.contains(pathology)*1.0)
         labels = to_categorical(labels[:data_num], num_classes=2)
     
     if if_save_npy and (not os.path.exists(path_to_data)):
         np.save(path_to_data, data)
         np.save(path_to_labels, labels)
-        df_shuffle[:data_num].to_csv(path_to_group_csv[:-4] % group + "_" + pathology + ".csv")
+    if not os.path.exists(path_to_group_csv[:-4]+"_%s.csv" % pathology):
+        df[:data_num].to_csv(path_to_group_csv[:-4]+"_%s.csv" % pathology)
     
     if if_return_df:
-        return data, labels, df_shuffle[:data_num]
+        return data, labels, df[:data_num]
     else:
         return data, labels
 
@@ -452,8 +463,8 @@ def train(input_shape=(128,128,1),
     if not os.path.exists(path_to_model_save):
         os.makedirs(path_to_model_save)
     path_to_model_save = path_to_model_save+"%s.h5" % (pathology)
-    if not os.path.exists(path_to_csv_dir):
-        grouping(if_duplicate=if_duplicate, ratio=ratio)
+    if not os.path.exists(path_to_csv_dir+"train_duplicate.csv"):
+        grouping(path_to_save_dir=path_to_csv_dir, if_duplicate=if_duplicate, ratio=ratio)
     path_to_group_csv = path_to_csv_dir+ "%s.csv" 
 #    path_to_train_csv = "../nih_data/Data_Entry_2017_train.csv"
 #    path_to_validation_csv = "../nih_data/Data_Entry_2017_validation.csv"
@@ -465,7 +476,7 @@ def train(input_shape=(128,128,1),
             
     # set validation data
     print("---  start make_validation_test_dataset  ---")
-    df_validation = pd.read_csv(path_to_group_csv % "validation")
+    df_validation = pd.read_csv(path_to_group_csv % ("validation") )
     val_data, val_label = make_dataset(df_validation,
                                        group="validation",
                                        path_to_image_dir=path_to_image_dir,
@@ -478,10 +489,12 @@ def train(input_shape=(128,128,1),
                                        if_normalize=if_normalize,
                                        if_load_npy=True,
                                        if_save_npy=True,
+                                       if_return_df=False,
+                                       if_load_df=True,
                                        )
     val_data, val_label = class_balance(val_data, val_label)
     print(np.sum(val_label[:,1]==0), np.sum(val_label[:,1]==1))
-    df_test = pd.read_csv(path_to_group_csv % "test")
+    df_test = pd.read_csv(path_to_group_csv % ("test") )
     test_data, test_label = make_dataset(df_test,
                                          group="test",
                                          path_to_image_dir=path_to_image_dir,
@@ -494,12 +507,14 @@ def train(input_shape=(128,128,1),
                                          if_normalize=if_normalize,
                                          if_load_npy=True,
                                          if_save_npy=True,
+                                         if_return_df=False,
+                                         if_load_df=True,
                                          )
 #    test_data, test_label = class_balance(test_data, test_label)
     print(np.sum(test_label[:,1]==0), np.sum(test_label[:,1]==1))
     
     # set generator or dataset for training
-    df_train = pd.read_csv(path_to_group_csv % "train")
+    df_train = pd.read_csv(path_to_group_csv % ("train") )
     if if_batch_from_df:
         train_gen , steps_per_epoch= batch_iter_df(df_train,
                                                    batch_size=batch_size
@@ -517,6 +532,8 @@ def train(input_shape=(128,128,1),
                                                if_normalize=if_normalize,
                                                if_load_npy=True,
                                                if_save_npy=True,
+                                               if_return_df=False,
+                                               if_load_df=True,
                                                )
         if if_datagen:
             train_gen , steps_per_epoch= batch_iter(train_data, train_label, batch_size=batch_size)

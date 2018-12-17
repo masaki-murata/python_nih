@@ -166,7 +166,8 @@ class CAM:
             print(self.df_test.info())
             self.if_load_npy=False
             self.if_save_npy=False
-        self.test_data, self.test_label, self.df_test = nih.make_dataset(self.df_test,
+        print("len(self.df_test) = ", len(self.df_test))
+        self.test_data, self.test_label, self.df_test = nih.make_dataset(df=self.df_test,
                                                                          group="test",
                                                                          ratio=self.ratio,
                                                                          input_shape=self.input_shape,
@@ -178,6 +179,7 @@ class CAM:
                                                                          if_load_npy=self.if_load_npy,
                                                                          if_save_npy=self.if_save_npy,
                                                                          if_return_df=True,
+                                                                         if_load_df=False,
                                                                          )
 #        return test_data, test_label, df_test 
 #    
