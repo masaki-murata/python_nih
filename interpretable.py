@@ -306,8 +306,8 @@ class CAM:
 
 def main():
     arg_nih={}
-    arg_nih['pathologies']=['Edema', 'Effusion', 'Consolidation', 'Atelectasis', 'Hernia', 'Cardiomegaly', 'Infiltration', 'Fibrosis']
-    arg_nih['layer_names']=["block4_conv4", "block5_conv4", "block5_pool"]
+    arg_nih['pathologies']=[]#['Edema', 'Effusion', 'Consolidation', 'Atelectasis', 'Hernia', 'Cardiomegaly', 'Infiltration', 'Fibrosis']
+    arg_nih['layer_names']=[]#["block4_conv4", "block5_conv4", "block5_pool"]
     arg_nih['cam_methods']=["grad_cam+2"]
     arg_nih['path_to_model'] = "../nih_data/models/mm11dd26_size256/%s.h5"
     arg_nih['input_shape']=256
@@ -338,7 +338,7 @@ def main():
 
 #    layer_names = ["block4_conv4", "block5_conv4", "block5_pool"]
 #    cam_methods = ["grad_cam+2"]
-    pathology="Effusion"
+#    pathology="Effusion"
     
 #            print(cam_method, layer_name)
     for pathology in arg_nih['pathologies']:

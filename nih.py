@@ -707,7 +707,7 @@ def main():
 #    pathologies = ['Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Effusion', 'Emphysema', 'Fibrosis', 'Hernia', 'Infiltration', 'Mass', 'Nodule',
 #                   'Pleural_Thickening', 'Pneumonia', 'Pneumothorax']          
     arg_nih={}
-    arg_nih['pathologies']=['Edema', 'Effusion', 'Consolidation', 'Atelectasis', 'Hernia', 'Cardiomegaly', 'Infiltration', 'Fibrosis']
+    arg_nih['pathologies']=[]#['Edema', 'Effusion', 'Consolidation', 'Atelectasis', 'Hernia', 'Cardiomegaly', 'Infiltration', 'Fibrosis']
     arg_nih['network']="DenseNet121"
     arg_nih['path_to_image_dir']=base_dir+"../nih_data/images/"
     arg_nih['batch_size']=64
