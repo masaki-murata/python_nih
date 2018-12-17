@@ -9,7 +9,7 @@ import numpy as np
 from PIL import Image
 from keras import backend as K
 import pandas as pd
-import os, re
+import os, re, sys
 
 # import original module
 import nih
@@ -312,7 +312,7 @@ def main():
     arg_nih['path_to_model'] = "../nih_data/models/mm11dd26_size256/%s.h5"
     arg_nih['input_shape']=256
     arg_nih['batch_size']=64
-    arg['nb_gpus']=1
+    arg_nih['nb_gpus']=1
     arg_nih['if_murata_select']=True,
     arg_nih['if_load_npy']=False,
     arg_nih['if_save_npy']=False,
@@ -352,7 +352,7 @@ def main():
                              if_save_npy=arg_nih['if_save_npy'],
                              cam_methods=arg_nih['cam_methods'],
                              if_murata_select=arg_nih['if_murata_select'],
-                             nb_gpus=arg['nb_gpus'],
+                             nb_gpus=arg_nih['nb_gpus'],
                              )
         interpretable.grad_cam()
 #    grad_cam(input_shape=(256,256,1),layer_name="block4_conv4")
