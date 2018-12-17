@@ -9,15 +9,20 @@ import numpy as np
 from PIL import Image
 from keras import backend as K
 import pandas as pd
-import os
+import os, re
 
 # import original module
 import nih
 
+base_dir = os.getcwd()
+if not re.search("nih_python", base_dir):
+    base_dir = base_dir + "/xray/nih_python/"
 
+   
 import tensorflow as tf
 from keras.backend.tensorflow_backend import set_session
-if os.name=='posix':
+if_DLB=False
+if os.name=='posix' and if_DLB:
     config = tf.ConfigProto(
         gpu_options=tf.GPUOptions(
             visible_device_list="2", # specify GPU number
