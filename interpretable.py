@@ -129,6 +129,7 @@ class CAM:
                  if_load_npy,
                  if_save_npy,
                  cam_methods,
+                 nb_gpus,
                  ratio=[0.7,0.1,0.2],
                  if_duplicate=True,
                  if_murata_select=True,
@@ -310,6 +311,8 @@ def main():
     arg_nih['layer_names']=[]#["block4_conv4", "block5_conv4", "block5_pool"]
     arg_nih['cam_methods']=["grad_cam+2"]
     arg_nih['path_to_model'] = "../nih_data/models/mm11dd26_size256/%s.h5"
+    arg_nih['ratio_train']=0.7
+    arg_nih['ratio_validation']=0.1
     arg_nih['input_shape']=256
     arg_nih['batch_size']=64
     arg_nih['nb_gpus']=1
@@ -318,7 +321,7 @@ def main():
     arg_nih['if_save_npy']=False,
 
     int_args = ['batch_size', 'input_shape', 'nb_gpus']
-    float_args = []#['ratio_train', 'ratio_validation']
+    float_args = ['ratio_train', 'ratio_validation']
     str_args = ["path_to_model"]
     list_args = ['pathologies', 'layer_names']
     bool_args = ['if_murata_select', 'if_load_npy', 'if_save_npy']
