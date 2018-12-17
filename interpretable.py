@@ -8,6 +8,7 @@ from keras.models import load_model
 import numpy as np
 from PIL import Image
 from keras import backend as K
+from keras.utils import multi_gpu_model
 import pandas as pd
 import os, re, sys
 
@@ -17,7 +18,7 @@ import nih
 base_dir = os.getcwd()
 if not re.search("nih_python", base_dir):
     base_dir = base_dir + "/xray/nih_python/"
-
+print(base_dir)
    
 import tensorflow as tf
 from keras.backend.tensorflow_backend import set_session
@@ -134,6 +135,9 @@ class CAM:
                  if_duplicate=True,
                  if_murata_select=True,
                  ):
+        if type(input_shape)==int:
+            input_shape=(input_shape,input_shape,1)
+
         self.layer_names=layer_names
         self.pathology=pathology
         self.path_to_model=path_to_model % (pathology)
@@ -154,26 +158,28 @@ class CAM:
         path_to_group_csv = path_to_csv_dir+ "%s.csv" 
         if self.if_duplicate:
             path_to_group_csv = path_to_group_csv[:-4]+"_duplicate.csv"
-        df_test = pd.read_csv(path_to_group_csv % "test")#[:50]
+        self.df_test = pd.read_csv(path_to_group_csv % "test")#[:50]
         if self.if_murata_select:
             murata_select = os.listdir(base_dir+"../nih_data/bb_images/%s/murata_select/" % self.pathology)
-            df_test = df_test[df_test["Image Index"].isin(os.listdir("../nih_data/bb_images/Effusion/murata_select/"))].info()
+            print(murata_select)
+            self.df_test = self.df_test[self.df_test["Image Index"].isin(murata_select)]
+            print(self.df_test.info())
             self.if_load_npy=False
             self.if_save_npy=False
-        test_data, test_label, df_test = nih.make_dataset(df_test,
-                                             group="test",
-                                             ratio=self.ratio,
-                                             input_shape=self.input_shape,
-                                             data_num=len(df_test),
-                                             pathology=self.pathology,
-                                             path_to_group_csv=path_to_group_csv,
-                                             if_rgb=False,
-                                             if_normalize=True,
-                                             if_load_npy=self.if_load_npy,
-                                             if_save_npy=self.if_save_npy,
-                                             if_return_df=True,
-                                             )
-        return test_data, test_label, df_test 
+        self.test_data, self.test_label, self.df_test = nih.make_dataset(self.df_test,
+                                                                         group="test",
+                                                                         ratio=self.ratio,
+                                                                         input_shape=self.input_shape,
+                                                                         data_num=len(self.df_test),
+                                                                         pathology=self.pathology,
+                                                                         path_to_group_csv=path_to_group_csv,
+                                                                         if_rgb=False,
+                                                                         if_normalize=True,
+                                                                         if_load_npy=self.if_load_npy,
+                                                                         if_save_npy=self.if_save_npy,
+                                                                         if_return_df=True,
+                                                                         )
+#        return test_data, test_label, df_test 
 #    
 #    def make_dir(self):
 #        path_to_save_cam = self.path_to_model[:-3]+"/cams/%s/" # % (TPFP)
@@ -186,12 +192,12 @@ class CAM:
     """ 将来的には nn の学習も入れたい """
     # nn の出力を出す
     def predict(self):
-        self.test_data, self.test_label, self.df_test = self.load_test()
+        self.load_test()
         self.model = load_model(self.path_to_model)
         if int(self.nb_gpus) > 1:
             self.model_multiple_gpu = multi_gpu_model(self.model, gpus=self.nb_gpus)
         else:
-            self.model_multiple_gpu = model
+            self.model_multiple_gpu = self.model
         self.model.summary()
 #        print(self.layer_name)
 #        print("aho")
@@ -345,6 +351,7 @@ def main():
     
 #            print(cam_method, layer_name)
     for pathology in arg_nih['pathologies']:
+        print(pathology)
         interpretable = CAM(layer_names=arg_nih['layer_names'],
                              ratio=arg_nih['ratio'],
                              input_shape=arg_nih['input_shape'],

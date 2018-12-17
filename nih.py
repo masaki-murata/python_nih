@@ -220,6 +220,7 @@ def make_dataset(df,
         df = df[(df["Finding Labels"]=="No Finding") | (df["Finding Labels"]==pathology)]
 #        df = df[(df["Finding Labels"]=="No Finding") | (df["Finding Labels"].str.contains(pathology))]
         data_num = min(data_num, len(df))
+        print("len(df), data_num =", len(df), data_num)
         df_shuffle = df.sample(frac=1)
         data = load_images(df_shuffle[:data_num], path_to_image_dir=path_to_image_dir, input_shape=input_shape, if_rgb=if_rgb, if_normalize=if_normalize)
         labels = np.array(df_shuffle["Finding Labels"].str.contains(pathology)*1.0)
