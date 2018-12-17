@@ -668,6 +668,40 @@ def train_pathologies(pathologies=[],
     
     return df
 
+
+    def read_comandline(arg_dict, 
+                        str_args, int_args, bool_args, list_args, float_args,
+                        arg_name, comandline):
+        if re.match('^'+arg_name, comandline):
+    #        value = re.search('(?<=^'+arg_name+'=)\S+', comandline).group(0)
+            if arg_name in str_args:
+                value = re.search('(?<=^'+arg_name+'=)\S+', comandline).group(0)
+                arg_dict[arg_name] = str(value)
+            elif arg_name in int_args:
+                value = re.search('(?<=^'+arg_name+'=)\d+', comandline).group(0)
+                arg_dict[arg_name] = int(value)
+            elif arg_name in float_args:
+                value = re.search('(?<=^'+arg_name+'=)\S+', comandline).group(0)
+                arg_dict[arg_name] = float(value)
+            elif arg_name in bool_args:
+                value = re.search('(?<=^'+arg_name+'=)\w+', comandline).group(0)
+                if value == "True":
+#                    arg_dict['if_list'][arg_name] = True
+                    arg_dict[arg_name] = True
+                else:
+#                    arg_dict['if_list'][arg_name] = False
+                    arg_dict[arg_name] = False
+            elif arg_name in list_args:
+                value = re.search('(?<=^'+arg_name+'=)\w+', comandline).group(0)
+                arg_dict[arg_name].append(value)
+                arg_dict[arg_name]=list(set(arg_dict[arg_name]))
+#            elif arg_name in func_args:
+#                value = re.search('(?<=^'+arg_name+'=)\w+', comandline).group(0)
+#                if value == "True":
+#                    arg_dict[arg_name] = True
+#                else:
+#                    arg_dict[arg_name] = False
+
 def main():
     
 #    pathologies = ['Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Effusion', 'Emphysema', 'Fibrosis', 'Hernia', 'Infiltration', 'Mass', 'Nodule',
@@ -712,38 +746,6 @@ def main():
 #    if_augment=True
 #    nb_gpus=1
     
-    def read_comandline(arg_dict, 
-                        str_args, int_args, bool_args, list_args, float_args,
-                        arg_name, comandline):
-        if re.match('^'+arg_name, comandline):
-    #        value = re.search('(?<=^'+arg_name+'=)\S+', comandline).group(0)
-            if arg_name in str_args:
-                value = re.search('(?<=^'+arg_name+'=)\S+', comandline).group(0)
-                arg_dict[arg_name] = str(value)
-            elif arg_name in int_args:
-                value = re.search('(?<=^'+arg_name+'=)\d+', comandline).group(0)
-                arg_dict[arg_name] = int(value)
-            elif arg_name in float_args:
-                value = re.search('(?<=^'+arg_name+'=)\S+', comandline).group(0)
-                arg_dict[arg_name] = float(value)
-            elif arg_name in bool_args:
-                value = re.search('(?<=^'+arg_name+'=)\w+', comandline).group(0)
-                if value == "True":
-#                    arg_dict['if_list'][arg_name] = True
-                    arg_dict[arg_name] = True
-                else:
-#                    arg_dict['if_list'][arg_name] = False
-                    arg_dict[arg_name] = False
-            elif arg_name in list_args:
-                value = re.search('(?<=^'+arg_name+'=)\w+', comandline).group(0)
-                arg_dict[arg_name].append(value)
-                arg_dict[arg_name]=list(set(arg_dict[arg_name]))
-#            elif arg_name in func_args:
-#                value = re.search('(?<=^'+arg_name+'=)\w+', comandline).group(0)
-#                if value == "True":
-#                    arg_dict[arg_name] = True
-#                else:
-#                    arg_dict[arg_name] = False
     
     argvs=sys.argv[1:]
     argc=len(argvs)

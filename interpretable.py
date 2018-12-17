@@ -32,90 +32,93 @@ if os.name=='posix' and if_DLB:
     
     set_session(tf.Session(config=config))
 
-def grad_cam(layer_name="block3_conv4",
-             ratio=[0.7,0.1,0.2],
-             input_shape=(128,128,1),
-             pathology="Effusion",
-             path_to_model="../nih_data/models/mm11dd26_size256/%s.h5",
-             if_duplicate=True,
-             ):
-    path_to_model=path_to_model % pathology
-    path_to_csv_dir = "../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) 
-    path_to_group_csv = path_to_csv_dir+ "%s.csv" 
-    if if_duplicate:
-        path_to_group_csv = path_to_group_csv[:-4]+"_duplicate.csv"
-    df_test = pd.read_csv(path_to_group_csv % "test")[:50]
-    test_data, test_label, df_test = nih.make_dataset(df_test,
-                                         group="test",
-                                         ratio=ratio,
-                                         input_shape=input_shape,
-                                         data_num=len(df_test),
-                                         pathology=pathology,
-                                         path_to_group_csv=path_to_group_csv,
-                                         if_rgb=False,
-                                         if_normalize=True,
-                                         if_load_npy=False,
-                                         if_save_npy=False,
-                                         if_return_df=True,
-                                         )
-    print(test_data.shape, test_label.shape, len(df_test))
-#    print(test_label)
-#    path_to_save_cam = path_to_model[:-3]+"/cams/%s/%s" # % (TPFP, image_index)
-    path_to_save_cam = path_to_model[:-3]+"/cams/%s/" # % (TPFP)
-    if not os.path.exists(path_to_save_cam % "TP"):
-        os.makedirs(path_to_save_cam % "TP")
-    if not os.path.exists(path_to_save_cam % "FP"):
-        os.makedirs(path_to_save_cam % "FP")
-    path_to_save_cam = path_to_save_cam + "%s"
-    model = load_model(path_to_model)
-    model.summary()
-    
-    for count in range(len(test_label)):
-        data = test_data[count]
-        data = data.reshape((1,)+data.shape)
-        predictions = model.predict(data)
-        class_idx = np.argmax(predictions[0])
-        if class_idx == 0:
-            continue
-        elif class_idx==1:
-            if test_label[count, class_idx]==1:
-                TPFP = "TP"
-            elif test_label[count, class_idx]==0:
-                TPFP = "FP"
-        class_output = model.output[:, class_idx]
-    
-        conv_output = model.get_layer(layer_name).output  # layer_nameのレイヤーのアウトプット
-        grads = K.gradients(class_output, conv_output)  # gradients(loss, variables) で、variablesのlossに関しての勾配を返す
-#        print(grads)
-        grads = grads[0]
-        gradient_function = K.function([model.input], [conv_output, grads])  # model.inputを入力すると、conv_outputとgradsを出力する関数
-        
-        output, grads_val = gradient_function([data])
-        print(output.shape)
-        output, grads_val = output[0], grads_val[0]
-    
-        # 重みを平均化して、レイヤーのアウトプットに乗じる
-        weights = np.mean(grads_val, axis=(0, 1)) # global average pooling
-#        print("output.shape={0}, weights.shape={1}".format(output.shape, weights.shape))
-        cam = np.sum(output*weights.reshape((1,1)+weights.shape), axis=2)
-#        cam = np.dot(output, weights)
-        
-        cam = np.maximum(cam, 0) 
-        cam = np.uint8(255*cam / cam.max())
-        cam = Image.fromarray(cam).resize((512,512))
-        
-        cam.save(path_to_save_cam % (TPFP, df_test["Image Index"].values[count]))
-        """
-        # 画像化してヒートマップにして合成
-    
-        cam = cv2.resize(cam, (200, 200), cv2.INTER_LINEAR) # 画像サイズは200で処理したので
-        cam = np.maximum(cam, 0) 
-        cam = cam / cam.max()
+"""
+#def grad_cam(layer_name="block3_conv4",
+#             ratio=[0.7,0.1,0.2],
+#             input_shape=(128,128,1),
+#             pathology="Effusion",
+#             path_to_model=base_dir+"../nih_data/models/mm11dd26_size256/%s.h5",
+#             if_duplicate=True,
+#             ):
+#    path_to_model=path_to_model % pathology
+#    path_to_csv_dir = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) 
+#    path_to_group_csv = path_to_csv_dir+ "%s.csv" 
+#    if if_duplicate:
+#        path_to_group_csv = path_to_group_csv[:-4]+"_duplicate.csv"
+#    df_test = pd.read_csv(path_to_group_csv % "test")[:50]
+#    test_data, test_label, df_test = nih.make_dataset(df_test,
+#                                         group="test",
+#                                         ratio=ratio,
+#                                         input_shape=input_shape,
+#                                         data_num=len(df_test),
+#                                         pathology=pathology,
+#                                         path_to_group_csv=path_to_group_csv,
+#                                         if_rgb=False,
+#                                         if_normalize=True,
+#                                         if_load_npy=False,
+#                                         if_save_npy=False,
+#                                         if_return_df=True,
+#                                         )
+#    print(test_data.shape, test_label.shape, len(df_test))
+##    print(test_label)
+##    path_to_save_cam = path_to_model[:-3]+"/cams/%s/%s" # % (TPFP, image_index)
+#    path_to_save_cam = path_to_model[:-3]+"/cams/%s/" # % (TPFP)
+#    if not os.path.exists(path_to_save_cam % "TP"):
+#        os.makedirs(path_to_save_cam % "TP")
+#    if not os.path.exists(path_to_save_cam % "FP"):
+#        os.makedirs(path_to_save_cam % "FP")
+#    path_to_save_cam = path_to_save_cam + "%s"
+#    model = load_model(path_to_model)
+#    model.summary()
+#    
+#    for count in range(len(test_label)):
+#        data = test_data[count]
+#        data = data.reshape((1,)+data.shape)
+#        predictions = model.predict(data)
+#        class_idx = np.argmax(predictions[0])
+#        if class_idx == 0:
+#            continue
+#        elif class_idx==1:
+#            if test_label[count, class_idx]==1:
+#                TPFP = "TP"
+#            elif test_label[count, class_idx]==0:
+#                TPFP = "FP"
+#        class_output = model.output[:, class_idx]
+#    
+#        conv_output = model.get_layer(layer_name).output  # layer_nameのレイヤーのアウトプット
+#        grads = K.gradients(class_output, conv_output)  # gradients(loss, variables) で、variablesのlossに関しての勾配を返す
+##        print(grads)
+#        grads = grads[0]
+#        gradient_function = K.function([model.input], [conv_output, grads])  # model.inputを入力すると、conv_outputとgradsを出力する関数
+#        
+#        output, grads_val = gradient_function([data])
+#        print(output.shape)
+#        output, grads_val = output[0], grads_val[0]
+#    
+#        # 重みを平均化して、レイヤーのアウトプットに乗じる
+#        weights = np.mean(grads_val, axis=(0, 1)) # global average pooling
+##        print("output.shape={0}, weights.shape={1}".format(output.shape, weights.shape))
+#        cam = np.sum(output*weights.reshape((1,1)+weights.shape), axis=2)
+##        cam = np.dot(output, weights)
+#        
+#        cam = np.maximum(cam, 0) 
+#        cam = np.uint8(255*cam / cam.max())
+#        cam = Image.fromarray(cam).resize((512,512))
+#        
+#        cam.save(path_to_save_cam % (TPFP, df_test["Image Index"].values[count]))
+       
+#        # 画像化してヒートマップにして合成
+#    
+#        cam = cv2.resize(cam, (200, 200), cv2.INTER_LINEAR) # 画像サイズは200で処理したので
+#        cam = np.maximum(cam, 0) 
+#        cam = cam / cam.max()
+#
+#    jetcam = cv2.applyColorMap(np.uint8(255 * cam), cv2.COLORMAP_JET)  # モノクロ画像に疑似的に色をつける
+#    jetcam = cv2.cvtColor(jetcam, cv2.COLOR_BGR2RGB)  # 色をRGBに変換
+#    jetcam = (np.float32(jetcam) + x / 2)   # もとの画像に合成
+"""
 
-    jetcam = cv2.applyColorMap(np.uint8(255 * cam), cv2.COLORMAP_JET)  # モノクロ画像に疑似的に色をつける
-    jetcam = cv2.cvtColor(jetcam, cv2.COLOR_BGR2RGB)  # 色をRGBに変換
-    jetcam = (np.float32(jetcam) + x / 2)   # もとの画像に合成
-    """
+
 class CAM:
     def __init__(self, 
                  layer_names, 
@@ -128,6 +131,7 @@ class CAM:
                  cam_methods,
                  ratio=[0.7,0.1,0.2],
                  if_duplicate=True,
+                 if_murata_select=True,
                  ):
         self.layer_names=layer_names
         self.pathology=pathology
@@ -139,15 +143,22 @@ class CAM:
         self.if_load_npy=if_load_npy
         self.if_save_npy=if_save_npy
         self.cam_methods=cam_methods
+        self.if_murata_select=if_murata_select
+        self.nb_gpus=nb_gpus
     
     # テストデータをロードする関数
     def load_test(self):
 #        path_to_model=self.path_to_model % self.pathology
-        path_to_csv_dir = "../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(self.ratio) 
+        path_to_csv_dir = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(self.ratio) 
         path_to_group_csv = path_to_csv_dir+ "%s.csv" 
         if self.if_duplicate:
             path_to_group_csv = path_to_group_csv[:-4]+"_duplicate.csv"
         df_test = pd.read_csv(path_to_group_csv % "test")#[:50]
+        if self.if_murata_select:
+            murata_select = os.listdir(base_dir+"../nih_data/bb_images/%s/murata_select/" % self.pathology)
+            df_test = df_test[df_test["Image Index"].isin(os.listdir("../nih_data/bb_images/Effusion/murata_select/"))].info()
+            self.if_load_npy=False
+            self.if_save_npy=False
         test_data, test_label, df_test = nih.make_dataset(df_test,
                                              group="test",
                                              ratio=self.ratio,
@@ -161,7 +172,7 @@ class CAM:
                                              if_save_npy=self.if_save_npy,
                                              if_return_df=True,
                                              )
-        return test_data, test_label, df_test 
+      return test_data, test_label, df_test 
 #    
 #    def make_dir(self):
 #        path_to_save_cam = self.path_to_model[:-3]+"/cams/%s/" # % (TPFP)
@@ -176,10 +187,14 @@ class CAM:
     def predict(self):
         self.test_data, self.test_label, self.df_test = self.load_test()
         self.model = load_model(self.path_to_model)
+        if int(self.nb_gpus) > 1:
+            self.model_multiple_gpu = multi_gpu_model(self.model, gpus=self.nb_gpus)
+        else:
+            self.model_multiple_gpu = model
         self.model.summary()
 #        print(self.layer_name)
 #        print("aho")
-        self.predictions = self.model.predict(self.test_data, batch_size=self.batch_size)
+        self.predictions = self.model_multiple_gpu.predict(self.test_data, batch_size=self.batch_size)
         
         
 #        return model, predictions
@@ -290,22 +305,56 @@ class CAM:
 
 
 def main():
-    layer_names = ["block4_conv4", "block5_conv4", "block5_pool"]
-    cam_methods = ["grad_cam+2"]
+    arg_nih={}
+    arg_nih['pathologies']=['Edema', 'Effusion', 'Consolidation', 'Atelectasis', 'Hernia', 'Cardiomegaly', 'Infiltration', 'Fibrosis']
+    arg_nih['layer_names']=["block4_conv4", "block5_conv4", "block5_pool"]
+    arg_nih['cam_methods']=["grad_cam+2"]
+    arg_nih['path_to_model'] = "../nih_data/models/mm11dd26_size256/%s.h5"
+    arg_nih['input_shape']=256
+    arg_nih['batch_size']=64
+    arg['nb_gpus']=1
+    arg_nih['if_murata_select']=True,
+    arg_nih['if_load_npy']=False,
+    arg_nih['if_save_npy']=False,
+
+    int_args = ['batch_size', 'input_shape', 'nb_gpus']
+    float_args = []#['ratio_train', 'ratio_validation']
+    str_args = ["path_to_model"]
+    list_args = ['pathologies', 'layer_names']
+    bool_args = ['if_murata_select', 'if_load_npy', 'if_save_npy']
+    total_args=int_args+str_args+bool_args+list_args+float_args
+
+    argvs=sys.argv[1:]
+    argc=len(argvs)
+    if argc > 0:
+        for arg_index in range(argc):
+            arg_input = argvs[arg_index]
+            for arg_name in total_args:
+                nih.read_comandline(arg_nih, 
+                                str_args, int_args, bool_args, list_args, float_args,
+                                arg_name, arg_input)
+
+    arg_nih['ratio']=[arg_nih['ratio_train'], arg_nih['ratio_validation'], 1-arg_nih['ratio_train']-arg_nih['ratio_validation']]
+
+#    layer_names = ["block4_conv4", "block5_conv4", "block5_pool"]
+#    cam_methods = ["grad_cam+2"]
     pathology="Effusion"
     
 #            print(cam_method, layer_name)
-    interpretable = CAM(layer_names=layer_names,
-                         ratio=[0.7,0.1,0.2],
-                         input_shape=(256,256,1),
-                         batch_size=32,
-                         pathology=pathology,
-                         path_to_model="../nih_data/models/mm11dd26_size256/%s.h5",
-                         if_load_npy=True,
-                         if_save_npy=True,
-                         cam_methods=cam_methods,
-                         )
-    interpretable.grad_cam()
+    for pathology in arg_nih['pathologies']:
+        interpretable = CAM(layer_names=arg_nih['layer_names'],
+                             ratio=arg_nih['ratio'],
+                             input_shape=arg_nih['input_shape'],
+                             batch_size=arg_nih['batch_size'],
+                             pathology=pathology,
+                             path_to_model=base_dir+arg_nih['path_to_model'],
+                             if_load_npy=arg_nih['if_load_npy'],
+                             if_save_npy=arg_nih['if_save_npy'],
+                             cam_methods=arg_nih['cam_methods'],
+                             if_murata_select=arg_nih['if_murata_select'],
+                             nb_gpus=arg['nb_gpus'],
+                             )
+        interpretable.grad_cam()
 #    grad_cam(input_shape=(256,256,1),layer_name="block4_conv4")
 
 if __name__ == '__main__':
