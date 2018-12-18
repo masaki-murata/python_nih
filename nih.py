@@ -27,6 +27,8 @@ from keras.applications.xception import Xception
 from keras.models import Sequential
 from keras import metrics
 from keras.preprocessing.image import ImageDataGenerator
+from keras import backend as K
+
 
 base_dir = os.getcwd()
 if not re.search("nih_python", base_dir):
@@ -215,6 +217,8 @@ def make_dataset(df=[],
     path_to_labels = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) + "%s_size%d_%s_labels.npy" % (group, size, pathology)
 #    path_to_group_csv = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) + "%s_%s.csv" % (group, pathology)
     path_to_group_csv = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) + "%s.csv" % (group)
+    
+    # csv をロード
     if if_load_df and os.path.exists(path_to_group_csv[:-4]+"_%s.csv" % pathology):
         df = pd.read_csv(path_to_group_csv[:-4]+"_%s.csv" % pathology)
 #        elif os.path.exists(path_to_group_csv[:-4]+"_%s.csv" % pathology):
@@ -298,6 +302,8 @@ def batch_iter(data, labels,
     
     return data_generator(), steps_per_epoch
 
+def loss_ambiguous(y_true, y_pred, eps):
+    return -K.sum( y_true*((1-eps)*K.log(y_pred)+eps*K.log(1-y_pred)) + (1-y_true)*((1-eps)*K.log(1-y_pred)+eps*K.log(y_pred)) )
 
 def make_model(network, input_shape=(128, 128, 1)):
     input_img = Input(shape=input_shape)
@@ -318,22 +324,7 @@ def make_model(network, input_shape=(128, 128, 1)):
         transfer = ResNet50(include_top=False, weights=None, input_tensor=x)
     if network=="Xception":
         transfer = Xception(include_top=False, weights=None, input_tensor=x)
-#    x = Conv2D(filters=8, kernel_size=3, padding="same", activation="relu")(input_img)
-#    x = Conv2D(filters=8, kernel_size=3, strides=2, padding="valid", activation="relu")(x)
-#    x = BatchNormalization()(x)
-#    x = Conv2D(filters=32, kernel_size=3, padding="same", activation="relu")(x)
-#    x = Conv2D(filters=32, kernel_size=3, strides=2, padding="valid", activation="relu")(x)
-#    x = BatchNormalization()(x)
-#    x = Conv2D(filters=64, kernel_size=3, padding="same", activation="relu")(x)
-#    x = Conv2D(filters=64, kernel_size=3, strides=2, padding="valid", activation="relu")(x)
-#    x = BatchNormalization()(x)
-#    x = Conv2D(filters=128, kernel_size=3, padding="same", activation="relu")(x)
-#    x = Conv2D(filters=128, kernel_size=3, strides=2, padding="valid", activation="relu")(x)
-#    x = BatchNormalization()(x)
 
-#    x = Flatten()(x)
-#    x = Dense(256, activation="relu")(x)
-#    output = Dense(2, activation="softmax")(x)
     top_model = Sequential()
     top_model.add(Flatten(input_shape=transfer.output_shape[1:]))
     top_model.add(Dense(256, activation='relu'))
@@ -433,16 +424,17 @@ def class_balance(data, labels):
     
     return data[indices], labels[indices]
 
-def train(input_shape=(128,128,1),
+def train(input_shape,#=(128,128,1),
+          path_to_image_dir,#="",
+          batch_size,#=32,
+          val_num,#=128,
+          epochs,#=100,
+          ratio,#=[0.7,0.15,0.15],
+          pathology,#="Effusion",
+          patience,#=8,
+          path_to_model_save,#="",
+          eps,#=0.1,
           network="",
-          path_to_image_dir="",
-          batch_size=32,
-          val_num=128,
-          epochs=100,
-          ratio=[0.7,0.15,0.15],
-          pathology="Effusion",
-          patience=8,
-          path_to_model_save="",
           if_transfer=True,
           if_rgb=False,
           if_batch_from_df=False,
@@ -450,7 +442,8 @@ def train(input_shape=(128,128,1),
           if_duplicate=True,
           if_augment=False,
           if_train=True,
-          if_datagen=True,
+          if_datagen_self=True,
+          if_loss_ambiguous=False,
           nb_gpus=1,
           ):
     if type(input_shape)==int:
@@ -535,7 +528,7 @@ def train(input_shape=(128,128,1),
                                                if_return_df=False,
                                                if_load_df=True,
                                                )
-        if if_datagen:
+        if if_datagen_self:
             train_gen , steps_per_epoch= batch_iter(train_data, train_label, batch_size=batch_size)
 
 #        train_label = to_categorical(train_label)
@@ -562,7 +555,14 @@ def train(input_shape=(128,128,1),
 #    class_weight = {0:np.sum(train_label[:,1])/float(len(train_label)), 1:np.sum(train_label[:,0])/float(len(train_label))}
 #    print("class_weight = ", class_weight)
 #    model_multi_gpu.compile(loss='binary_crossentropy', optimizer=opt_generator)
-    model_multiple_gpu.compile(loss="categorical_crossentropy", optimizer=sgd, metrics=[metrics.categorical_accuracy])
+    if if_loss_ambiguous:
+        def loss(y_true, y_pred):
+            return loss_ambiguous(y_true, y_pred, eps)
+    else:
+        loss="categorical_crossentropy"
+       
+  
+    model_multiple_gpu.compile(loss=loss, optimizer=sgd, metrics=[metrics.categorical_accuracy])
     
     # start training
 #    train_data_sick = train_data[train_label[:,1]==1]
@@ -579,7 +579,7 @@ def train(input_shape=(128,128,1),
                                              epochs=1,
                                              validation_data=(val_data,val_label),
                                              )
-        elif if_datagen:
+        elif if_datagen_self:
             model_multiple_gpu.fit_generator(train_gen,
                                              steps_per_epoch=steps_per_epoch,
                                              epochs=1,
@@ -635,15 +635,16 @@ def train(input_shape=(128,128,1),
     return test_auc
 
 
-def train_pathologies(pathologies=[],
+def train_pathologies(pathologies,#=[],
+                      path_to_image_dir,#="",
+                      input_shape,#=(128,128,1),
+                      batch_size,#=32,
+                      val_num,#=128,
+                      epochs,#=100,
+                      ratio,#=[0.7,0.15,0.15],
+                      patience,#=8,
+                      eps,
                       network="",
-                      path_to_image_dir="",
-                      input_shape=(128,128,1),
-                      batch_size=32,
-                      val_num=128,
-                      epochs=100,
-                      ratio=[0.7,0.15,0.15],
-                      patience=8,
                       if_transfer=True,
                       if_rgb=False,
                       if_batch_from_df=False,
@@ -651,7 +652,8 @@ def train_pathologies(pathologies=[],
                       if_duplicate=True,
                       if_augment=False,
                       if_train=True,
-                      if_datagen=True,
+                      if_datagen_self=True,
+                      if_loss_ambiguous=False,
                       nb_gpus=1,
                       ):
     if type(input_shape)==int:
@@ -678,13 +680,15 @@ def train_pathologies(pathologies=[],
                          ratio=ratio,
                          pathology=pathology,
                          patience=patience,
+                         eps=eps,
                          path_to_model_save=path_to_model_save,
                          if_batch_from_df=if_batch_from_df,
                          if_duplicate=if_duplicate,
                          if_normalize=if_normalize,
                          if_augment=if_augment,
                          if_train=if_train,
-                         if_datagen=if_datagen,
+                         if_datagen_self=if_datagen_self,
+                         if_loss_ambiguous=if_loss_ambiguous,
                          nb_gpus=nb_gpus,
                          )
         df.loc[count] = [pathology, test_auc]
@@ -744,18 +748,20 @@ def main():
     arg_nih['input_shape']=256
     arg_nih['ratio_train']=0.7
     arg_nih['ratio_validation']=0.1
+    arg_nih['eps']=0.1
     arg_nih['if_batch_from_df']=False
     arg_nih['if_duplicate']=True
     arg_nih['if_normalize']=True
     arg_nih['if_augment']=True
     arg_nih['if_train']=True
-    arg_nih['if_datagen']=True
+    arg_nih['if_datagen_self']=True
+    arg_nih['if_loss_ambiguous']=True
 
     int_args = ['batch_size', 'epochs', 'val_num', 'patience', 'nb_gpus', 'input_shape']
-    float_args = ['ratio_train', 'ratio_validation']
+    float_args = ['ratio_train', 'ratio_validation', 'eps']
     str_args = ['network', "path_to_image_dir"]
     list_args = ['pathologies']
-    bool_args = ['if_batch_from_df', 'if_duplicate', 'if_normalize', 'if_augment', 'if_train', 'if_datagen']
+    bool_args = ['if_batch_from_df', 'if_duplicate', 'if_normalize', 'if_augment', 'if_train', 'if_datagen_self', 'if_loss_ambiguous']
     total_args=int_args+str_args+bool_args+list_args+float_args
 
 #    pathologies = ['Edema', 'Effusion', 'Consolidation', 'Atelectasis', 'Hernia', 'Cardiomegaly', 'Infiltration', 'Fibrosis']
@@ -795,12 +801,14 @@ def main():
                       val_num=arg_nih['val_num'],
                       ratio=arg_nih['ratio'],
                       patience=arg_nih['patience'],
+                      eps=arg_nih['eps'],
                       if_batch_from_df=arg_nih['if_batch_from_df'],
                       if_duplicate=arg_nih['if_duplicate'],
                       if_normalize=arg_nih['if_normalize'],
                       if_augment=arg_nih['if_augment'],
                       if_train=arg_nih['if_train'],
-                      if_datagen=arg_nih['if_datagen'],
+                      if_datagen_self=arg_nih['if_datagen_self'],
+                      if_loss_ambiguous=arg_nih['if_loss_ambiguous'],
                       nb_gpus=arg_nih['nb_gpus'],
                       )
 #    test_aucs={}
