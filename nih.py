@@ -305,7 +305,11 @@ def batch_iter(data, labels,
 
 # ground_truth に間違いがあるときの誤差関数
 def loss_ambiguous(y_true, y_pred, eps):
-    return -K.sum( y_true*((1-eps)*K.log(y_pred)+eps*K.log(1-y_pred)) + (1-y_true)*((1-eps)*K.log(1-y_pred)+eps*K.log(y_pred)) )
+    y_pred = K.clip(y_pred, K.epsilon(), 1 - K.epsilon())
+    return -K.mean( y_true*((1-eps)*K.log(y_pred)+eps*K.log(1-y_pred)), -1)
+#    y_pred=y_pred[:,1]
+#    y_true=y_true[:,1]
+#    return -K.sum( y_true*((1-eps)*K.log(y_pred)+eps*K.log(1-y_pred)) + (1-y_true)*((1-eps)*K.log(1-y_pred)+eps*K.log(y_pred)) )
 
 
 def make_model(network, input_shape=(128, 128, 1)):
@@ -559,8 +563,9 @@ def train(input_shape,#=(128,128,1),
 #    print("class_weight = ", class_weight)
 #    model_multi_gpu.compile(loss='binary_crossentropy', optimizer=opt_generator)
     if if_loss_ambiguous:
-        def loss(y_true, y_pred):
+        def loss_amb(y_true, y_pred):
             return loss_ambiguous(y_true, y_pred, eps)
+        loss=loss_amb
     else:
         loss="categorical_crossentropy"
        
