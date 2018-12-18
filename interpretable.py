@@ -216,7 +216,11 @@ class CAM:
         
 #        return model, predictions
     def save_cam(self, layer_name, cam_method, cams, start_index):
-        path_to_save_cam = self.path_to_model[:-3]+"/cams/" + cam_method + "_" + layer_name+"/%s/" # % (TPFP)
+        path_to_save_cam = self.path_to_model[:-3]+"/cams/"
+        path_to_save_cam = path_to_save_cam + cam_method + "_" + layer_name
+        if self.samplesize > 1:
+            path_to_save_cam = path_to_save_cam + "_samplesize%d_noiselevel%.2f" % (self.samplesize, self.noiselevel)
+        path_to_save_cam = path_to_save_cam + "/%s/" # % (TPFP)
         if start_index==0:
             if not os.path.exists(path_to_save_cam % "TP"):
                 os.makedirs(path_to_save_cam % "TP")
