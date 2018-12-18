@@ -131,6 +131,8 @@ class CAM:
                  if_load_npy,
                  if_save_npy,
                  cam_methods,
+                 samplesize,
+                 noiselevel,
                  nb_gpus,
                  ratio=[0.7,0.1,0.2],
                  if_duplicate=True,
@@ -147,6 +149,8 @@ class CAM:
         self.if_duplicate=if_duplicate
         self.input_shape=input_shape
         self.batch_size=batch_size
+        self.samplesize=samplesize
+        self.noiselevel=noiselevel
         self.if_load_npy=if_load_npy
         self.if_save_npy=if_save_npy
         self.cam_methods=cam_methods
@@ -235,6 +239,27 @@ class CAM:
 #            print(count)
             cam.save(path_to_save_cam % (TPFP, self.df_test["Image Index"].values[count]))
             count+=1
+    
+    
+    def compute_cams(self, input_data, gradient_function, cam_method):
+        output, grads_val = gradient_function([input_data])
+#            print("output.shape =", output.shape)
+#             重みを平均化して、レイヤーのアウトプットに乗じる
+#            weights = np.mean(grads_val, axis=(0, 1))
+        if cam_method=="grad_cam":
+            weights = np.mean(grads_val, axis=(1, 2)) # global average pooling
+            weights = weights.reshape((weights.shape[0],1,1,weights.shape[-1]))
+        elif cam_method=="grad_cam+":
+            weights = np.mean(grads_val, axis=(1, 2)) # global average pooling
+            weights = np.maximum(weights, 0)
+            weights = weights.reshape((weights.shape[0],1,1,weights.shape[-1]))
+        elif cam_method=="grad_cam+2":
+            weights = np.mean(np.maximum(grads_val,0), axis=(1, 2)) # global average pooling
+            weights = weights.reshape((weights.shape[0],1,1,weights.shape[-1]))
+        elif cam_method=="grad_cam_murata":
+            weights = np.maximum(grads_val,0)
+#            print("weights.shape = ", weights.shape)
+        return np.sum(output*weights, axis=3)
         
     
     def grad_cam_single(self, layer_name, cam_method):
@@ -250,25 +275,34 @@ class CAM:
         end_index=min(self.batch_size, len(mask_predictions))
         print("start_index = ", start_index)
         while start_index < end_index:
-#            print(self.test_data.shape)
-            output, grads_val = gradient_function([self.test_data[start_index:end_index]])
-#            print("output.shape =", output.shape)
-#             重みを平均化して、レイヤーのアウトプットに乗じる
-#            weights = np.mean(grads_val, axis=(0, 1))
-            if cam_method=="grad_cam":
-                weights = np.mean(grads_val, axis=(1, 2)) # global average pooling
-                weights = weights.reshape((weights.shape[0],1,1,weights.shape[-1]))
-            elif cam_method=="grad_cam+":
-                weights = np.mean(grads_val, axis=(1, 2)) # global average pooling
-                weights = np.maximum(weights, 0)
-                weights = weights.reshape((weights.shape[0],1,1,weights.shape[-1]))
-            elif cam_method=="grad_cam+2":
-                weights = np.mean(np.maximum(grads_val,0), axis=(1, 2)) # global average pooling
-                weights = weights.reshape((weights.shape[0],1,1,weights.shape[-1]))
-            elif cam_method=="grad_cam_murata":
-                weights = np.maximum(grads_val,0)
-#            print("weights.shape = ", weights.shape)
-            cams = np.sum(output*weights, axis=3)
+            if self.samplesize==1:
+                cams = self.compute_cams(self.test_data[start_index:end_index], gradient_function, cam_method)
+            elif self.samplesize>1:
+                cams = 0
+                original_data = self.test_data[start_index:end_index]
+                for sample in range(self.samplesize):
+                    input_data = original_data + self.noiselevel*np.random.normal(size=original_data.shape)  
+                    cams += self.compute_cams(input_data, gradient_function, cam_method)
+                cams = cams / float(self.samplesize)
+##            print(self.test_data.shape)
+#            output, grads_val = gradient_function([self.test_data[start_index:end_index]])
+##            print("output.shape =", output.shape)
+##             重みを平均化して、レイヤーのアウトプットに乗じる
+##            weights = np.mean(grads_val, axis=(0, 1))
+#            if cam_method=="grad_cam":
+#                weights = np.mean(grads_val, axis=(1, 2)) # global average pooling
+#                weights = weights.reshape((weights.shape[0],1,1,weights.shape[-1]))
+#            elif cam_method=="grad_cam+":
+#                weights = np.mean(grads_val, axis=(1, 2)) # global average pooling
+#                weights = np.maximum(weights, 0)
+#                weights = weights.reshape((weights.shape[0],1,1,weights.shape[-1]))
+#            elif cam_method=="grad_cam+2":
+#                weights = np.mean(np.maximum(grads_val,0), axis=(1, 2)) # global average pooling
+#                weights = weights.reshape((weights.shape[0],1,1,weights.shape[-1]))
+#            elif cam_method=="grad_cam_murata":
+#                weights = np.maximum(grads_val,0)
+##            print("weights.shape = ", weights.shape)
+#            cams = np.sum(output*weights, axis=3)
             self.save_cam(layer_name, cam_method, cams=cams, start_index=start_index)
 #            print(cams.shape)
             start_index=start_index+self.batch_size
@@ -327,15 +361,17 @@ def main():
     arg_nih['path_to_image_dir'] = "../nih_data/images/"
     arg_nih['ratio_train']=0.7
     arg_nih['ratio_validation']=0.1
+    arg_nih['noiselevel']=0.1    
     arg_nih['input_shape']=256
     arg_nih['batch_size']=64
+    arg_nih['samplesize']=1
     arg_nih['nb_gpus']=1
     arg_nih['if_murata_select']=True,
     arg_nih['if_load_npy']=False,
     arg_nih['if_save_npy']=False,
 
-    int_args = ['batch_size', 'input_shape', 'nb_gpus']
-    float_args = ['ratio_train', 'ratio_validation']
+    int_args = ['batch_size', 'input_shape', 'nb_gpus', 'samplesize']
+    float_args = ['ratio_train', 'ratio_validation', 'noiselevel']
     str_args = ["path_to_model", "path_to_image_dir"]
     list_args = ['pathologies', 'layer_names', 'cam_methods']
     bool_args = ['if_murata_select', 'if_load_npy', 'if_save_npy']
@@ -364,6 +400,8 @@ def main():
                              ratio=arg_nih['ratio'],
                              input_shape=arg_nih['input_shape'],
                              batch_size=arg_nih['batch_size'],
+                             samplesize=arg_nih['samplesize'],
+                             noiselevel=arg_nih['noiselevel'],
                              pathology=pathology,
                              path_to_model=base_dir+arg_nih['path_to_model'],
                              path_to_image_dir=arg_nih['path_to_image_dir'],
