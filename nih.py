@@ -302,8 +302,11 @@ def batch_iter(data, labels,
     
     return data_generator(), steps_per_epoch
 
+
+# ground_truth に間違いがあるときの誤差関数
 def loss_ambiguous(y_true, y_pred, eps):
     return -K.sum( y_true*((1-eps)*K.log(y_pred)+eps*K.log(1-y_pred)) + (1-y_true)*((1-eps)*K.log(1-y_pred)+eps*K.log(y_pred)) )
+
 
 def make_model(network, input_shape=(128, 128, 1)):
     input_img = Input(shape=input_shape)
@@ -377,9 +380,9 @@ def auc(y_true, y_pred):
     auc = 0
     for threshold in pred_sorted:
         tp_num = len( sick_true[(sick_pred>=threshold)&(sick_true==1)] )
-        fn_num = len( sick_true[(sick_pred>=threshold)&(sick_true==0)] )
-        sensitivity_next = tp_num / positive_num
-        specificity_next = fn_num / negative_num
+        fp_num = len( sick_true[(sick_pred>=threshold)&(sick_true==0)] )
+        sensitivity_next = tp_num / float(positive_num)
+        specificity_next = fp_num / float(negative_num)
         auc_part = 0.5*(sensitivity+sensitivity_next)*(specificity_next-specificity)
         assert auc_part >= 0
         auc += auc_part
