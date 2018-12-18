@@ -599,6 +599,14 @@ def train(input_shape=(128,128,1),
 #            train_data_epoch = train_data_epoch[shuffle_indices]
 #            train_label_epoch = train_label_epoch[shuffle_indices]
             if if_augment:
+#                batches = 0
+#                for x_batch, y_batch in datagen.flow(train_data_epoch, train_labels_epoch, batch_size=batch_size):
+#                    model_multiple_gpu.fit(x_batch, y_batch)
+#                    batches += 1
+#                    if batches >= len(train_data) / 32:
+#                        # we need to break the loop by hand because
+#                        # the generator loops indefinitely
+#                        break                
                 model_multiple_gpu.fit_generator(datagen.flow(train_data_epoch, train_labels_epoch, batch_size=batch_size),
                                                  steps_per_epoch=int(len(train_data_epoch) / batch_size), epochs=1)
             else:
