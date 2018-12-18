@@ -124,6 +124,7 @@ class CAM:
     def __init__(self, 
                  layer_names, 
                  path_to_model, 
+                 path_to_image_dir,
                  pathology, 
                  input_shape,
                  batch_size,
@@ -141,6 +142,7 @@ class CAM:
         self.layer_names=layer_names
         self.pathology=pathology
         self.path_to_model=path_to_model % (pathology)
+        self.path_to_image_dir=path_to_image_dir
         self.ratio=ratio
         self.if_duplicate=if_duplicate
         self.input_shape=input_shape
@@ -167,9 +169,11 @@ class CAM:
             self.if_load_npy=False
             self.if_save_npy=False
         print("len(self.df_test) = ", len(self.df_test))
+        print("input_shape = ",self.input_shape)
         self.test_data, self.test_label, self.df_test = nih.make_dataset(df=self.df_test,
                                                                          group="test",
                                                                          ratio=self.ratio,
+                                                                         path_to_image_dir=self.path_to_image_dir,
                                                                          input_shape=self.input_shape,
                                                                          data_num=len(self.df_test),
                                                                          pathology=self.pathology,
@@ -237,10 +241,11 @@ class CAM:
 #        self.predict()
         mask_predictions = self.predictions[:,1] > 0.5
 #        print(mask_predictions.shape)
-        class_output = self.model.output[:, 1]
-        conv_output = self.model.get_layer(layer_name).output  # layer_nameのレイヤーのアウトプット
+        print("model_multiple_gpu.output = ", self.model_multiple_gpu.output)
+        class_output = self.model_multiple_gpu.output[:, 1]
+        conv_output = self.model_multiple_gpu.get_layer(layer_name).output  # layer_nameのレイヤーのアウトプット
         grads = K.gradients(class_output, conv_output)[0]  # gradients(loss, variables) で、variablesのlossに関しての勾配を返す
-        gradient_function = K.function([self.model.input], [conv_output, grads])  # model.inputを入力すると、conv_outputとgradsを出力する関数
+        gradient_function = K.function([self.model_multiple_gpu.input], [conv_output, grads])  # model.inputを入力すると、conv_outputとgradsを出力する関数
         start_index=0
         end_index=min(self.batch_size, len(mask_predictions))
         print("start_index = ", start_index)
@@ -317,8 +322,9 @@ def main():
     arg_nih={}
     arg_nih['pathologies']=[]#['Edema', 'Effusion', 'Consolidation', 'Atelectasis', 'Hernia', 'Cardiomegaly', 'Infiltration', 'Fibrosis']
     arg_nih['layer_names']=[]#["block4_conv4", "block5_conv4", "block5_pool"]
-    arg_nih['cam_methods']=["grad_cam+2"]
+    arg_nih['cam_methods']=[]#["grad_cam+2", "grad_cam_murata"]
     arg_nih['path_to_model'] = "../nih_data/models/mm11dd26_size256/%s.h5"
+    arg_nih['path_to_image_dir'] = "../nih_data/images/"
     arg_nih['ratio_train']=0.7
     arg_nih['ratio_validation']=0.1
     arg_nih['input_shape']=256
@@ -330,8 +336,8 @@ def main():
 
     int_args = ['batch_size', 'input_shape', 'nb_gpus']
     float_args = ['ratio_train', 'ratio_validation']
-    str_args = ["path_to_model"]
-    list_args = ['pathologies', 'layer_names']
+    str_args = ["path_to_model", "path_to_image_dir"]
+    list_args = ['pathologies', 'layer_names', 'cam_methods']
     bool_args = ['if_murata_select', 'if_load_npy', 'if_save_npy']
     total_args=int_args+str_args+bool_args+list_args+float_args
 
@@ -360,6 +366,7 @@ def main():
                              batch_size=arg_nih['batch_size'],
                              pathology=pathology,
                              path_to_model=base_dir+arg_nih['path_to_model'],
+                             path_to_image_dir=arg_nih['path_to_image_dir'],
                              if_load_npy=arg_nih['if_load_npy'],
                              if_save_npy=arg_nih['if_save_npy'],
                              cam_methods=arg_nih['cam_methods'],
