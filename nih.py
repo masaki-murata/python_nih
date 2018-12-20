@@ -96,7 +96,7 @@ def load_images(df,
                 input_shape=(128, 128, 1),
                 path_to_image_dir = base_dir+"../nih_data/images/",
                 if_rgb=False,
-                if_normalize=True,
+#                if_normalize=True,
                 ):
     images = np.zeros((len(df),)+input_shape)
         
@@ -107,8 +107,8 @@ def load_images(df,
                 images[count,:,:,rgb]  = np.asarray(Image.open(path_to_image_dir+image_index).convert('L'))
         else:
             image = np.asarray( Image.open(path_to_image_dir+image_index).convert('L').resize(input_shape[:-1]) )
-            if if_normalize:
-                image = (image-image.mean()) / image.std()
+#            if if_normalize:
+#                image = (image-image.mean()) / image.std()
             images[count] = image.reshape(input_shape)
         count += 1
 #    images = images.reshape(images.shape+(1,))
@@ -206,7 +206,7 @@ def make_dataset(df=[],
                  pathology="Effusion",
                  path_to_group_csv="",
                  if_rgb=False,
-                 if_normalize=True,
+#                 if_normalize=True,
                  if_load_npy=False,
                  if_save_npy=False,
                  if_return_df=False,
@@ -236,10 +236,11 @@ def make_dataset(df=[],
         data_num = min(data_num, len(df))
         print("len(df), data_num =", len(df), data_num)
 #        df_shuffle = df.sample(frac=1)
-        data = load_images(df[:data_num], path_to_image_dir=path_to_image_dir, input_shape=input_shape, if_rgb=if_rgb, if_normalize=if_normalize)
+        data = load_images(df[:data_num], path_to_image_dir=path_to_image_dir, input_shape=input_shape, if_rgb=if_rgb)#, if_normalize=if_normalize)
         labels = np.array(df["Finding Labels"].str.contains(pathology)*1.0)
         labels = to_categorical(labels[:data_num], num_classes=2)
     
+    assert data.itemsize==1, print(data.itemsize)
     if if_save_npy and (not os.path.exists(path_to_data)):
         np.save(path_to_data, data)
         np.save(path_to_labels, labels)
@@ -247,9 +248,9 @@ def make_dataset(df=[],
         df[:data_num].to_csv(path_to_group_csv[:-4]+"_%s.csv" % pathology)
     
     if if_return_df:
-        return data, labels, df[:data_num]
+        return data[:data_num], labels[:data_num], df[:data_num]
     else:
-        return data, labels
+        return data[:data_num], labels[:data_num]
 
     
 def batch_iter_df(df,
@@ -257,7 +258,7 @@ def batch_iter_df(df,
                   input_shape=(128,128,1),
                   batch_size=32,
                   if_rgb=False,
-                  if_normalize=True,
+#                  if_normalize=True,
                   ):
     data_num = len(df)
     steps_per_epoch = int( (data_num - 1) / batch_size ) + 1
@@ -269,14 +270,14 @@ def batch_iter_df(df,
                 start_index = batch_num * batch_size
                 end_index = min((batch_num + 1) * batch_size, data_num)
                 df_epoch = df_shuffle[start_index:end_index]
-                data = load_images(df_epoch, path_to_image_dir=path_to_image_dir, input_shape=input_shape, if_rgb=if_rgb, if_normalize=if_normalize)
+                data = load_images(df_epoch, path_to_image_dir=path_to_image_dir, input_shape=input_shape, if_rgb=if_rgb)#, if_normalize=if_normalize)
                 labels = load_gts(df_epoch)
                 
                 yield data, labels
     
     return data_generator(), steps_per_epoch
 
-def batch_iter(data, labels,
+def batch_iter(data, labels, if_normalize,
                batch_size=32,
                ):
     norm_indices = np.where(labels[:,1]==0)[0]
@@ -294,11 +295,15 @@ def batch_iter(data, labels,
                 start_index = batch_num * batch_size
                 end_index = min((batch_num + 1) * batch_size, data_num)
                 batch_indices = indices[start_index:end_index]
+                batch_data = np.asarray(data[batch_indices], dtype=np.float32)
+                batch_labels = labels[batch_indices]
+                if if_normalize:
+                    batch_data = (batch_data - np.mean(batch_data, axis=(1,2,3)) ) / np.std(batch_data, axis=(1,2,3))
 #                df_epoch = df_shuffle[start_index:end_index]
 #                data = load_images(df_epoch, path_to_image_dir=path_to_image_dir, input_shape=input_shape, if_rgb=if_rgb, if_normalize=if_normalize)
 #                labels = load_gts(df_epoch)
                 
-                yield data[batch_indices], labels[batch_indices]
+                yield batch_data, batch_labels
     
     return data_generator(), steps_per_epoch
 
@@ -486,7 +491,7 @@ def train(input_shape,#=(128,128,1),
                                        pathology=pathology,
                                        path_to_group_csv=path_to_group_csv,
                                        if_rgb=if_rgb,
-                                       if_normalize=if_normalize,
+#                                       if_normalize=if_normalize,
                                        if_load_npy=True,
                                        if_save_npy=True,
                                        if_return_df=False,
@@ -504,7 +509,7 @@ def train(input_shape,#=(128,128,1),
                                          pathology=pathology,
                                          path_to_group_csv=path_to_group_csv,
                                          if_rgb=if_rgb,
-                                         if_normalize=if_normalize,
+#                                         if_normalize=if_normalize,
                                          if_load_npy=True,
                                          if_save_npy=True,
                                          if_return_df=False,
@@ -529,14 +534,15 @@ def train(input_shape,#=(128,128,1),
                                                pathology=pathology,
                                                path_to_group_csv=path_to_group_csv,
                                                if_rgb=if_rgb,
-                                               if_normalize=if_normalize,
+#                                               if_normalize=if_normalize,
                                                if_load_npy=True,
                                                if_save_npy=True,
                                                if_return_df=False,
                                                if_load_df=True,
                                                )
+        assert train_data.itemsize==1, print("train_data.itemsize = ", train_data.itemsize)
         if if_datagen_self:
-            train_gen , steps_per_epoch= batch_iter(train_data, train_label, batch_size=batch_size)
+            train_gen , steps_per_epoch= batch_iter(train_data, train_label, if_normalize, batch_size=batch_size)
 
 #        train_label = to_categorical(train_label)
     print(len(df_train), len(train_label))
