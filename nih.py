@@ -216,7 +216,7 @@ def make_dataset(df=[],
     size = input_shape[0]
     path_to_ratio = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio)
     if not if_single_pathology:
-        path_to_group_csv[:-1] + "_multipathology/"
+        path_to_ratio = path_to_ratio[:-1] + "_multipathology/"
     path_to_data = path_to_ratio  + "%s_size%d_%s_data.npy" % (group, size, pathology)
     path_to_labels = path_to_ratio + "%s_size%d_%s_labels.npy" % (group, size, pathology)
 #    path_to_group_csv = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) + "%s_%s.csv" % (group, pathology)
@@ -468,6 +468,8 @@ def train(input_shape,#=(128,128,1),
         input_shape=(input_shape,input_shape,1)
     print("train for ", pathology)
     path_to_csv_dir = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) 
+    if not if_single_pathology:
+        path_to_csv_dir = path_to_csv_dir[:-1] + "_multipathology/"
     now = datetime.datetime.now()
     if len(path_to_model_save)==0:
         path_to_model_save = base_dir+"../nih_data/models/mm%02ddd%02d_%s/" % (now.month, now.day, network)
@@ -685,7 +687,7 @@ def train_pathologies(pathologies,#=[],
     now = datetime.datetime.now()
     path_to_model_save = base_dir+"../nih_data/models/mm%02ddd%02d_size%d_%s/" % (now.month, now.day, input_shape[0], network)
     if not if_single_pathology:
-        path_to_model_save = path_to_model_save[:-1] + "multipathology/"
+        path_to_model_save = path_to_model_save[:-1] + "_multipathology/"
 #    print(os.getcwd())
 #    os.mkdir("../nih_data/models")
     if not os.path.exists(path_to_model_save):
