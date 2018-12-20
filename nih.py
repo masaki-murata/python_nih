@@ -823,7 +823,7 @@ def main():
     
 #    for input_shape in [256]:
     print(arg_nih)
-    sys.exit()
+#    sys.exit()
     train_pathologies(pathologies=arg_nih['pathologies'],
                       network=arg_nih['network'],
                       path_to_image_dir=arg_nih['path_to_image_dir'],
