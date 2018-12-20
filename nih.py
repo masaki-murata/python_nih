@@ -211,6 +211,7 @@ def make_dataset(df=[],
                  if_save_npy=False,
                  if_return_df=False,
                  if_load_df=False,
+                 if_single_pathology=True,
                  ):
     size = input_shape[0]
     path_to_data = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) + "%s_size%d_%s_data.npy" % (group, size, pathology)
@@ -231,7 +232,8 @@ def make_dataset(df=[],
     else:
         print("len(df), data_num =", len(df), data_num)
         print("df[Finding Labels], pathology = ", df["Finding Labels"], pathology)
-        df = df[(df["Finding Labels"]=="No Finding") | (df["Finding Labels"]==pathology)]
+        if if_single_pathology: # 該当する病変だけを含むかどうかで正負を判定する
+            df = df[(df["Finding Labels"]=="No Finding") | (df["Finding Labels"]==pathology)]
 #        df = df[(df["Finding Labels"]=="No Finding") | (df["Finding Labels"].str.contains(pathology))]
         data_num = min(data_num, len(df))
         print("len(df), data_num =", len(df), data_num)
@@ -456,6 +458,7 @@ def train(input_shape,#=(128,128,1),
           if_train=True,
           if_datagen_self=True,
           if_loss_ambiguous=False,
+          if_single_pathology=True,
           nb_gpus=1,
           ):
     if type(input_shape)==int:
@@ -496,6 +499,7 @@ def train(input_shape,#=(128,128,1),
                                        if_save_npy=True,
                                        if_return_df=False,
                                        if_load_df=True,
+                                       if_single_pathology=if_single_pathology,
                                        )
     val_data, val_label = class_balance(val_data, val_label)
     print(np.sum(val_label[:,1]==0), np.sum(val_label[:,1]==1))
@@ -514,6 +518,7 @@ def train(input_shape,#=(128,128,1),
                                          if_save_npy=True,
                                          if_return_df=False,
                                          if_load_df=True,
+                                         if_single_pathology=if_single_pathology,
                                          )
 #    test_data, test_label = class_balance(test_data, test_label)
     print(np.sum(test_label[:,1]==0), np.sum(test_label[:,1]==1))
@@ -539,6 +544,7 @@ def train(input_shape,#=(128,128,1),
                                                if_save_npy=True,
                                                if_return_df=False,
                                                if_load_df=True,
+                                               if_single_pathology=if_single_pathology,
                                                )
         assert train_data.itemsize==1, print("train_data.itemsize = ", train_data.itemsize)
         if if_datagen_self:
@@ -668,12 +674,15 @@ def train_pathologies(pathologies,#=[],
                       if_train=True,
                       if_datagen_self=True,
                       if_loss_ambiguous=False,
+                      if_single_pathology=True,
                       nb_gpus=1,
                       ):
     if type(input_shape)==int:
         input_shape=(input_shape,input_shape,1)
     now = datetime.datetime.now()
     path_to_model_save = base_dir+"../nih_data/models/mm%02ddd%02d_size%d_%s/" % (now.month, now.day, input_shape[0], network)
+    if not if_single_pathology:
+        path_to_model_save = path_to_model_save[:-1] + "multipathology/"
 #    print(os.getcwd())
 #    os.mkdir("../nih_data/models")
     if not os.path.exists(path_to_model_save):
@@ -703,6 +712,7 @@ def train_pathologies(pathologies,#=[],
                          if_train=if_train,
                          if_datagen_self=if_datagen_self,
                          if_loss_ambiguous=if_loss_ambiguous,
+                         if_single_pathology=if_single_pathology,
                          nb_gpus=nb_gpus,
                          )
         df.loc[count] = [pathology, test_auc]
@@ -770,12 +780,13 @@ def main():
     arg_nih['if_train']=True
     arg_nih['if_datagen_self']=True
     arg_nih['if_loss_ambiguous']=True
+    arg_nih['if_single_pathology']=True
 
     int_args = ['batch_size', 'epochs', 'val_num', 'patience', 'nb_gpus', 'input_shape']
     float_args = ['ratio_train', 'ratio_validation', 'eps']
     str_args = ['network', "path_to_image_dir"]
     list_args = ['pathologies']
-    bool_args = ['if_batch_from_df', 'if_duplicate', 'if_normalize', 'if_augment', 'if_train', 'if_datagen_self', 'if_loss_ambiguous']
+    bool_args = ['if_batch_from_df', 'if_duplicate', 'if_normalize', 'if_augment', 'if_train', 'if_datagen_self', 'if_loss_ambiguous', 'if_single_pathology']
     total_args=int_args+str_args+bool_args+list_args+float_args
 
 #    pathologies = ['Edema', 'Effusion', 'Consolidation', 'Atelectasis', 'Hernia', 'Cardiomegaly', 'Infiltration', 'Fibrosis']
@@ -823,6 +834,7 @@ def main():
                       if_train=arg_nih['if_train'],
                       if_datagen_self=arg_nih['if_datagen_self'],
                       if_loss_ambiguous=arg_nih['if_loss_ambiguous'],
+                      if_single_pathology=arg_nih['if_single_pathology'],
                       nb_gpus=arg_nih['nb_gpus'],
                       )
 #    test_aucs={}
