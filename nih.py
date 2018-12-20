@@ -98,7 +98,7 @@ def load_images(df,
                 if_rgb=False,
 #                if_normalize=True,
                 ):
-    images = np.zeros((len(df),)+input_shape)
+    images = np.zeros((len(df),)+input_shape, dtype=np.uint8)
         
     count = 0
     for image_index in df['Image Index'].values:
@@ -242,7 +242,7 @@ def make_dataset(df=[],
         labels = np.array(df["Finding Labels"].str.contains(pathology)*1.0)
         labels = to_categorical(labels[:data_num], num_classes=2)
     
-    assert data.itemsize==1, print(data.itemsize)
+    assert data.itemsize==1, print(data.dtype, data.itemsize)
     if if_save_npy and (not os.path.exists(path_to_data)):
         np.save(path_to_data, data)
         np.save(path_to_labels, labels)
