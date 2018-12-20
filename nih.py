@@ -214,10 +214,13 @@ def make_dataset(df=[],
                  if_single_pathology=True,
                  ):
     size = input_shape[0]
-    path_to_data = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) + "%s_size%d_%s_data.npy" % (group, size, pathology)
-    path_to_labels = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) + "%s_size%d_%s_labels.npy" % (group, size, pathology)
+    path_to_ratio = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio)
+    if not if_single_pathology:
+        path_to_group_csv[:-1] + "_multipathology/"
+    path_to_data = path_to_ratio  + "%s_size%d_%s_data.npy" % (group, size, pathology)
+    path_to_labels = path_to_ratio + "%s_size%d_%s_labels.npy" % (group, size, pathology)
 #    path_to_group_csv = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) + "%s_%s.csv" % (group, pathology)
-    path_to_group_csv = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) + "%s.csv" % (group)
+    path_to_group_csv = path_to_ratio+ "%s.csv" % (group)
     
     # csv をロード
     if if_load_df and os.path.exists(path_to_group_csv[:-4]+"_%s.csv" % pathology):
@@ -300,7 +303,7 @@ def batch_iter(data, labels, if_normalize,
                 batch_data = np.asarray(data[batch_indices], dtype=np.float32)
                 batch_labels = labels[batch_indices]
                 if if_normalize:
-                    batch_data = (batch_data - np.mean(batch_data, axis=(1,2,3)) ) / np.std(batch_data, axis=(1,2,3))
+                    batch_data = (batch_data - np.mean(batch_data, axis=(1,2,3), keepdims=True) ) / np.std(batch_data, axis=(1,2,3), keepdims=True)
 #                df_epoch = df_shuffle[start_index:end_index]
 #                data = load_images(df_epoch, path_to_image_dir=path_to_image_dir, input_shape=input_shape, if_rgb=if_rgb, if_normalize=if_normalize)
 #                labels = load_gts(df_epoch)
