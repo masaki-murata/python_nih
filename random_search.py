@@ -17,11 +17,7 @@ def dict_hyperparam():
     hp["epoch_num"] = [32]
     
     hp['pool_stride'] = ['pool', 'stride']
-#    hp["downsample_num"] = list( range(1,log_width) )
-#    for x in range(1, log_width):
-#        hp["fn%d" % x] = [2**y for y in range(3,7)] #list(range(8,65))
-#        hp["conv_width%d" % x] = list(range(2, max(3,width//2**x)))
-#        hp["conv_num%d" % x] = [1,2,3,4]
+    hp['network'] = ["VGG16", "VGG19", "DenseNet121", "DenseNet169", "DenseNet201", "InceptionV3", "ResNet50", "Xception"]
     
     hp["dense_layer_num"] = [1,2]
     hp["dense_units1"] = [2**x for x in range(1,9)]#list(range(2,256))
@@ -50,5 +46,37 @@ def chose_hyperparam(ransuu={}):
     if hp_value["dense_layer_num"] == 1:
         hp_value["dense_units1"] = 2
      
-    
     return hp_value
+
+
+def random_search(pathology,
+                  iteration,
+                  ratio,
+                  ):
+    
+    train(input_shape,#=(128,128,1),
+              path_to_image_dir,#="",
+              batch_size,#=32,
+              val_num,#=128,
+              epochs,#=100,
+              ratio,#=[0.7,0.15,0.15],
+              pathology,#="Effusion",
+              patience,#=8,
+              path_to_model_save,#="",
+              eps,#=0.1,
+              network="",
+              if_transfer=True,
+              if_rgb=False,
+              if_batch_from_df=False,
+              if_normalize=True,
+              if_duplicate=True,
+              if_augment=False,
+              if_train=True,
+              if_datagen_self=True,
+              if_loss_ambiguous=False,
+              if_single_pathology=True,
+              nb_gpus=1,
+              
+              
+
+

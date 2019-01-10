@@ -282,7 +282,7 @@ def batch_iter_df(df,
     
     return data_generator(), steps_per_epoch
 
-def batch_iter(data, labels, if_normalize,
+def batch_iter(data, labels, if_normalize, if_augment,
                batch_size=32,
                ):
     norm_indices = np.where(labels[:,1]==0)[0]
@@ -304,6 +304,7 @@ def batch_iter(data, labels, if_normalize,
                 batch_labels = labels[batch_indices]
                 if if_normalize:
                     batch_data = (batch_data - np.mean(batch_data, axis=(1,2,3), keepdims=True) ) / np.std(batch_data, axis=(1,2,3), keepdims=True)
+                    
 #                df_epoch = df_shuffle[start_index:end_index]
 #                data = load_images(df_epoch, path_to_image_dir=path_to_image_dir, input_shape=input_shape, if_rgb=if_rgb, if_normalize=if_normalize)
 #                labels = load_gts(df_epoch)
@@ -553,7 +554,7 @@ def train(input_shape,#=(128,128,1),
                                                )
         assert train_data.itemsize==1, print("train_data.itemsize = ", train_data.itemsize)
         if if_datagen_self:
-            train_gen , steps_per_epoch= batch_iter(train_data, train_label, if_normalize, batch_size=batch_size)
+            train_gen , steps_per_epoch= batch_iter(train_data, train_label, if_normalize, if_augment, batch_size=batch_size)
 
 #        train_label = to_categorical(train_label)
     print(len(df_train), len(train_label))
@@ -730,30 +731,34 @@ def train_pathologies(pathologies,#=[],
 
 def read_comandline(arg_dict, 
                     str_args, int_args, bool_args, list_args, float_args,
-                    arg_name, comandline):
-    if re.match('^'+arg_name, comandline):
-#        value = re.search('(?<=^'+arg_name+'=)\S+', comandline).group(0)
-        if arg_name in str_args:
-            value = re.search('(?<=^'+arg_name+'=)\S+', comandline).group(0)
-            arg_dict[arg_name] = str(value)
-        elif arg_name in int_args:
-            value = re.search('(?<=^'+arg_name+'=)\d+', comandline).group(0)
-            arg_dict[arg_name] = int(value)
-        elif arg_name in float_args:
-            value = re.search('(?<=^'+arg_name+'=)\S+', comandline).group(0)
-            arg_dict[arg_name] = float(value)
-        elif arg_name in bool_args:
-            value = re.search('(?<=^'+arg_name+'=)\w+', comandline).group(0)
-            if value == "True":
-#                    arg_dict['if_list'][arg_name] = True
-                arg_dict[arg_name] = True
-            else:
-#                    arg_dict['if_list'][arg_name] = False
-                arg_dict[arg_name] = False
-        elif arg_name in list_args:
-            value = re.search('(?<=^'+arg_name+'=)\w+', comandline).group(0)
-            arg_dict[arg_name].append(value)
-            arg_dict[arg_name]=list(set(arg_dict[arg_name]))
+                    total_args, comandline):
+    count=0
+    for arg_name in total_args:
+        if re.match('^'+arg_name, comandline):
+            count += 1
+    #        value = re.search('(?<=^'+arg_name+'=)\S+', comandline).group(0)
+            if arg_name in str_args:
+                value = re.search('(?<=^'+arg_name+'=)\S+', comandline).group(0)
+                arg_dict[arg_name] = str(value)
+            elif arg_name in int_args:
+                value = re.search('(?<=^'+arg_name+'=)\d+', comandline).group(0)
+                arg_dict[arg_name] = int(value)
+            elif arg_name in float_args:
+                value = re.search('(?<=^'+arg_name+'=)\S+', comandline).group(0)
+                arg_dict[arg_name] = float(value)
+            elif arg_name in bool_args:
+                value = re.search('(?<=^'+arg_name+'=)\w+', comandline).group(0)
+                if value == "True":
+    #                    arg_dict['if_list'][arg_name] = True
+                    arg_dict[arg_name] = True
+                else:
+    #                    arg_dict['if_list'][arg_name] = False
+                    arg_dict[arg_name] = False
+            elif arg_name in list_args:
+                value = re.search('(?<=^'+arg_name+'=)\w+', comandline).group(0)
+                arg_dict[arg_name].append(value)
+                arg_dict[arg_name]=list(set(arg_dict[arg_name]))
+    assert count==1, "count = {0}".format(count)
 #            elif arg_name in func_args:
 #                value = re.search('(?<=^'+arg_name+'=)\w+', comandline).group(0)
 #                if value == "True":
@@ -814,10 +819,10 @@ def main():
     if argc > 0:
         for arg_index in range(argc):
             arg_input = argvs[arg_index]
-            for arg_name in total_args:
-                read_comandline(arg_nih, 
-                                str_args, int_args, bool_args, list_args, float_args,
-                                arg_name, arg_input)
+#            for arg_name in total_args:
+            read_comandline(arg_nih, 
+                            str_args, int_args, bool_args, list_args, float_args,
+                            total_args, arg_input)
     arg_nih['ratio']=[arg_nih['ratio_train'], arg_nih['ratio_validation'], 1-arg_nih['ratio_train']-arg_nih['ratio_validation']]
     
     
