@@ -30,6 +30,9 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras import backend as K
 
 
+from data_process import make_dataset, class_balance
+
+
 base_dir = os.getcwd()
 if not re.search("nih_python", base_dir):
     base_dir = base_dir + "/xray/nih_python/"
@@ -145,65 +148,6 @@ def move_images(path_to_original_dir="/mnt/nas-public/nih-cxp-dataset/images/",
     
 #    return train_ids, validation_ids, test_ids
 
-def make_dataset(df=[],
-                 group="train",
-                 path_to_image_dir="",
-                 ratio=[0.7,0.15,0.15],
-                 input_shape=(128, 128, 1),
-                 data_num=128,
-                 pathology="Effusion",
-                 path_to_group_csv="",
-                 if_rgb=False,
-#                 if_normalize=True,
-                 if_load_npy=False,
-                 if_save_npy=False,
-                 if_return_df=False,
-                 if_load_df=False,
-                 if_single_pathology=True,
-                 ):
-    size = input_shape[0]
-    path_to_ratio = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio)
-    if not if_single_pathology:
-        path_to_ratio = path_to_ratio[:-1] + "_multipathology/"
-    path_to_data = path_to_ratio  + "%s_size%d_%s_data.npy" % (group, size, pathology)
-    path_to_labels = path_to_ratio + "%s_size%d_%s_labels.npy" % (group, size, pathology)
-#    path_to_group_csv = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) + "%s_%s.csv" % (group, pathology)
-    path_to_group_csv = path_to_ratio+ "%s.csv" % (group)
-    
-    # csv をロード
-    if if_load_df and os.path.exists(path_to_group_csv[:-4]+"_%s.csv" % pathology):
-        df = pd.read_csv(path_to_group_csv[:-4]+"_%s.csv" % pathology)
-#        elif os.path.exists(path_to_group_csv[:-4]+"_%s.csv" % pathology):
-#            df = pd.read_csv(path_to_group_csv)
-        
-    if if_load_npy and os.path.exists(path_to_data):
-        data = np.load(path_to_data)
-        labels = np.load(path_to_labels)
-#    df_deplicate = pd.read_csv()
-    else:
-        print("len(df), data_num =", len(df), data_num)
-        print("df[Finding Labels], pathology = ", df["Finding Labels"], pathology)
-        if if_single_pathology: # 該当する病変だけを含むかどうかで正負を判定する
-            df = df[(df["Finding Labels"]=="No Finding") | (df["Finding Labels"]==pathology)]
-#        df = df[(df["Finding Labels"]=="No Finding") | (df["Finding Labels"].str.contains(pathology))]
-        data_num = min(data_num, len(df))
-        print("len(df), data_num =", len(df), data_num)
-#        df_shuffle = df.sample(frac=1)
-        data = load_images(df[:data_num], path_to_image_dir=path_to_image_dir, input_shape=input_shape, if_rgb=if_rgb)#, if_normalize=if_normalize)
-        labels = np.array(df["Finding Labels"].str.contains(pathology)*1.0)
-        labels = to_categorical(labels[:data_num], num_classes=2)
-    
-    assert data.itemsize==1, print(data.dtype, data.itemsize)
-    if if_save_npy and (not os.path.exists(path_to_data)):
-        np.save(path_to_data, data)
-        np.save(path_to_labels, labels)
-    if not os.path.exists(path_to_group_csv[:-4]+"_%s.csv" % pathology):
-        df[:data_num].to_csv(path_to_group_csv[:-4]+"_%s.csv" % pathology)
-    
-    if if_return_df:
-        return data[:data_num], labels[:data_num], df[:data_num]
-    else:
-        return data[:data_num], labels[:data_num]
 
     
 def batch_iter_df(df,
@@ -362,33 +306,6 @@ def auc(y_true, y_pred):
 #def weighted_crossentropy(y_true, y_pred):
 #    y_pred[y_true]
 
-# 正常・異常が一対一になるように
-def class_balance(data, labels):
-    norm_indices = np.where(labels[:,1]==0)[0]
-    sick_indices = np.where(labels[:,1]==1)[0]
-    sick_num = len(sick_indices)
-#    norm_num, sick_num = len(norm_indices), len(sick_indices)
-    norm_indices = np.random.choice(norm_indices, sick_num, replace=False)
-    indices = np.hstack((norm_indices, sick_indices))
-    np.random.shuffle(indices)
-    
-#    data = data[indices]
-#    labels = labels[indices]
-#    
-#    data_norm = data[labels[:,1]==0]
-#    data_sick = data[labels[:,1]==1]
-#    norm_num, sick_num = len(data_norm), len(data_sick)
-#    
-#    norm_indices = np.random.randint(norm_num, size=sick_num)
-#    data_norm_select = data_norm[norm_indices]
-#    data_epoch = np.vstack((data_norm_select, data_sick))
-#    labels_epoch = np.vstack(( np.tile(np.array([1,0]), (sick_num,1)), \
-#                                               np.tile(np.array([0,1]), (sick_num,1)) ))
-#    shuffle_indices = np.random.permutation(np.arange(len(labels_epoch)))
-#    data_epoch = data_epoch[shuffle_indices]
-#    labels_epoch = labels_epoch[shuffle_indices]
-    
-    return data[indices], labels[indices]
 
 def train(input_shape,#=(128,128,1),
           path_to_image_dir,#="",

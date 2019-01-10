@@ -66,6 +66,81 @@ def grouping(path_to_nih_data_csv = base_dir+"../nih_data/Data_Entry_2017_murata
     df_test.to_csv(path_to_group_csv % "test")
 
 
+# データセットを作成する関数
+def make_dataset(df=[],
+                 group="train",
+                 path_to_image_dir="",
+                 ratio=[0.7,0.15,0.15],
+                 input_shape=(128, 128, 1),
+                 data_num=128,
+                 pathology="Effusion",
+                 path_to_group_csv="",
+                 if_rgb=False,
+#                 if_normalize=True,
+                 if_load_npy=False,
+                 if_save_npy=False,
+                 if_return_df=False,
+                 if_load_df=False,
+                 if_single_pathology=True,
+                 ):
+    size = input_shape[0]
+    path_to_ratio = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio)
+    if not if_single_pathology:
+        path_to_ratio = path_to_ratio[:-1] + "_multipathology/"
+    path_to_data = path_to_ratio  + "%s_size%d_%s_data.npy" % (group, size, pathology)
+    path_to_labels = path_to_ratio + "%s_size%d_%s_labels.npy" % (group, size, pathology)
+#    path_to_group_csv = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) + "%s_%s.csv" % (group, pathology)
+    path_to_group_csv = path_to_ratio+ "%s.csv" % (group)
+    
+    # csv をロード
+    if if_load_df and os.path.exists(path_to_group_csv[:-4]+"_%s.csv" % pathology):
+        df = pd.read_csv(path_to_group_csv[:-4]+"_%s.csv" % pathology)
+#        elif os.path.exists(path_to_group_csv[:-4]+"_%s.csv" % pathology):
+#            df = pd.read_csv(path_to_group_csv)
+        
+    if if_load_npy and os.path.exists(path_to_data):
+        data = np.load(path_to_data)
+        labels = np.load(path_to_labels)
+#    df_deplicate = pd.read_csv()
+    else:
+        print("len(df), data_num =", len(df), data_num)
+        print("df[Finding Labels], pathology = ", df["Finding Labels"], pathology)
+        if if_single_pathology: # 該当する病変だけを含むかどうかで正負を判定する
+            df = df[(df["Finding Labels"]=="No Finding") | (df["Finding Labels"]==pathology)]
+#        df = df[(df["Finding Labels"]=="No Finding") | (df["Finding Labels"].str.contains(pathology))]
+        data_num = min(data_num, len(df))
+        print("len(df), data_num =", len(df), data_num)
+#        df_shuffle = df.sample(frac=1)
+        data = load_images(df[:data_num], path_to_image_dir=path_to_image_dir, input_shape=input_shape, if_rgb=if_rgb)#, if_normalize=if_normalize)
+        labels = np.array(df["Finding Labels"].str.contains(pathology)*1.0)
+        labels = to_categorical(labels[:data_num], num_classes=2)
+    
+    assert data.itemsize==1, print(data.dtype, data.itemsize)
+    if if_save_npy and (not os.path.exists(path_to_data)):
+        np.save(path_to_data, data)
+        np.save(path_to_labels, labels)
+    if not os.path.exists(path_to_group_csv[:-4]+"_%s.csv" % pathology):
+        df[:data_num].to_csv(path_to_group_csv[:-4]+"_%s.csv" % pathology)
+    
+    if if_return_df:
+        return data[:data_num], labels[:data_num], df[:data_num]
+    else:
+        return data[:data_num], labels[:data_num]
+
+
+# 正常・異常が一対一になるように
+def class_balance(data, labels):
+    norm_indices = np.where(labels[:,1]==0)[0]
+    sick_indices = np.where(labels[:,1]==1)[0]
+    sick_num = len(sick_indices)
+#    norm_num, sick_num = len(norm_indices), len(sick_indices)
+    norm_indices = np.random.choice(norm_indices, sick_num, replace=False)
+    indices = np.hstack((norm_indices, sick_indices))
+    np.random.shuffle(indices)
+        
+    return data[indices], labels[indices]
+
+
 def make_bb_images(path_to_bb = "../nih_data/BBox_List_2017.csv",
                    pathology="Effusion"):
     path_to_images = "../nih_data/images/"
