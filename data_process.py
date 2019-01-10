@@ -10,6 +10,62 @@ import pandas as pd
 import numpy as np
 import os, re, shutil
 
+base_dir = os.getcwd()
+
+def grouping(path_to_nih_data_csv = base_dir+"../nih_data/Data_Entry_2017_murata.csv",
+             path_to_bb = base_dir+"../nih_data/BBox_List_2017.csv",
+             path_to_save_dir = "",
+#             path_to_train_csv = "../nih_data/Data_Entry_2017_train.csv",
+#             path_to_validation_csv = "../nih_data/Data_Entry_2017_validation.csv",
+#             path_to_test_csv = "../nih_data/Data_Entry_2017_test.csv",
+             if_duplicate=True,
+             ratio = [0.7, 0.1, 0.2],
+#             if_save = False,
+             ):
+#    path_to_save_dir = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) 
+    if not os.path.exists(path_to_save_dir):
+        os.makedirs(path_to_save_dir)
+    path_to_group_csv = path_to_save_dir+ "%s.csv"
+    
+    df = pd.read_csv(path_to_nih_data_csv)
+    total_num = len(df)
+    train_num, validation_num = int(ratio[0]*len(df)), int(ratio[1]*len(df))
+    
+    df_bb = pd.read_csv(path_to_bb)
+    bb_indices = df_bb["Image Index"].values
+    bb_indices = list(set(list( map(lambda x: x[:-7]+"000.png", bb_indices) )))
+#    test_num = len(df) - (train_num + validation_num)
+    # BB のある患者は test に入れるので、df からそれらの患者を削除
+    df_nonbb = df[~df["Image Index"].isin(bb_indices)]
+    df_shuffle = df_nonbb.sample(frac=1)
+    df_train, df_validation, df_test = df_shuffle[:train_num], df_shuffle[train_num:train_num+validation_num], df_shuffle[train_num+validation_num:]
+    df_test = pd.concat([df_test, df[df["Image Index"].isin(bb_indices)]])
+    assert total_num==(len(df_train)+len(df_validation)+len(df_test)), "{0},{1},{2},{3}".format(total_num, len(df_train), len(df_validation), len(df_test))
+    
+    if if_duplicate:
+        # 重複を含んだリストを読み込む
+        df_duplicate = pd.read_csv(base_dir+"../nih_data/Data_Entry_2017.csv")
+        # 患者リストを作成
+        train_ids = list(df_train["Patient ID"].values)
+        validation_ids = list(df_validation["Patient ID"].values)
+        test_ids = list(df_test["Patient ID"].values)
+        # 重複を許して患者を取り出す
+        df_train = df_duplicate[df_duplicate["Patient ID"].isin(train_ids)]
+        df_validation = df_duplicate[df_duplicate["Patient ID"].isin(validation_ids)]
+        df_test = df_duplicate[df_duplicate["Patient ID"].isin(test_ids)]
+        # 保存先を変更
+        path_to_group_csv = path_to_group_csv[:-4]+"_duplicate.csv"
+        print(len(df_train))
+#        path_to_train_csv = path_to_train_csv[:-4]+"_duplicate.csv"
+#        path_to_validation_csv = path_to_validation_csv[:-4]+"_duplicate.csv"
+#        path_to_test_csv = path_to_test_csv[:-4]+"_duplicate.csv"
+    assert len(df_duplicate)==(len(df_train)+len(df_validation)+len(df_test)), "{0},{1},{2},{3}".format(len(df_duplicate), len(df_train), len(df_validation), len(df_test))
+    # save to csv
+    df_train.to_csv(path_to_group_csv % "train")
+    df_validation.to_csv(path_to_group_csv % "validation")
+    df_test.to_csv(path_to_group_csv % "test")
+
+
 def make_bb_images(path_to_bb = "../nih_data/BBox_List_2017.csv",
                    pathology="Effusion"):
     path_to_images = "../nih_data/images/"
