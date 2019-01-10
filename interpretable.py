@@ -174,7 +174,7 @@ class CAM:
             self.if_save_npy=False
         print("len(self.df_test) = ", len(self.df_test))
         print("input_shape = ",self.input_shape)
-        self.test_data, self.test_label, self.df_test = nih.make_dataset(df=self.df_test,
+        self.test_data, self.test_label, self.df_test = data_process.make_dataset(df=self.df_test,
                                                                          group="test",
                                                                          ratio=self.ratio,
                                                                          path_to_image_dir=self.path_to_image_dir,

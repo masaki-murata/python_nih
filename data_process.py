@@ -66,6 +66,31 @@ def grouping(path_to_nih_data_csv = base_dir+"../nih_data/Data_Entry_2017_murata
     df_test.to_csv(path_to_group_csv % "test")
 
 
+# 画像を読み込む関数
+def load_images(df,
+                input_shape=(128, 128, 1),
+                path_to_image_dir = base_dir+"../nih_data/images/",
+                if_rgb=False,
+#                if_normalize=True,
+                ):
+    images = np.zeros((len(df),)+input_shape, dtype=np.uint8)
+        
+    count = 0
+    for image_index in df['Image Index'].values:
+        if if_rgb:
+            for rgb in range(3):
+                images[count,:,:,rgb]  = np.asarray(Image.open(path_to_image_dir+image_index).convert('L'))
+        else:
+            image = np.asarray( Image.open(path_to_image_dir+image_index).convert('L').resize(input_shape[:-1]) )
+#            if if_normalize:
+#                image = (image-image.mean()) / image.std()
+            images[count] = image.reshape(input_shape)
+        count += 1
+#    images = images.reshape(images.shape+(1,))
+    
+    return images
+
+
 # データセットを作成する関数
 def make_dataset(df=[],
                  group="train",

@@ -30,7 +30,7 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras import backend as K
 
 
-from data_process import make_dataset, class_balance
+from data_process import make_dataset, class_balance, grouping, load_images
 
 
 base_dir = os.getcwd()
@@ -52,34 +52,6 @@ if os.name=='posix' and if_DLB:
 
     
 
-#def set_label(path_to_nih_data_csv = "../nih_data/nih_data_000.csv",
-#              path_to_png_dir = "../nih_data/pngs/",
-#              ):
-##    path_to_nih_data_csv = "../nih_data/nih_data_000.csv"
-##    path_to_png_dir = "../nih_data/pngs/"
-##    name_png = "%08d_000.png"
-#    num_pngs = len(pd.read_csv(path_to_nih_data_csv))
-#    nih_csv = open(path_to_nih_data_csv, 'r', encoding="utf-8")
-#    reader = csv.reader(nih_csv)
-#    header = next(reader)
-##    no_findings = []
-#    gts = np.ones(num_pngs, dtype=np.int)
-#    count = 0
-#    for row in reader:
-##        print(path_to_png_dir+row[0])
-#        img = np.asarray(Image.open(path_to_png_dir+row[0]).convert('L'))
-##        print(row[0], img.shape)
-#        if row[1] == "No Finding":
-##            print(row[1])
-##            no_findings.append(row[0])
-#            gts[count] = 0
-#        count += 1
-#    if args[if_save_gts]:
-#        np.save(args[path_to_gts],gts)
-##    print(len(no_findings))
-#    return gts
-
-
 # ground truth を作る関数
 def set_gts(path_to_nih_data_csv = base_dir+"../nih_data/Data_Entry_2017_murarta.csv",
             path_to_png_dir = base_dir+"../nih_data/pngs/",
@@ -95,29 +67,6 @@ def set_gts(path_to_nih_data_csv = base_dir+"../nih_data/Data_Entry_2017_murarta
     return gts
     
     
-def load_images(df,
-                input_shape=(128, 128, 1),
-                path_to_image_dir = base_dir+"../nih_data/images/",
-                if_rgb=False,
-#                if_normalize=True,
-                ):
-    images = np.zeros((len(df),)+input_shape, dtype=np.uint8)
-        
-    count = 0
-    for image_index in df['Image Index'].values:
-        if if_rgb:
-            for rgb in range(3):
-                images[count,:,:,rgb]  = np.asarray(Image.open(path_to_image_dir+image_index).convert('L'))
-        else:
-            image = np.asarray( Image.open(path_to_image_dir+image_index).convert('L').resize(input_shape[:-1]) )
-#            if if_normalize:
-#                image = (image-image.mean()) / image.std()
-            images[count] = image.reshape(input_shape)
-        count += 1
-#    images = images.reshape(images.shape+(1,))
-    
-    return images
-
 # ground truth を dataframe からロードする関する
 def load_gts(df,
              ):
