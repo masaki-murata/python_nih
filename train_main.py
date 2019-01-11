@@ -80,9 +80,9 @@ class CNN():
         model = Model(input=input_img, output=top_model(transfer.output))
     
     #    model = Model(input_img, output)
-        if optimizer=="Adam":
+        if hp_value["optimizer"]=="Adam":
             opt_generator = Adam(lr=hp_value["learning_rate"], beta_1=0.9, beta_2=0.999, epsilon=1e-08)
-        elif optimizer=="SGD":
+        elif hp_value["optimizer"]=="SGD":
             opt_generator = SGD(lr=hp_value["learning_rate"], momentum=hp_value["momentum"], decay=0.0, nesterov=False)
         model.compile(loss='binary_crossentropy', optimizer=opt_generator, metrics=['acc'])
     
