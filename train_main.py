@@ -44,11 +44,11 @@ class CNN():
     def load_dataset(self,
                      path_to_data_label,
                      ):
-        data, labels = {}, {}
+        self.data, self.labels = {}, {}
         for group in ["train", "validation", "test"]:
-            data[group] = np.load(path_to_data_label % ("validation", "data"))
-            labels[group] = np.load(path_to_data_label % ("validation", "labels"))
-        data["validation"], labels["validation"] = class_balance(data["validation"], labels["validation"])
+            self.data[group] = np.load(path_to_data_label % ("validation", "data"))
+            self.labels[group] = np.load(path_to_data_label % ("validation", "labels"))
+        self.data["validation"], self.labels["validation"] = class_balance(self.data["validation"], self.labels["validation"])
         
         
     def make_model(self, hp_value):
@@ -94,6 +94,9 @@ class CNN():
 
     def train(self, hp_value, nb_gpus,
               ):
+        # load dataset
+        load_dataset(path_to_data_label)
+        # make model
         model = make_model(self, hp_value)
         if int(nb_gpus) > 1:
             model_multiple_gpu = multi_gpu_model(model, gpus=nb_gpus)
