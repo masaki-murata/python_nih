@@ -14,6 +14,7 @@ import os, re, sys
 
 # import original module
 import nih
+import data_process
 
 base_dir = os.getcwd()
 if not re.search("nih_python", base_dir):
