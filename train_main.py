@@ -32,22 +32,31 @@ from keras import backend as K
 from data_process import make_dataset, class_balance
 from random_search import chose_hyperparam
 
+base_dir = os.getcwd()
+if not re.search("nih_python", base_dir):
+    base_dir = base_dir + "/xray/nih_python/"
+
 
 class CNN():
     def __init__(self, 
+                 pathology,
                  input_shape,
                  ratio=[0.7,0.1,0.2],
                  ):
         self.ratio = ratio
         self.input_shape = input_shape
+        self.pathology = pathology
+        self.size = input_shape[0]
                 
     def load_dataset(self,
-                     path_to_data_label,
+#                     path_to_data_label, #  "%s_size%d_%s_%s.npy" % (group, size, pathology, data/labels)
                      ):
+        path_to_data_label = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(self.ratio)
+        path_to_data_label = path_to_data_label + "%s_size%d_%s_data.npy"
         self.data, self.labels = {}, {}
         for group in ["train", "validation", "test"]:
-            self.data[group] = np.load(path_to_data_label % ("validation", "data"))
-            self.labels[group] = np.load(path_to_data_label % ("validation", "labels"))
+            self.data[group] = np.load(path_to_data_label % ("validation", self.size, self.pathology, "data"))
+            self.labels[group] = np.load(path_to_data_label % ("validation", self.size, self.pathology, "labels"))
         self.data["validation"], self.labels["validation"] = class_balance(self.data["validation"], self.labels["validation"])
         
         
@@ -106,9 +115,10 @@ class CNN():
 
 def main():
     hp_value = chose_hyperparam()
+    nb_gpus=1
     
-    cnn = CNN(input_shape=(128,128,3))
-    cnn.make_model(hp_value)
+    cnn = CNN(pathology="Effusion", input_shape=(128,128,3))
+    cnn.train(hp_value,nb_gpus)
 
 if __name__ == '__main__':
     main()        
