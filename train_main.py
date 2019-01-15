@@ -30,6 +30,7 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras import backend as K
 
 from data_process import make_dataset, class_balance
+from random_search import chose_hyperparam
 
 
 class CNN():
@@ -91,5 +92,22 @@ class CNN():
         return model
 
 
+    def train(self, hp_value, nb_gpus,
+              ):
+        model = make_model(self, hp_value)
+        if int(nb_gpus) > 1:
+            model_multiple_gpu = multi_gpu_model(model, gpus=nb_gpus)
+        else:
+            model_multiple_gpu = model
+
+
+def main():
+    hp_value = chose_hyperparam()
+    
+    cnn = CNN(input_shape=(128,128,3))
+    cnn.make_model(hp_value)
+
+if __name__ == '__main__':
+    main()        
 
     

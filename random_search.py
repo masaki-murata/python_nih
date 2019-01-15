@@ -76,6 +76,7 @@ def random_search(pathology,
               if_loss_ambiguous=False,
               if_single_pathology=True,
               nb_gpus=1,
+              )
               
               
 
