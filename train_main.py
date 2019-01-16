@@ -32,7 +32,7 @@ from keras import backend as K
 from data_process import make_dataset, class_balance
 from random_search import chose_hyperparam
 
-base_dir = os.getcwd()
+base_dir = os.getcwd()+"/"
 if not re.search("nih_python", base_dir):
     base_dir = base_dir + "/xray/nih_python/"
 
@@ -54,17 +54,21 @@ class CNN():
     def __init__(self, 
                  pathology,
                  input_shape,
+                 if_single_pathology,
                  ratio=[0.7,0.1,0.2],
                  ):
         self.ratio = ratio
         self.input_shape = input_shape
         self.pathology = pathology
         self.size = input_shape[0]
+        self.if_single_pathology = if_single_pathology
                 
     def load_dataset(self,
 #                     path_to_data_label, #  "%s_size%d_%s_%s.npy" % (group, size, pathology, data/labels)
                      ):
         path_to_data_label = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(self.ratio)
+        if not self.if_single_pathology:
+            path_to_data_label = path_to_data_label[:-1] + "_multipathology/"
         path_to_data_label = path_to_data_label + "%s_size%d_%s_%s.npy"
         self.data, self.labels = {}, {}
         for group in ["train", "validation", "test"]:
@@ -129,8 +133,9 @@ class CNN():
 def main():
     hp_value = chose_hyperparam()
     nb_gpus=1
+    if_single_pathology=False
     
-    cnn = CNN(pathology="Effusion", input_shape=(256,256,3))
+    cnn = CNN(pathology="Effusion", input_shape=(128,128,3), if_single_pathology=if_single_pathology)
     cnn.train(hp_value,nb_gpus)
 
 if __name__ == '__main__':
