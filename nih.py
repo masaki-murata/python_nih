@@ -33,9 +33,9 @@ from keras import backend as K
 from data_process import make_dataset, class_balance, grouping, load_images
 
 
-base_dir = os.getcwd()
+base_dir = os.getcwd()+"/"
 if not re.search("nih_python", base_dir):
-    base_dir = base_dir + "/xray/nih_python/"
+    base_dir = base_dir + "xray/nih_python/"
 
 import tensorflow as tf
 from keras.backend.tensorflow_backend import set_session

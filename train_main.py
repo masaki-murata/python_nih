@@ -36,6 +36,19 @@ base_dir = os.getcwd()
 if not re.search("nih_python", base_dir):
     base_dir = base_dir + "/xray/nih_python/"
 
+import tensorflow as tf
+from keras.backend.tensorflow_backend import set_session
+if_DLB=False
+if os.name=='posix' and if_DLB:
+    config = tf.ConfigProto(
+        gpu_options=tf.GPUOptions(
+            visible_device_list="2", # specify GPU number
+            allow_growth=True
+        )
+    )
+    
+    set_session(tf.Session(config=config))
+
 
 class CNN():
     def __init__(self, 
@@ -52,11 +65,11 @@ class CNN():
 #                     path_to_data_label, #  "%s_size%d_%s_%s.npy" % (group, size, pathology, data/labels)
                      ):
         path_to_data_label = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(self.ratio)
-        path_to_data_label = path_to_data_label + "%s_size%d_%s_data.npy"
+        path_to_data_label = path_to_data_label + "%s_size%d_%s_%s.npy"
         self.data, self.labels = {}, {}
         for group in ["train", "validation", "test"]:
-            self.data[group] = np.load(path_to_data_label % ("validation", self.size, self.pathology, "data"))
-            self.labels[group] = np.load(path_to_data_label % ("validation", self.size, self.pathology, "labels"))
+            self.data[group] = np.load(path_to_data_label % (group, self.size, self.pathology, "data"))
+            self.labels[group] = np.load(path_to_data_label % (group, self.size, self.pathology, "labels"))
         self.data["validation"], self.labels["validation"] = class_balance(self.data["validation"], self.labels["validation"])
         
         
@@ -104,9 +117,9 @@ class CNN():
     def train(self, hp_value, nb_gpus,
               ):
         # load dataset
-        load_dataset(path_to_data_label)
+        self.load_dataset()
         # make model
-        model = make_model(self, hp_value)
+        model = self.make_model(hp_value)
         if int(nb_gpus) > 1:
             model_multiple_gpu = multi_gpu_model(model, gpus=nb_gpus)
         else:
@@ -117,7 +130,7 @@ def main():
     hp_value = chose_hyperparam()
     nb_gpus=1
     
-    cnn = CNN(pathology="Effusion", input_shape=(128,128,3))
+    cnn = CNN(pathology="Effusion", input_shape=(256,256,3))
     cnn.train(hp_value,nb_gpus)
 
 if __name__ == '__main__':

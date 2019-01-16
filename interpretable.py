@@ -16,9 +16,9 @@ import os, re, sys
 import nih
 import data_process
 
-base_dir = os.getcwd()
+base_dir = os.getcwd()+"/"
 if not re.search("nih_python", base_dir):
-    base_dir = base_dir + "/xray/nih_python/"
+    base_dir = base_dir + "xray/nih_python/"
 print(base_dir)
    
 import tensorflow as tf

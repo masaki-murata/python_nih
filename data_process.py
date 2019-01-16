@@ -9,8 +9,9 @@ from PIL import Image, ImageOps, ImageDraw
 import pandas as pd
 import numpy as np
 import os, re, shutil
+from keras.utils import to_categorical
 
-base_dir = os.getcwd()
+base_dir = os.getcwd()+"/"
 
 def grouping(path_to_nih_data_csv = base_dir+"../nih_data/Data_Entry_2017_murata.csv",
              path_to_bb = base_dir+"../nih_data/BBox_List_2017.csv",
@@ -95,7 +96,7 @@ def load_images(df,
 def make_dataset(df=[],
                  group="train",
                  path_to_image_dir="",
-                 ratio=[0.7,0.15,0.15],
+                 ratio=[0.7,0.1,0.2],
                  input_shape=(128, 128, 1),
                  data_num=128,
                  pathology="Effusion",
@@ -116,6 +117,11 @@ def make_dataset(df=[],
     path_to_labels = path_to_ratio + "%s_size%d_%s_labels.npy" % (group, size, pathology)
 #    path_to_group_csv = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(ratio) + "%s_%s.csv" % (group, pathology)
     path_to_group_csv = path_to_ratio+ "%s.csv" % (group)
+    
+    if len(df)==0:
+        df = pd.read_csv(path_to_group_csv[:-4]+"_duplicate.csv")
+    if data_num==-1:
+        data_num=len(df)
     
     # csv をロード
     if if_load_df and os.path.exists(path_to_group_csv[:-4]+"_%s.csv" % pathology):
@@ -357,29 +363,36 @@ def main():
     size = 1024
 #    path_to_cam_pngs="../nih_data/models/mm12dd17_size512_VGG19/%s/cams/%s_%s/murata_select/"
     path_to_cams = "../nih_data/models/mm12dd17_size512_VGG19/%s/cams/"
-#    path_to_bb_murata = "../nih_data/bb_images/%s/murata_select/" % pathology
-#    for layer_name, cam_method in zip(layer_names, cam_methods):
-#    for layer_name in layer_names:
-#        for cam_method in cam_methods:
-#            print(layer_name, cam_method)
-    move_cam_pngs(#cam_method, layer_name, 
-                  pathology,
-                  path_to_cams=path_to_cams,
-#                          path_to_bb_murata = "../nih_data/bb_images/%s/murata_select/",
-#                          path_to_cam_pngs = path_to_cam_pngs, # % (pathology, cam_method, layer_name),
-                          )
-    glue_cams(#cam_method, layer_name, 
-              pathology, size,
-#                      path_to_cam_pngs=path_to_cam_pngs, # % (pathology, cam_method, layer_name), 
-              path_to_cams=path_to_cams, # % (pathology, cam_method, layer_name),
-              )
-#    pathologies = ['Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Effusion', 'Emphysema', 'Fibrosis', 'Hernia', 'Infiltration', 'Mass', 'Nodule',
-#                   'Pleural_Thickening', 'Pneumonia', 'Pneumothorax']          
-#                   
-#    for pathology in pathologies:
-#        count = make_bb_images(pathology=pathology)
-#        print(pathology, count)
+    
 
+#    move_cam_pngs(#cam_method, layer_name, 
+#                  pathology,
+#                  path_to_cams=path_to_cams,
+##                          path_to_bb_murata = "../nih_data/bb_images/%s/murata_select/",
+##                          path_to_cam_pngs = path_to_cam_pngs, # % (pathology, cam_method, layer_name),
+#                          )
+#    glue_cams(#cam_method, layer_name, 
+#              pathology, size,
+##                      path_to_cam_pngs=path_to_cam_pngs, # % (pathology, cam_method, layer_name), 
+#              path_to_cams=path_to_cams, # % (pathology, cam_method, layer_name),
+#              )
+    make_dataset(df=[],
+                 group="train",
+                 path_to_image_dir=base_dir+"../nih_data/images/",
+                 ratio=[0.7,0.1,0.2],
+                 input_shape=(128, 128, 1),
+                 data_num=-1,
+                 pathology="Effusion",
+                 path_to_group_csv="",
+                 if_rgb=False,
+    #                 if_normalize=True,
+                 if_load_npy=False,
+                 if_save_npy=True,
+                 if_return_df=False,
+                 if_load_df=False,
+                 if_single_pathology=False,
+                 )
+    
 if __name__ == '__main__':
     main()
     
