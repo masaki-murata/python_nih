@@ -376,22 +376,23 @@ def main():
 ##                      path_to_cam_pngs=path_to_cam_pngs, # % (pathology, cam_method, layer_name), 
 #              path_to_cams=path_to_cams, # % (pathology, cam_method, layer_name),
 #              )
-    make_dataset(df=[],
-                 group="train",
-                 path_to_image_dir=base_dir+"../nih_data/images/",
-                 ratio=[0.7,0.1,0.2],
-                 input_shape=(128, 128, 1),
-                 data_num=-1,
-                 pathology="Effusion",
-                 path_to_group_csv="",
-                 if_rgb=False,
-    #                 if_normalize=True,
-                 if_load_npy=False,
-                 if_save_npy=True,
-                 if_return_df=False,
-                 if_load_df=False,
-                 if_single_pathology=False,
-                 )
+    for group in ["train", "validation", "test"]:
+        make_dataset(df=[],
+                     group=group,
+                     path_to_image_dir=base_dir+"../nih_data/images/",
+                     ratio=[0.7,0.1,0.2],
+                     input_shape=(128, 128, 1),
+                     data_num=-1,
+                     pathology="Effusion",
+                     path_to_group_csv="",
+                     if_rgb=False,
+        #                 if_normalize=True,
+                     if_load_npy=False,
+                     if_save_npy=True,
+                     if_return_df=False,
+                     if_load_df=False,
+                     if_single_pathology=False,
+                     )
     
 if __name__ == '__main__':
     main()
