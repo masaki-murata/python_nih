@@ -30,7 +30,7 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras import backend as K
 
 from data_process import make_dataset, class_balance
-from nih import loss_ambiguous
+from nih import loss_ambiguous, auc
 from random_search import chose_hyperparam
 
 base_dir = os.getcwd()+"/"
@@ -149,7 +149,7 @@ class CNN():
                                      zoom_range=hp_value["zoom_range"],
                                      )   
         
-        for ep in hp_values["epochs"]:
+        for ep in hp_value["epochs"]:
             # set training data class balanced
             train_data_epoch, train_labels_epoch = class_balance(self.data["train"], self.labels["train"])
             
@@ -159,6 +159,7 @@ class CNN():
             
             # predict for validation set
             val_pred = model_multiple_gpu.predict(self.data["validation"], batch_size=hp_value["batch_size"])
+            val_auc = nih.auc(self.labels["validation"], val_pred)
             
 
 def main():
