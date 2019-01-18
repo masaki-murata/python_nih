@@ -80,6 +80,7 @@ class CNN():
         
         
     def make_model(self, hp_value):
+        # set architecture
         input_img = Input(shape=self.input_shape)
         x = Conv2D(filters=3, kernel_size=3, padding="same", activation="relu")(input_img)
         if hp_value["network"]=="VGG16":
@@ -146,7 +147,10 @@ class CNN():
                                      width_shift_range=hp_value["width_shift_range"],
                                      height_shift_range=hp_value["height_shift_range"],
                                      zoom_range=hp_value["zoom_range"],
-                                     )    
+                                     )   
+        
+        for ep in hp_values["epochs"]:
+            train_data_epoch, train_labels_epoch = class_balance(self.data["train"], self.labels["train"])
 
 def main():
     hp_value = chose_hyperparam()
