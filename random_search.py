@@ -23,6 +23,11 @@ def dict_hyperparam():
     hp["dense_units1"] = [2**x for x in range(1,9)]#list(range(2,256))
     hp["dense_units2"] = [2]
     
+    hp["rotation_range"] = [0, 5, 10, 20, 30, 45]
+    hp["width_shift_range"] = [0, 0.1, 0.2, 0.3, 0.4, 0.5]
+    hp["height_shift_range"] = [0, 0.1, 0.2, 0.3, 0.4, 0.5]
+    hp["zoom_range"] = [0, 0.1, 0.2, 0.3, 0.4, 0.5]
+    
     return hp
 
         

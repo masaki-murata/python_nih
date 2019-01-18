@@ -128,7 +128,12 @@ class CNN():
             model_multiple_gpu = multi_gpu_model(model, gpus=nb_gpus)
         else:
             model_multiple_gpu = model
-
+            
+        datagen = ImageDataGenerator(rotation_range=hp_value["rotation_range"],
+                                     width_shift_range=hp_value["width_shift_range"],
+                                     height_shift_range=hp_value["height_shift_range"],
+                                     zoom_range=hp_value["zoom_range"],
+                                     )    
 
 def main():
     hp_value = chose_hyperparam()
