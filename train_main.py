@@ -30,6 +30,7 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras import backend as K
 
 from data_process import make_dataset, class_balance
+from nih import loss_ambiguous
 from random_search import chose_hyperparam
 
 base_dir = os.getcwd()+"/"
@@ -55,6 +56,7 @@ class CNN():
                  pathology,
                  input_shape,
                  if_single_pathology,
+                 if_loss_ambiguous,
                  ratio=[0.7,0.1,0.2],
                  ):
         self.ratio = ratio
@@ -107,11 +109,22 @@ class CNN():
         model = Model(input=input_img, output=top_model(transfer.output))
     
     #    model = Model(input_img, output)
+        # set optimizer
         if hp_value["optimizer"]=="Adam":
             opt_generator = Adam(lr=hp_value["learning_rate"], beta_1=0.9, beta_2=0.999, epsilon=1e-08)
         elif hp_value["optimizer"]=="SGD":
             opt_generator = SGD(lr=hp_value["learning_rate"], momentum=hp_value["momentum"], decay=0.0, nesterov=False)
-        model.compile(loss='binary_crossentropy', optimizer=opt_generator, metrics=['acc'])
+        
+        # set loss function
+        if hp_value["if_loss_ambiguous"]:
+            def loss_amb(y_true, y_pred):
+                return loss_ambiguous(y_true, y_pred, eps=0.1)
+            loss=loss_amb
+        else:
+            loss="binary_crossentropy"
+        
+        # compile the model
+        model.compile(loss=loss, optimizer=opt_generator, metrics=['acc'])
     
         model.summary()
         

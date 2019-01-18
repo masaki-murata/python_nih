@@ -27,6 +27,7 @@ def dict_hyperparam():
     hp["width_shift_range"] = [0, 0.1, 0.2, 0.3, 0.4, 0.5]
     hp["height_shift_range"] = [0, 0.1, 0.2, 0.3, 0.4, 0.5]
     hp["zoom_range"] = [0, 0.1, 0.2, 0.3, 0.4, 0.5]
+    hp["if_loss_ambiguous"] = [False]
     
     return hp
 
