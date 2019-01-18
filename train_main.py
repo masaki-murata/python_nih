@@ -150,7 +150,16 @@ class CNN():
                                      )   
         
         for ep in hp_values["epochs"]:
+            # set training data class balanced
             train_data_epoch, train_labels_epoch = class_balance(self.data["train"], self.labels["train"])
+            
+            # train for one epoch
+            model_multiple_gpu.fit_generator(datagen.flow(train_data_epoch, train_labels_epoch, batch_size=hp_value["batch_size"]),
+                                             steps_per_epoch=int(len(train_data_epoch) / hp_value["batch_size"]), epochs=1)
+            
+            # predict for validation set
+            val_pred = model_multiple_gpu.predict(self.data["validation"], batch_size=hp_value["batch_size"])
+            
 
 def main():
     hp_value = chose_hyperparam()
