@@ -132,7 +132,7 @@ class CNN():
         return model
 
 
-    def train(self, hp_value, nb_gpus,
+    def train(self, hp_value, nb_gpus, path_to_model_save,
               ):
         # load dataset
         self.load_dataset()
@@ -161,6 +161,10 @@ class CNN():
             # predict for validation set
             val_pred = model_multiple_gpu.predict(self.data["validation"], batch_size=hp_value["batch_size"])
             val_auc = auc(self.labels["validation"], val_pred)
+            
+            # save history in csv
+            df_history = pd.DataFrame(columns=["epoch", "validation_auc"])
+            df_history.loc[epoch] = [epoch+1, val_auc]
 
             if val_auc > val_auc_0:
                 count_patience=0
@@ -172,6 +176,7 @@ class CNN():
                 model.save(path_to_model_save)
             else:
                 count_patience+=1
+                # early stopping
                 if count_patience>hp_value["patience"]:
                     break
             
