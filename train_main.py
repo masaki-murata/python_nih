@@ -164,7 +164,7 @@ class CNN():
             
             # save history in csv
             df_history = pd.DataFrame(columns=["epoch", "validation_auc"])
-            df_history.loc[epoch] = [epoch+1, val_auc]
+            df_history.loc[ep] = [ep+1, val_auc]
 
             if val_auc > val_auc_0:
                 count_patience=0
