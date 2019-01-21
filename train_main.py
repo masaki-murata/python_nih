@@ -31,7 +31,7 @@ from keras import backend as K
 
 from data_process import make_dataset, class_balance
 from nih import loss_ambiguous, auc
-from random_search import chose_hyperparam
+from hyperparameters import chose_hyperparam
 
 base_dir = os.getcwd()+"/"
 if not re.search("nih_python", base_dir):
@@ -52,11 +52,13 @@ if os.name=='posix' and if_DLB:
 
 
 class CNN():
+    # initialize
     def __init__(self, 
                  pathology,
                  input_shape,
                  if_single_pathology,
                  if_loss_ambiguous,
+                 nb_gpus=0,
                  ratio=[0.7,0.1,0.2],
                  ):
         self.ratio = ratio
@@ -64,7 +66,10 @@ class CNN():
         self.pathology = pathology
         self.size = input_shape[0]
         self.if_single_pathology = if_single_pathology
-                
+        self.nb_gpus = nb_gpus
+        
+    
+    # load train, validation, test dataset
     def load_dataset(self,
 #                     path_to_data_label, #  "%s_size%d_%s_%s.npy" % (group, size, pathology, data/labels)
                      ):
@@ -78,7 +83,8 @@ class CNN():
             self.labels[group] = np.load(path_to_data_label % (group, self.size, self.pathology, "labels"))
         self.data["validation"], self.labels["validation"] = class_balance(self.data["validation"], self.labels["validation"])
         
-        
+    
+    # make cnn model
     def make_model(self, hp_value):
         # set architecture
         input_img = Input(shape=self.input_shape)
@@ -131,8 +137,9 @@ class CNN():
         
         return model
 
-
-    def train(self, hp_value, nb_gpus, path_to_model_save,
+    
+    # train a cnn model
+    def train(self, hp_value, path_to_model_save,
               ):
         # load dataset
         self.load_dataset()
@@ -165,6 +172,7 @@ class CNN():
             # save history in csv
             df_history = pd.DataFrame(columns=["epoch", "validation_auc"])
             df_history.loc[ep] = [ep+1, val_auc]
+            df_history.to_csv(path_to_model_save[:-3]+"_history.csv", index=False)
 
             if val_auc > val_auc_0:
                 count_patience=0
@@ -179,6 +187,16 @@ class CNN():
                 # early stopping
                 if count_patience>hp_value["patience"]:
                     break
+        
+    def random_search(self,
+                      iteration_num,
+                      ):
+        now = datetime.datetime.now()
+        path_to_model_save = base_dir+"../nih_data/models/random_search_mm%02ddd%02d/" % (now.month, now.day)
+        for iteration in iteration_num:
+            hp_value = chose_hyperparam()
+            self.train(hp_value, path_to_model_save)
+        
             
 
 def main():
