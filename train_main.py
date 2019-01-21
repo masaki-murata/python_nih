@@ -149,6 +149,7 @@ class CNN():
                                      zoom_range=hp_value["zoom_range"],
                                      )   
         
+        val_auc_0, count_patience = 0, 0
         for ep in hp_value["epochs"]:
             # set training data class balanced
             train_data_epoch, train_labels_epoch = class_balance(self.data["train"], self.labels["train"])
@@ -159,7 +160,20 @@ class CNN():
             
             # predict for validation set
             val_pred = model_multiple_gpu.predict(self.data["validation"], batch_size=hp_value["batch_size"])
-            val_auc = nih.auc(self.labels["validation"], val_pred)
+            val_auc = auc(self.labels["validation"], val_pred)
+
+            if val_auc > val_auc_0:
+                count_patience=0
+                val_auc_0 = val_auc
+                test_pred = model_multiple_gpu.predict(self.data["test"], batch_size=self.batch_size)
+                test_auc = auc(self.labels["test"], test_pred)
+                print("test_auc = ", test_auc)
+                
+                model.save(path_to_model_save)
+            else:
+                count_patience+=1
+                if count_patience>hp_value["patience"]:
+                    break
             
 
 def main():
