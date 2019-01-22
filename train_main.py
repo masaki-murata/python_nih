@@ -177,9 +177,9 @@ class CNN():
             if val_auc > val_auc_0:
                 count_patience=0
                 val_auc_0 = val_auc
-                test_pred = model_multiple_gpu.predict(self.data["test"], batch_size=self.batch_size)
-                test_auc = auc(self.labels["test"], test_pred)
-                print("test_auc = ", test_auc)
+#                test_pred = model_multiple_gpu.predict(self.data["test"], batch_size=self.batch_size)
+#                test_auc = auc(self.labels["test"], test_pred)
+#                print("test_auc = ", test_auc)
                 
                 model.save(path_to_model_save)
             else:
@@ -187,10 +187,13 @@ class CNN():
                 # early stopping
                 if count_patience>hp_value["patience"]:
                     break
+                
+        return val_auc
         
     def random_search(self,
                       iteration_num,
                       ):
+        # setting directory to save models
         now = datetime.datetime.now()
         path_to_model_save = base_dir+"../nih_data/models/random_search_mm%02ddd%02d" % (now.month, now.day) + "_%03d/" # % (count)
         if not os.path.exists(path_to_model_save):
@@ -198,7 +201,7 @@ class CNN():
         for count in range(1000):
             if not os.path.exists(path_to_model_save % count):
                 path_to_model_save = path_to_model_save % count
-                os.makedirs(path_to_model_save % count)
+                os.makedirs(path_to_model_save)
                 break
             
         for iteration in iteration_num:
