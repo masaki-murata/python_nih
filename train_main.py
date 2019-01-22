@@ -192,7 +192,15 @@ class CNN():
                       iteration_num,
                       ):
         now = datetime.datetime.now()
-        path_to_model_save = base_dir+"../nih_data/models/random_search_mm%02ddd%02d/" % (now.month, now.day)
+        path_to_model_save = base_dir+"../nih_data/models/random_search_mm%02ddd%02d" % (now.month, now.day) + "_%03d/" # % (count)
+        if not os.path.exists(path_to_model_save):
+            os.makedirs(path_to_model_save)
+        for count in range(1000):
+            if not os.path.exists(path_to_model_save % count):
+                path_to_model_save = path_to_model_save % count
+                os.makedirs(path_to_model_save % count)
+                break
+            
         for iteration in iteration_num:
             hp_value = chose_hyperparam()
             self.train(hp_value, path_to_model_save)
