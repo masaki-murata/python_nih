@@ -203,10 +203,11 @@ class CNN():
                 path_to_model_save = path_to_model_save % count
                 os.makedirs(path_to_model_save)
                 break
-            
+        
+        df_auc = pd.DataFrame(columns=["path_to_model", "validation_auc"])
         for iteration in iteration_num:
             hp_value = chose_hyperparam()
-            self.train(hp_value, path_to_model_save)
+            self.train(hp_value, path_to_model_save+"model.h5")  #ここ修正必要（モデル名をどうするか）
         
             
 
