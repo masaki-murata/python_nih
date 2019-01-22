@@ -139,7 +139,7 @@ class CNN():
 
     
     # train a cnn model
-    def train(self, hp_value, path_to_model_save,
+    def train(self, hp_value, path_to_model_dir,
               ):
         # load dataset
         self.load_dataset()
@@ -172,7 +172,7 @@ class CNN():
             # save history in csv
             df_history = pd.DataFrame(columns=["epoch", "validation_auc"])
             df_history.loc[ep] = [ep+1, val_auc]
-            df_history.to_csv(path_to_model_save[:-3]+"_history.csv", index=False)
+            df_history.to_csv(path_to_model_dir+"_history.csv", index=False)
 
             if val_auc > val_auc_0:
                 count_patience=0
@@ -181,12 +181,13 @@ class CNN():
 #                test_auc = auc(self.labels["test"], test_pred)
 #                print("test_auc = ", test_auc)
                 
-                model.save(path_to_model_save)
+                model.save(path_to_model_dir+"model.h5")
             else:
                 count_patience+=1
                 # early stopping
                 if count_patience>hp_value["patience"]:
                     break
+
                 
         return val_auc
         
@@ -195,19 +196,22 @@ class CNN():
                       ):
         # setting directory to save models
         now = datetime.datetime.now()
-        path_to_model_save = base_dir+"../nih_data/models/random_search_mm%02ddd%02d" % (now.month, now.day) + "_%03d/" # % (count)
-        if not os.path.exists(path_to_model_save):
-            os.makedirs(path_to_model_save)
+        path_to_model_list = base_dir+"../nih_data/models/random_search_mm%02ddd%02d" % (now.month, now.day) + "_%03d/" # % (count)
+        if not os.path.exists(path_to_model_list):
+            os.makedirs(path_to_model_list)
         for count in range(1000):
-            if not os.path.exists(path_to_model_save % count):
-                path_to_model_save = path_to_model_save % count
-                os.makedirs(path_to_model_save)
+            if not os.path.exists(path_to_model_list % count):
+                path_to_model_list = path_to_model_list % count
+                os.makedirs(path_to_model_list)
                 break
         
         df_auc = pd.DataFrame(columns=["path_to_model", "validation_auc"])
         for iteration in iteration_num:
             hp_value = chose_hyperparam()
-            self.train(hp_value, path_to_model_save+"model.h5")  #ここ修正必要（モデル名をどうするか）
+            path_to_model_dir = path_to_model_list + "%04d/" % iteration_num
+            val_auc = self.train(hp_value, path_to_model_dir)  
+            df_auc.loc[iteration] = [path_to_model_dir+"model.h5", val_auc]
+            df_auc.to_csv(path_to_model_list+"val_aucs.csv", index=False)
         
             
 
