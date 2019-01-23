@@ -145,8 +145,8 @@ class CNN():
         self.load_dataset()
         # make model
         model = self.make_model(hp_value)
-        if int(nb_gpus) > 1:
-            model_multiple_gpu = multi_gpu_model(model, gpus=nb_gpus)
+        if int(self.nb_gpus) > 1:
+            model_multiple_gpu = multi_gpu_model(model, gpus=self.nb_gpus)
         else:
             model_multiple_gpu = model
             
@@ -177,9 +177,6 @@ class CNN():
             if val_auc > val_auc_0:
                 count_patience=0
                 val_auc_0 = val_auc
-#                test_pred = model_multiple_gpu.predict(self.data["test"], batch_size=self.batch_size)
-#                test_auc = auc(self.labels["test"], test_pred)
-#                print("test_auc = ", test_auc)
                 
                 model.save(path_to_model_dir+"model.h5")
             else:
