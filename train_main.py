@@ -147,8 +147,8 @@ class CNN():
     # train a cnn model
     def train(self, hp_value, path_to_model_dir,
               ):
-        # load dataset
-        self.load_dataset()
+#        # load dataset
+#        self.load_dataset()
         # make model
         model, model_multiple_gpu = self.make_model(hp_value)
             
@@ -194,6 +194,8 @@ class CNN():
     def random_search(self,
                       iteration_num,
                       ):
+        # load dataset
+        self.load_dataset()
         # setting directory to save models
         now = datetime.datetime.now()
         path_to_model_list = base_dir+"../nih_data/models/random_search_%s_mm%02ddd%02d" % (self.pathology, now.month, now.day) + "_%03d/" # % (count)
