@@ -14,7 +14,8 @@ def dict_hyperparam():
     hp["momentum"] = [0, 0.99]
     hp["optimizer"] = ["SGD", "Adam"]
     hp["batch_size"] = [2**x for x in range(3, 7)] #[2**5, 2**6, 2**7, 2**8, 2**9, 2**10, 2**11] #[2**x for x in range(6)]
-    hp["epoch_num"] = [32]
+    hp["epoch_num"] = [8]
+    hp["patience"] = [16]
     
     hp['pool_stride'] = ['pool', 'stride']
     hp['network'] = ["VGG16", "VGG19", "DenseNet121", "DenseNet169", "DenseNet201", "InceptionV3", "ResNet50", "Xception"]
