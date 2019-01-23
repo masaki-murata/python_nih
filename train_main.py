@@ -30,7 +30,7 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras import backend as K
 
 from data_process import make_dataset, class_balance
-from nih import loss_ambiguous, auc
+from nih import loss_ambiguous, auc, read_comandline
 from hyperparameters import chose_hyperparam
 
 base_dir = os.getcwd()+"/"
@@ -57,10 +57,11 @@ class CNN():
                  pathology,
                  input_shape,
                  if_single_pathology,
-                 if_loss_ambiguous,
                  nb_gpus=0,
                  ratio=[0.7,0.1,0.2],
                  ):
+        if type(input_shape)==int:
+            input_shape=(input_shape,input_shape,1)
         self.ratio = ratio
         self.input_shape = input_shape
         self.pathology = pathology
@@ -125,17 +126,22 @@ class CNN():
         # set loss function
         if hp_value["if_loss_ambiguous"]:
             def loss_amb(y_true, y_pred):
-                return loss_ambiguous(y_true, y_pred, eps=0.1)
+                return loss_ambiguous(y_true, y_pred, eps=hp_value["eps"])
             loss=loss_amb
         else:
             loss="binary_crossentropy"
+            
+        model.summary()
+
+        if int(self.nb_gpus) > 1:
+            model_multiple_gpu = multi_gpu_model(model, gpus=self.nb_gpus)
+        else:
+            model_multiple_gpu = model
         
         # compile the model
-        model.compile(loss=loss, optimizer=opt_generator, metrics=['acc'])
-    
-        model.summary()
-        
-        return model
+        model_multiple_gpu.compile(loss=loss, optimizer=opt_generator, metrics=['acc'])
+
+        return model_multiple_gpu
 
     
     # train a cnn model
@@ -144,11 +150,7 @@ class CNN():
         # load dataset
         self.load_dataset()
         # make model
-        model = self.make_model(hp_value)
-        if int(self.nb_gpus) > 1:
-            model_multiple_gpu = multi_gpu_model(model, gpus=self.nb_gpus)
-        else:
-            model_multiple_gpu = model
+        model_multiple_gpu = self.make_model(hp_value)
             
         datagen = ImageDataGenerator(rotation_range=hp_value["rotation_range"],
                                      width_shift_range=hp_value["width_shift_range"],
@@ -157,7 +159,7 @@ class CNN():
                                      )   
         
         val_auc_0, count_patience = 0, 0
-        for ep in hp_value["epochs"]:
+        for ep in range(hp_value["epoch_num"]):
             # set training data class balanced
             train_data_epoch, train_labels_epoch = class_balance(self.data["train"], self.labels["train"])
             
@@ -193,7 +195,7 @@ class CNN():
                       ):
         # setting directory to save models
         now = datetime.datetime.now()
-        path_to_model_list = base_dir+"../nih_data/models/random_search_mm%02ddd%02d" % (now.month, now.day) + "_%03d/" # % (count)
+        path_to_model_list = base_dir+"../nih_data/models/random_search_%s_mm%02ddd%02d" % (self.pathology, now.month, now.day) + "_%03d/" # % (count)
         if not os.path.exists(path_to_model_list):
             os.makedirs(path_to_model_list)
         for count in range(1000):
@@ -203,7 +205,7 @@ class CNN():
                 break
         
         df_auc = pd.DataFrame(columns=["path_to_model", "validation_auc"])
-        for iteration in iteration_num:
+        for iteration in range(iteration_num):
             hp_value = chose_hyperparam()
             path_to_model_dir = path_to_model_list + "%04d/" % iteration_num
             val_auc = self.train(hp_value, path_to_model_dir)  
@@ -213,12 +215,38 @@ class CNN():
             
 
 def main():
-    hp_value = chose_hyperparam()
-    nb_gpus=1
-    if_single_pathology=False
+#    hp_value = chose_hyperparam()
+    arg_nih={}
+
+    int_args = ['input_shape', 'nb_gpus', 'iteration_num']
+    float_args = ['ratio_train', 'ratio_validation']
+    str_args = ['pathology']
+    list_args = []
+    bool_args = ['if_single_pathology']
+    total_args=int_args+str_args+bool_args+list_args+float_args
+
+    argvs=sys.argv[1:]
+    argc=len(argvs)
+    if argc > 0:
+        for arg_index in range(argc):
+            arg_input = argvs[arg_index]
+#            for arg_name in total_args:
+            read_comandline(arg_nih, 
+                            str_args, int_args, bool_args, list_args, float_args,
+                            total_args, arg_input)
+    arg_nih['ratio']=[arg_nih['ratio_train'], arg_nih['ratio_validation'], 1-arg_nih['ratio_train']-arg_nih['ratio_validation']]
+
+#    nb_gpus=1
+#    if_single_pathology=False
     
-    cnn = CNN(pathology="Effusion", input_shape=(128,128,3), if_single_pathology=if_single_pathology)
-    cnn.train(hp_value,nb_gpus)
+    cnn = CNN(pathology=arg_nih["pathology"], 
+              input_shape=arg_nih['input_shape'],
+              if_single_pathology=arg_nih['if_single_pathology'],
+              nb_gpus=arg_nih['nb_gpus'],
+              ratio=arg_nih['ratio'],
+              )
+    cnn.random_search(iteration_num=arg_nih['iteration_num'],
+                      )
 
 if __name__ == '__main__':
     main()        
