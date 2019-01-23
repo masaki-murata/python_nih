@@ -175,7 +175,7 @@ class CNN():
             
             # save history in csv            
             df_history.loc[ep] = [ep+1, val_auc]
-            df_history.to_csv(path_to_model_dir+"_history.csv", index=False)
+            df_history.to_csv(path_to_model_dir+"history.csv", index=False)
 
             if val_auc > val_auc_0:
                 count_patience=0
@@ -206,7 +206,7 @@ class CNN():
         # copy script files
         files=["train_main.sh", "train_main.py", "nih.py", "hyperparameters.py", "data_process.py"]
         path_to_scripts = path_to_model_list+"scripts/"
-        assert os.path.exists(path_to_scripts), "file already exists"
+        assert not os.path.exists(path_to_scripts), "scripts directory already exists"
         os.makedirs(path_to_scripts)
         for file in files:
             shutil.copyfile(base_dir+file, path_to_scripts+file)
@@ -218,7 +218,7 @@ class CNN():
             hp_value = chose_hyperparam()
             # set the directory 
             path_to_model_dir = path_to_model_list + "%04d/" % iteration
-            assert os.path.exists(path_to_model_dir), "file already exists"
+            assert not os.path.exists(path_to_model_dir), "file already exists"
             os.makedirs(path_to_model_dir)
             # train the model
             val_auc = self.train(hp_value, path_to_model_dir)
