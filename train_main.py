@@ -141,7 +141,7 @@ class CNN():
         # compile the model
         model_multiple_gpu.compile(loss=loss, optimizer=opt_generator, metrics=['acc'])
 
-        return model_multiple_gpu
+        return model, model_multiple_gpu
 
     
     # train a cnn model
@@ -150,7 +150,7 @@ class CNN():
         # load dataset
         self.load_dataset()
         # make model
-        model_multiple_gpu = self.make_model(hp_value)
+        model, model_multiple_gpu = self.make_model(hp_value)
             
         datagen = ImageDataGenerator(rotation_range=hp_value["rotation_range"],
                                      width_shift_range=hp_value["width_shift_range"],
@@ -160,7 +160,7 @@ class CNN():
         
         val_auc_0, count_patience = 0, 0
         df_history = pd.DataFrame(columns=["epoch", "validation_auc"])
-        df_history.to_csv(path_to_model_dir+"_history.csv", index=False)
+        df_history.to_csv(path_to_model_dir+"history.csv", index=False)
         for ep in range(hp_value["epoch_num"]):
             # set training data class balanced
             train_data_epoch, train_labels_epoch = class_balance(self.data["train"], self.labels["train"])
@@ -181,7 +181,7 @@ class CNN():
                 count_patience=0
                 val_auc_0 = val_auc
                 
-                model_multiple_gpu.save(path_to_model_dir+"model.h5")
+                model.save(path_to_model_dir+"model.h5")
             else:
                 count_patience+=1
                 # early stopping
