@@ -197,8 +197,6 @@ class CNN():
         # setting directory to save models
         now = datetime.datetime.now()
         path_to_model_list = base_dir+"../nih_data/models/random_search_%s_mm%02ddd%02d" % (self.pathology, now.month, now.day) + "_%03d/" # % (count)
-        if not os.path.exists(path_to_model_list):
-            os.makedirs(path_to_model_list)
         for count in range(1000):
             if not os.path.exists(path_to_model_list % count):
                 path_to_model_list = path_to_model_list % count
@@ -207,8 +205,11 @@ class CNN():
         
         # copy script files
         files=["train_main.sh", "train_main.py", "nih.py", "hyperparameters.py", "data_process.py"]
+        path_to_scripts = path_to_model_list+"scripts/"
+        assert os.path.exists(path_to_scripts), "file already exists"
+        os.makedirs(path_to_scripts)
         for file in files:
-            shutil.copyfile(base_dir+file, path_to_model_list+"scripts/"+file)
+            shutil.copyfile(base_dir+file, path_to_scripts+file)
         
         df_auc = pd.DataFrame(columns=["path_to_model", "validation_auc"])
         df_auc.to_csv(path_to_model_list+"val_aucs.csv", index=False)
@@ -217,7 +218,7 @@ class CNN():
             hp_value = chose_hyperparam()
             # set the directory 
             path_to_model_dir = path_to_model_list + "%04d/" % iteration
-            assert path_to_model_dir, "file already exists"
+            assert os.path.exists(path_to_model_dir), "file already exists"
             os.makedirs(path_to_model_dir)
             # train the model
             val_auc = self.train(hp_value, path_to_model_dir)
