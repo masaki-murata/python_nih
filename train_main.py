@@ -68,8 +68,8 @@ class CNN():
         self.size = input_shape[0]
         self.if_single_pathology = if_single_pathology
         self.nb_gpus = nb_gpus
-        
     
+       
     # load train, validation, test dataset
     def load_dataset(self,
 #                     path_to_data_label, #  "%s_size%d_%s_%s.npy" % (group, size, pathology, data/labels)
@@ -159,6 +159,8 @@ class CNN():
                                      )   
         
         val_auc_0, count_patience = 0, 0
+        df_history = pd.DataFrame(columns=["epoch", "validation_auc"])
+        df_history.to_csv(path_to_model_dir+"_history.csv", index=False)
         for ep in range(hp_value["epoch_num"]):
             # set training data class balanced
             train_data_epoch, train_labels_epoch = class_balance(self.data["train"], self.labels["train"])
@@ -171,8 +173,7 @@ class CNN():
             val_pred = model_multiple_gpu.predict(self.data["validation"], batch_size=hp_value["batch_size"])
             val_auc = auc(self.labels["validation"], val_pred)
             
-            # save history in csv
-            df_history = pd.DataFrame(columns=["epoch", "validation_auc"])
+            # save history in csv            
             df_history.loc[ep] = [ep+1, val_auc]
             df_history.to_csv(path_to_model_dir+"_history.csv", index=False)
 
@@ -180,7 +181,7 @@ class CNN():
                 count_patience=0
                 val_auc_0 = val_auc
                 
-                model.save(path_to_model_dir+"model.h5")
+                model_multiple_gpu.save(path_to_model_dir+"model.h5")
             else:
                 count_patience+=1
                 # early stopping
@@ -204,11 +205,23 @@ class CNN():
                 os.makedirs(path_to_model_list)
                 break
         
+        # copy script files
+        files=["train_main.sh", "train_main.py", "nih.py", "hyperparameters.py", "data_process.py"]
+        for file in files:
+            shutil.copyfile(base_dir+file, path_to_model_list+"scripts/"+file)
+        
         df_auc = pd.DataFrame(columns=["path_to_model", "validation_auc"])
+        df_auc.to_csv(path_to_model_list+"val_aucs.csv", index=False)
         for iteration in range(iteration_num):
+            # select hyperparameters
             hp_value = chose_hyperparam()
-            path_to_model_dir = path_to_model_list + "%04d/" % iteration_num
-            val_auc = self.train(hp_value, path_to_model_dir)  
+            # set the directory 
+            path_to_model_dir = path_to_model_list + "%04d/" % iteration
+            assert path_to_model_dir, "file already exists"
+            os.makedirs(path_to_model_dir)
+            # train the model
+            val_auc = self.train(hp_value, path_to_model_dir)
+            # save model path and model quality
             df_auc.loc[iteration] = [path_to_model_dir+"model.h5", val_auc]
             df_auc.to_csv(path_to_model_list+"val_aucs.csv", index=False)
         
