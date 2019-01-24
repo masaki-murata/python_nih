@@ -10,6 +10,7 @@ from PIL import Image
 from keras import backend as K
 from keras.utils import multi_gpu_model
 from keras import initializers, layers
+from keras.models import Model
 import pandas as pd
 import os, re, sys
 
@@ -236,8 +237,8 @@ class CAM:
                 else:
                     x = layer(x)
     
-        bn_model = Model(input, x)
-        return bn_model        
+        self.model = Model(input, x)
+#        return noised_model        
         
         
 #        return model, predictions
