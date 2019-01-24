@@ -9,6 +9,7 @@ import numpy as np
 from PIL import Image
 from keras import backend as K
 from keras.utils import multi_gpu_model
+from keras import initializers, layers
 import pandas as pd
 import os, re, sys
 
@@ -120,6 +121,13 @@ if os.name=='posix' and if_DLB:
 #    jetcam = (np.float32(jetcam) + x / 2)   # もとの画像に合成
 """
 
+class noise_layer(layers.Layer):
+    def call(self, inputs, noiselevel, **kwargs):
+        mean = K.mean(inputs)
+        stddev = K.std(inputs)
+        return inputs + K.random_normal(shape=K.shape(inputs),
+                                        mean=mean,
+                                        stddev=noiselevel*stddev)
 
 class CAM:
     def __init__(self, 
@@ -213,6 +221,8 @@ class CAM:
 #        print(self.layer_name)
 #        print("aho")
         self.predictions = self.model_multiple_gpu.predict(self.test_data, batch_size=self.batch_size)
+    
+#    def add_noise_layer(self):
         
         
 #        return model, predictions
