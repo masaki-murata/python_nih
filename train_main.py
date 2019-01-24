@@ -215,18 +215,21 @@ class CNN():
         
         df_auc = pd.DataFrame(columns=["path_to_model", "validation_auc"])
         df_auc.to_csv(path_to_model_list+"val_aucs.csv", index=False)
-        for iteration in range(iteration_num):
-            # select hyperparameters
-            hp_value = chose_hyperparam()
-            # set the directory 
-            path_to_model_dir = path_to_model_list + "%04d/" % iteration
-            assert not os.path.exists(path_to_model_dir), "file already exists"
-            os.makedirs(path_to_model_dir)
-            # train the model
-            val_auc = self.train(hp_value, path_to_model_dir)
-            # save model path and model quality
-            df_auc.loc[iteration] = [path_to_model_dir+"model.h5", val_auc]
-            df_auc.to_csv(path_to_model_list+"val_aucs.csv", index=False)
+        try:
+            for iteration in range(iteration_num):
+                # select hyperparameters
+                hp_value = chose_hyperparam()
+                # set the directory 
+                path_to_model_dir = path_to_model_list + "%04d/" % iteration
+                assert not os.path.exists(path_to_model_dir), "file already exists"
+                os.makedirs(path_to_model_dir)
+                # train the model
+                val_auc = self.train(hp_value, path_to_model_dir)
+                # save model path and model quality
+                df_auc.loc[iteration] = [path_to_model_dir+"model.h5", val_auc]
+                df_auc.to_csv(path_to_model_list+"val_aucs.csv", index=False)
+        except:
+            pass
         
             
 
