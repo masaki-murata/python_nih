@@ -222,7 +222,22 @@ class CAM:
 #        print("aho")
         self.predictions = self.model_multiple_gpu.predict(self.test_data, batch_size=self.batch_size)
     
-#    def add_noise_layer(self):
+    def add_noise_layer(self, layer_name):
+        for i, layer in enumerate(self.model.layers):
+            if i==0:
+                input = layer.input
+                x = input
+            else:
+                if layer_name==layer.name:
+#                    layer.activation = activations.linear
+                    x = layer(x)
+                    x = noise_layer()(x)
+#                    x = Activation("relu")(x)
+                else:
+                    x = layer(x)
+    
+        bn_model = Model(input, x)
+        return bn_model        
         
         
 #        return model, predictions
