@@ -316,27 +316,7 @@ class CAM:
                     input_data = original_data + self.noiselevel*np.random.normal(size=original_data.shape)  
                     cams += self.compute_cams(input_data, gradient_function, cam_method)
                 cams = cams / float(self.samplesize)
-##            print(self.test_data.shape)
-#            output, grads_val = gradient_function([self.test_data[start_index:end_index]])
-##            print("output.shape =", output.shape)
-##             重みを平均化して、レイヤーのアウトプットに乗じる
-##            weights = np.mean(grads_val, axis=(0, 1))
-#            if cam_method=="grad_cam":
-#                weights = np.mean(grads_val, axis=(1, 2)) # global average pooling
-#                weights = weights.reshape((weights.shape[0],1,1,weights.shape[-1]))
-#            elif cam_method=="grad_cam+":
-#                weights = np.mean(grads_val, axis=(1, 2)) # global average pooling
-#                weights = np.maximum(weights, 0)
-#                weights = weights.reshape((weights.shape[0],1,1,weights.shape[-1]))
-#            elif cam_method=="grad_cam+2":
-#                weights = np.mean(np.maximum(grads_val,0), axis=(1, 2)) # global average pooling
-#                weights = weights.reshape((weights.shape[0],1,1,weights.shape[-1]))
-#            elif cam_method=="grad_cam_murata":
-#                weights = np.maximum(grads_val,0)
-##            print("weights.shape = ", weights.shape)
-#            cams = np.sum(output*weights, axis=3)
             self.save_cam(layer_name, cam_method, cams=cams, start_index=start_index)
-#            print(cams.shape)
             start_index=start_index+self.batch_size
             end_index=min(start_index+self.batch_size, len(mask_predictions))
         print(end_index, len(mask_predictions))
@@ -349,39 +329,6 @@ class CAM:
                 self.grad_cam_single(layer_name, cam_method)
        
 
-    """        
-    def grad_cam_murata(self):
-        self.predict()
-        mask_predictions = self.predictions[:,1] > 0.5
-        class_output = self.model.output[:, 1]
-        conv_output = self.model.get_layer(self.layer_name).output  # layer_nameのレイヤーのアウトプット
-        grads = K.gradients(class_output, conv_output)[0]  # gradients(loss, variables) で、variablesのlossに関しての勾配を返す
-        gradient_function = K.function([self.model.input], [conv_output, grads])  # model.inputを入力すると、conv_outputとgradsを出力する関数
-        start_index=0
-        end_index=min(self.batch_size, len(mask_predictions))
-        while start_index < end_index:
-#            print(self.test_data.shape)
-            output, grads_val = gradient_function([self.test_data[start_index:end_index]])
-#            print("output.shape =", output.shape)
-            # 重みを平均化して、レイヤーのアウトプットに乗じる
-    #        weights = np.mean(grads_val, axis=(0, 1))
-#            weights = np.mean(grads_val, axis=(1, 2)) # global average pooling
-#            print("weights.shape = ", grads_val.shape)
-    #        print("output.shape={0}, weights.shape={1}".format(output.shape, weights.shape))
-            grads_val = np.maximum(grads_val,0)
-            cams = np.sum(output*grads_val, axis=3)
-            self.save_cam(method="grad_cam_murata",cams=cams, start_index=start_index)
-#            print(cams.shape)
-            start_index=start_index+self.batch_size
-            end_index=min(start_index+self.batch_size, len(mask_predictions))
-        print(end_index, len(mask_predictions))
-        
-    def cam(self):
-        if self.cam_method == "grad_cam":
-            self.grad_cam()
-        if self.cam_method == "grad_cam_murata":
-            self.grad_cam_murata()
-    """
 
 
 def main():
