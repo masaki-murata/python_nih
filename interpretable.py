@@ -38,6 +38,12 @@ if os.name=='posix' and if_DLB:
 
 
 class noise_layer(layers.Layer):
+    def __init__(self, noiselevel, 
+#                 **kwargs,
+                 ):
+        self.noiselevel = noiselevel
+#        super(MyLayer, self).__init__(**kwargs)
+
     def call(self, inputs, noiselevel, **kwargs):
         mean = K.mean(inputs)
         stddev = K.std(inputs)
