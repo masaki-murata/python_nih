@@ -141,8 +141,8 @@ class CAM:
     def add_noise_layer(self, layer_name):
         for i, layer in enumerate(self.model.layers):
             if i==0:
-                input = layer.input
-                x = input
+                input_layer = layer.input
+                x = input_layer
             else:
                 if layer_name==layer.name:
 #                    layer.activation = activations.linear
@@ -152,8 +152,11 @@ class CAM:
                 else:
                     x = layer(x)
     
-        self.model = Model(input, x)
-#        return noised_model        
+        _model = Model(input_layer, x)
+        if int(self.nb_gpus) > 1:
+            self.model_multiple_gpu = multi_gpu_model(_model, gpus=self.nb_gpus)
+        else:
+            self.model_multiple_gpu = _model
         
         
 #        return model, predictions
@@ -240,6 +243,8 @@ class CAM:
         self.predict()
         for layer_name in self.layer_names:
             for cam_method in self.cam_methods:
+                if cam_method == "aho":
+                    self.add_noise_layer(layer_name)
                 print( "layer_name = {0}, cam_method = {1}".format(layer_name,cam_method) )
                 self.grad_cam_single(layer_name, cam_method)
        
