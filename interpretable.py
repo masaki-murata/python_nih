@@ -293,6 +293,7 @@ class CAM:
         return np.sum(output*weights, axis=3)
         
     
+    # 一組の（レイヤー、方法）に対して saliency map を評価
     def grad_cam_single(self, layer_name, cam_method):
 #        self.predict()
         mask_predictions = self.predictions[:,1] > 0.5
