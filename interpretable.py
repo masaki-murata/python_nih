@@ -44,12 +44,12 @@ class noise_layer(layers.Layer):
         self.noiselevel = noiselevel
 #        super(MyLayer, self).__init__(**kwargs)
 
-    def call(self, inputs, noiselevel, **kwargs):
+    def call(self, inputs, **kwargs):
         mean = K.mean(inputs)
         stddev = K.std(inputs)
         return inputs + K.random_normal(shape=K.shape(inputs),
                                         mean=mean,
-                                        stddev=noiselevel*stddev)
+                                        stddev=self.noiselevel*stddev)
 
 class CAM:
     def __init__(self, 
