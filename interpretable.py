@@ -64,6 +64,7 @@ class CAM:
                  cam_methods,
                  samplesize,
                  noiselevel,
+                 noise_layer, #  initial, intermediate
                  nb_gpus,
                  ratio=[0.7,0.1,0.2],
                  if_duplicate=True,
@@ -82,6 +83,7 @@ class CAM:
         self.batch_size=batch_size
         self.samplesize=samplesize
         self.noiselevel=noiselevel
+        self.noise_layer=noise_layer
         self.if_load_npy=if_load_npy
         self.if_save_npy=if_save_npy
         self.cam_methods=cam_methods
@@ -114,11 +116,12 @@ class CAM:
                                                                          pathology=self.pathology,
                                                                          path_to_group_csv=path_to_group_csv,
                                                                          if_rgb=False,
-                                                                         if_normalize=True,
+#                                                                         if_normalize=True,
                                                                          if_load_npy=self.if_load_npy,
                                                                          if_save_npy=self.if_save_npy,
                                                                          if_return_df=True,
                                                                          if_load_df=False,
+                                                                         if_single_pathology=False,
                                                                          )
 #        return test_data, test_label, df_test 
 #    
@@ -239,7 +242,7 @@ class CAM:
                 cams = 0
                 original_data = self.test_data[start_index:end_index]
                 for sample in range(self.samplesize):
-                    input_data = original_data + self.noiselevel*np.random.normal(size=original_data.shape)  
+                    input_data = original_data + (noise_layer=="initial")*self.noiselevel*np.random.normal(size=original_data.shape)  
                     cams += self.compute_cams(input_data, gradient_function, cam_method)
                 cams = cams / float(self.samplesize)
             self.save_cam(layer_name, cam_method, cams=cams, start_index=start_index)
@@ -249,9 +252,11 @@ class CAM:
         
     def grad_cam(self):
         self.predict()
+        print(self.predictions)
+        print(self.test_data.shape)
         for layer_name in self.layer_names:
             for cam_method in self.cam_methods:
-                if cam_method == "aho":
+                if noise_layer == "intermediate":
                     self.add_noise_layer(layer_name)
                 print( "layer_name = {0}, cam_method = {1}".format(layer_name,cam_method) )
                 self.grad_cam_single(layer_name, cam_method)
@@ -261,25 +266,26 @@ class CAM:
 
 def main():
     arg_nih={}
-    arg_nih['pathologies']=[]#['Edema', 'Effusion', 'Consolidation', 'Atelectasis', 'Hernia', 'Cardiomegaly', 'Infiltration', 'Fibrosis']
-    arg_nih['layer_names']=[]#["block4_conv4", "block5_conv4", "block5_pool"]
-    arg_nih['cam_methods']=[]#["grad_cam+2", "grad_cam_murata"]
+    arg_nih['pathologies']=['Effusion']#['Edema', 'Effusion', 'Consolidation', 'Atelectasis', 'Hernia', 'Cardiomegaly', 'Infiltration', 'Fibrosis']
+    arg_nih['layer_names']=["block4_conv4"]#["block4_conv4", "block5_conv4", "block5_pool"]
+    arg_nih['cam_methods']=["grad_cam_murata"]#["grad_cam+2", "grad_cam_murata"]
     arg_nih['path_to_model'] = "../nih_data/models/mm11dd26_size256/%s.h5"
     arg_nih['path_to_image_dir'] = "../nih_data/images/"
     arg_nih['ratio_train']=0.7
     arg_nih['ratio_validation']=0.1
+    arg_nih['noise_layer']="initial"
     arg_nih['noiselevel']=0.1    
     arg_nih['input_shape']=256
     arg_nih['batch_size']=64
     arg_nih['samplesize']=1
     arg_nih['nb_gpus']=1
     arg_nih['if_murata_select']=True,
-    arg_nih['if_load_npy']=False,
+    arg_nih['if_load_npy']=True,
     arg_nih['if_save_npy']=False,
 
     int_args = ['batch_size', 'input_shape', 'nb_gpus', 'samplesize']
     float_args = ['ratio_train', 'ratio_validation', 'noiselevel']
-    str_args = ["path_to_model", "path_to_image_dir"]
+    str_args = ["path_to_model", "path_to_image_dir", "noise_layer"]
     list_args = ['pathologies', 'layer_names', 'cam_methods']
     bool_args = ['if_murata_select', 'if_load_npy', 'if_save_npy']
     total_args=int_args+str_args+bool_args+list_args+float_args
@@ -308,6 +314,7 @@ def main():
                              input_shape=arg_nih['input_shape'],
                              batch_size=arg_nih['batch_size'],
                              samplesize=arg_nih['samplesize'],
+                             noise_layer=arg_nih['noise_layer'],
                              noiselevel=arg_nih['noiselevel'],
                              pathology=pathology,
                              path_to_model=base_dir+arg_nih['path_to_model'],
