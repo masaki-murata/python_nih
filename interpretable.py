@@ -277,7 +277,7 @@ def main():
     arg_nih['noiselevel']=0.1    
     arg_nih['input_shape']=256
     arg_nih['batch_size']=64
-    arg_nih['samplesize']=1
+    arg_nih['samplesize']=100
     arg_nih['nb_gpus']=1
     arg_nih['if_murata_select']=True,
     arg_nih['if_load_npy']=True,
