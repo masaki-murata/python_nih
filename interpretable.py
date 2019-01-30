@@ -67,6 +67,7 @@ class CAM:
                  noise_layer, #  initial, intermediate
                  nb_gpus,
                  ratio=[0.7,0.1,0.2],
+                 if_single_pathology=False,
                  if_duplicate=True,
                  if_murata_select=True,
                  ):
@@ -88,16 +89,22 @@ class CAM:
         self.if_save_npy=if_save_npy
         self.cam_methods=cam_methods
         self.if_murata_select=if_murata_select
+        self.if_single_pathology=if_single_pathology
         self.nb_gpus=nb_gpus
     
     # テストデータをロードする関数
     def load_test(self):
 #        path_to_model=self.path_to_model % self.pathology
         path_to_csv_dir = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(self.ratio) 
-        path_to_group_csv = path_to_csv_dir+ "%s.csv" 
+        if not self.if_single_pathology:
+            print("ahoahoaho")
+            path_to_csv_dir = path_to_csv_dir[:-1] + "_multipathology/"
+        path_to_group_csv = path_to_csv_dir + "%s.csv" 
         if self.if_duplicate:
             path_to_group_csv = path_to_group_csv[:-4]+"_duplicate.csv"
         self.df_test = pd.read_csv(path_to_group_csv % "test")#[:50]
+        print("path_to_group_csv =" + path_to_group_csv % "test")
+        print("len(self.df_test) = ", len(self.df_test))
         if self.if_murata_select:
             murata_select = os.listdir(base_dir+"../nih_data/bb_images/%s/murata_select/" % self.pathology)
             print(murata_select)
@@ -123,15 +130,6 @@ class CAM:
                                                                          if_load_df=False,
                                                                          if_single_pathology=False,
                                                                          )
-#        return test_data, test_label, df_test 
-#    
-#    def make_dir(self):
-#        path_to_save_cam = self.path_to_model[:-3]+"/cams/%s/" # % (TPFP)
-#        if not os.path.exists(path_to_save_cam % "TP"):
-#            os.makedirs(path_to_save_cam % "TP")
-#        if not os.path.exists(path_to_save_cam % "FP"):
-#            os.makedirs(path_to_save_cam % "FP")
-#        path_to_save_cam = path_to_save_cam + "%s"
     
     """ 将来的には nn の学習も入れたい """
     # nn の出力を出す
@@ -142,7 +140,7 @@ class CAM:
             self.model_multiple_gpu = multi_gpu_model(self.model, gpus=self.nb_gpus)
         else:
             self.model_multiple_gpu = self.model
-        self.model.summary()
+#        self.model.summary()
 #        print(self.layer_name)
 #        print("aho")
         self.predictions = self.model_multiple_gpu.predict(self.test_data, batch_size=self.batch_size)
@@ -258,6 +256,7 @@ class CAM:
             for cam_method in self.cam_methods:
                 if noise_layer == "intermediate":
                     self.add_noise_layer(layer_name)
+                    self.model_multiple_gpu.summary()
                 print( "layer_name = {0}, cam_method = {1}".format(layer_name,cam_method) )
                 self.grad_cam_single(layer_name, cam_method)
        
@@ -280,15 +279,18 @@ def main():
     arg_nih['samplesize']=100
     arg_nih['nb_gpus']=1
     arg_nih['if_duplicate']=True
-    arg_nih['if_murata_select']=True,
-    arg_nih['if_load_npy']=True,
-    arg_nih['if_save_npy']=False,
+    arg_nih['if_murata_select']=True
+    arg_nih['if_single_pathology']=False
+    arg_nih['if_load_npy']=False
+    arg_nih['if_save_npy']=False
+
+    print("arg_nih['if_murata_select'] = ", arg_nih['if_murata_select'])
 
     int_args = ['batch_size', 'input_shape', 'nb_gpus', 'samplesize']
     float_args = ['ratio_train', 'ratio_validation', 'noiselevel']
     str_args = ["path_to_model", "path_to_image_dir", "noise_layer"]
     list_args = ['pathologies', 'layer_names', 'cam_methods']
-    bool_args = ['if_duplicate', 'if_murata_select', 'if_load_npy', 'if_save_npy']
+    bool_args = ['if_duplicate', 'if_murata_select', 'if_single_pathology', 'if_load_npy', 'if_save_npy']
     total_args=int_args+str_args+bool_args+list_args+float_args
 
     argvs=sys.argv[1:]
@@ -307,7 +309,8 @@ def main():
 #    cam_methods = ["grad_cam+2"]
 #    pathology="Effusion"
     
-#            print(cam_method, layer_name)
+    print("arg_nih['if_single_pathology'] = ", arg_nih['if_single_pathology'])
+    print("arg_nih['if_murata_select'] = ", arg_nih['if_murata_select'])
     for pathology in arg_nih['pathologies']:
         print(pathology)
         interpretable = CAM(layer_names=arg_nih['layer_names'],
@@ -321,6 +324,7 @@ def main():
                              path_to_model=base_dir+arg_nih['path_to_model'],
                              path_to_image_dir=arg_nih['path_to_image_dir'],
                              if_duplicate=arg_nih['if_duplicate'],
+                             if_single_pathology=arg_nih['if_single_pathology'],
                              if_load_npy=arg_nih['if_load_npy'],
                              if_save_npy=arg_nih['if_save_npy'],
                              cam_methods=arg_nih['cam_methods'],
@@ -330,7 +334,7 @@ def main():
         interpretable.grad_cam()
         path_to_cams="../nih_data/models/mm11dd26_size256/%s/cams/" # % pathology
         data_process.move_cam_pngs(pathology, path_to_cams=path_to_cams)
-        data_process.glue_cams(pathology, 1024, path_to_cams)
+        data_process.glue_cams(pathology, 512, path_to_cams)
 #    grad_cam(input_shape=(256,256,1),layer_name="block4_conv4")
 
 if __name__ == '__main__':
