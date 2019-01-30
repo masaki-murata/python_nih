@@ -572,7 +572,7 @@ def read_comandline(arg_dict,
                 value = re.search('(?<=^'+arg_name+'=)\w+', comandline).group(0)
                 arg_dict[arg_name].append(value)
                 arg_dict[arg_name]=list(set(arg_dict[arg_name]))
-    assert count==1, "count = {0}".format(count)
+    assert count==1, "count = {0}, comandline = {1}".format(count, comandline)
 #            elif arg_name in func_args:
 #                value = re.search('(?<=^'+arg_name+'=)\w+', comandline).group(0)
 #                if value == "True":

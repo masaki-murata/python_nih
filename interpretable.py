@@ -266,7 +266,7 @@ class CAM:
 def main():
     arg_nih={}
     arg_nih['pathologies']=['Effusion']#['Edema', 'Effusion', 'Consolidation', 'Atelectasis', 'Hernia', 'Cardiomegaly', 'Infiltration', 'Fibrosis']
-    arg_nih['layer_names']=["block4_conv4"]#["block4_conv4", "block5_conv4", "block5_pool"]
+    arg_nih['layer_names']=["block5_conv4"]#["block4_conv4", "block5_conv4", "block5_pool"]
     arg_nih['cam_methods']=["grad_cam_murata"]#["grad_cam+2", "grad_cam_murata"]
     arg_nih['path_to_model'] = "../nih_data/models/mm11dd26_size256/%s.h5"
     arg_nih['path_to_image_dir'] = "../nih_data/images/"
