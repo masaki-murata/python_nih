@@ -279,6 +279,7 @@ def main():
     arg_nih['batch_size']=64
     arg_nih['samplesize']=100
     arg_nih['nb_gpus']=1
+    arg_nih['if_duplicate']=True
     arg_nih['if_murata_select']=True,
     arg_nih['if_load_npy']=True,
     arg_nih['if_save_npy']=False,
@@ -287,7 +288,7 @@ def main():
     float_args = ['ratio_train', 'ratio_validation', 'noiselevel']
     str_args = ["path_to_model", "path_to_image_dir", "noise_layer"]
     list_args = ['pathologies', 'layer_names', 'cam_methods']
-    bool_args = ['if_murata_select', 'if_load_npy', 'if_save_npy']
+    bool_args = ['if_duplicate', 'if_murata_select', 'if_load_npy', 'if_save_npy']
     total_args=int_args+str_args+bool_args+list_args+float_args
 
     argvs=sys.argv[1:]
@@ -319,6 +320,7 @@ def main():
                              pathology=pathology,
                              path_to_model=base_dir+arg_nih['path_to_model'],
                              path_to_image_dir=arg_nih['path_to_image_dir'],
+                             if_duplicate=arg_nih['if_duplicate'],
                              if_load_npy=arg_nih['if_load_npy'],
                              if_save_npy=arg_nih['if_save_npy'],
                              cam_methods=arg_nih['cam_methods'],
@@ -326,8 +328,9 @@ def main():
                              nb_gpus=arg_nih['nb_gpus'],
                              )
         interpretable.grad_cam()
-        path_to_cams="../nih_data/models/mm11dd26_size256/%s/cams/" % pathology
-        data_process.glue_cams(pathology, arg_nih['input_shape'], path_to_cams)
+        path_to_cams="../nih_data/models/mm11dd26_size256/%s/cams/" # % pathology
+        data_process.move_cam_pngs(pathology, path_to_cams=path_to_cams)
+        data_process.glue_cams(pathology, 1024, path_to_cams)
 #    grad_cam(input_shape=(256,256,1),layer_name="block4_conv4")
 
 if __name__ == '__main__':
