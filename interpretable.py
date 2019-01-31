@@ -284,7 +284,6 @@ def main():
     arg_nih['if_load_npy']=True
     arg_nih['if_save_npy']=False
 
-    print("arg_nih['path_to_image_dir']  = ", arg_nih['path_to_image_dir'] )
 
     int_args = ['batch_size', 'input_shape', 'nb_gpus', 'samplesize']
     float_args = ['ratio_train', 'ratio_validation', 'noiselevel']
@@ -310,7 +309,7 @@ def main():
 #    cam_methods = ["grad_cam+2"]
 #    pathology="Effusion"
     
-#    print("arg_nih['if_single_pathology'] = ", arg_nih['if_single_pathology'])
+    print("arg_nih['path_to_image_dir']  = ", arg_nih['path_to_image_dir'] )
 #    print("arg_nih['if_murata_select'] = ", arg_nih['if_murata_select'])
     for pathology in arg_nih['pathologies']:
         print(pathology)
@@ -333,7 +332,7 @@ def main():
                              nb_gpus=arg_nih['nb_gpus'],
                              )
         interpretable.grad_cam()
-        path_to_cams=arg_nih['path_to_model'][:3]+"/cams/"
+        path_to_cams=base_dir+arg_nih['path_to_model'][:-3]+"/cams/"
 #        base_dir + "../nih_data/models/mm11dd26_size256/%s/cams/" # % pathology
         data_process.move_cam_pngs(pathology, path_to_cams=path_to_cams)
         data_process.glue_cams(pathology, 1024, path_to_cams)
