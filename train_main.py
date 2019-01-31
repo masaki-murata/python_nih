@@ -242,7 +242,7 @@ def main():
     str_args = ['pathology']
     list_args = []
     bool_args = ['if_single_pathology']
-    total_args=int_args+str_args+bool_args+list_args+float_args
+#    total_args=int_args+str_args+bool_args+list_args+float_args
 
     argvs=sys.argv[1:]
     argc=len(argvs)
@@ -252,7 +252,8 @@ def main():
 #            for arg_name in total_args:
             read_comandline(arg_nih, 
                             str_args, int_args, bool_args, list_args, float_args,
-                            total_args, arg_input)
+#                            total_args,
+                            arg_input)
     arg_nih['ratio']=[arg_nih['ratio_train'], arg_nih['ratio_validation'], 1-arg_nih['ratio_train']-arg_nih['ratio_validation']]
 
 #    nb_gpus=1

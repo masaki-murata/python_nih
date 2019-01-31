@@ -97,7 +97,6 @@ class CAM:
 #        path_to_model=self.path_to_model % self.pathology
         path_to_csv_dir = base_dir+"../nih_data/ratio_t%.2fv%.2ft%.2f/" % tuple(self.ratio) 
         if not self.if_single_pathology:
-            print("ahoahoaho")
             path_to_csv_dir = path_to_csv_dir[:-1] + "_multipathology/"
         path_to_group_csv = path_to_csv_dir + "%s.csv" 
         if self.if_duplicate:
@@ -140,7 +139,7 @@ class CAM:
             self.model_multiple_gpu = multi_gpu_model(self.model, gpus=self.nb_gpus)
         else:
             self.model_multiple_gpu = self.model
-#        self.model.summary()
+        self.model.summary()
 #        print(self.layer_name)
 #        print("aho")
         self.predictions = self.model_multiple_gpu.predict(self.test_data, batch_size=self.batch_size)
@@ -266,8 +265,8 @@ class CAM:
 def main():
     print("start interpretable")
     arg_nih={}
-    arg_nih['pathologies']=['Effusion']#['Edema', 'Effusion', 'Consolidation', 'Atelectasis', 'Hernia', 'Cardiomegaly', 'Infiltration', 'Fibrosis']
-    arg_nih['layer_names']=["block5_conv4"]#["block4_conv4", "block5_conv4", "block5_pool"]
+    arg_nih['pathologies']=[]#['Effusion']#['Edema', 'Effusion', 'Consolidation', 'Atelectasis', 'Hernia', 'Cardiomegaly', 'Infiltration', 'Fibrosis']
+    arg_nih['layer_names']=[]#["block5_conv4"]#["block4_conv4", "block5_conv4", "block5_pool"]
     arg_nih['cam_methods']=["grad_cam_murata"]#["grad_cam+2", "grad_cam_murata"]
     arg_nih['path_to_model'] = "../nih_data/models/mm11dd26_size256/%s.h5"
     arg_nih['path_to_image_dir'] = "../nih_data/images/"
@@ -285,7 +284,7 @@ def main():
     arg_nih['if_load_npy']=True
     arg_nih['if_save_npy']=False
 
-    print("arg_nih['if_murata_select'] = ", arg_nih['if_murata_select'])
+    print("arg_nih['path_to_image_dir']  = ", arg_nih['path_to_image_dir'] )
 
     int_args = ['batch_size', 'input_shape', 'nb_gpus', 'samplesize']
     float_args = ['ratio_train', 'ratio_validation', 'noiselevel']
@@ -311,11 +310,10 @@ def main():
 #    cam_methods = ["grad_cam+2"]
 #    pathology="Effusion"
     
-    print("arg_nih['if_single_pathology'] = ", arg_nih['if_single_pathology'])
-    print("arg_nih['if_murata_select'] = ", arg_nih['if_murata_select'])
+#    print("arg_nih['if_single_pathology'] = ", arg_nih['if_single_pathology'])
+#    print("arg_nih['if_murata_select'] = ", arg_nih['if_murata_select'])
     for pathology in arg_nih['pathologies']:
         print(pathology)
-        """
         interpretable = CAM(layer_names=arg_nih['layer_names'],
                              ratio=arg_nih['ratio'],
                              input_shape=arg_nih['input_shape'],
@@ -335,10 +333,9 @@ def main():
                              nb_gpus=arg_nih['nb_gpus'],
                              )
         interpretable.grad_cam()
-        """
         path_to_cams=base_dir + "../nih_data/models/mm11dd26_size256/%s/cams/" # % pathology
-#        data_process.move_cam_pngs(pathology, path_to_cams=path_to_cams)
-        data_process.glue_cams(pathology, 512, path_to_cams)
+        data_process.move_cam_pngs(pathology, path_to_cams=path_to_cams)
+        data_process.glue_cams(pathology, 1024, path_to_cams)
 #    grad_cam(input_shape=(256,256,1),layer_name="block4_conv4")
 
 if __name__ == '__main__':
