@@ -333,7 +333,8 @@ def main():
                              nb_gpus=arg_nih['nb_gpus'],
                              )
         interpretable.grad_cam()
-        path_to_cams=base_dir + "../nih_data/models/mm11dd26_size256/%s/cams/" # % pathology
+        path_to_cams=arg_nih['path_to_model'][:3]+"/cams/"
+#        base_dir + "../nih_data/models/mm11dd26_size256/%s/cams/" # % pathology
         data_process.move_cam_pngs(pathology, path_to_cams=path_to_cams)
         data_process.glue_cams(pathology, 1024, path_to_cams)
 #    grad_cam(input_shape=(256,256,1),layer_name="block4_conv4")
