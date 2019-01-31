@@ -12,6 +12,8 @@ import os, re, shutil
 from keras.utils import to_categorical
 
 base_dir = os.getcwd()+"/"
+if not re.search("nih_python", base_dir):
+    base_dir = base_dir + "xray/nih_python/"
 
 def grouping(path_to_nih_data_csv = base_dir+"../nih_data/Data_Entry_2017_murata.csv",
              path_to_bb = base_dir+"../nih_data/BBox_List_2017.csv",
@@ -202,8 +204,8 @@ def make_bb_images(path_to_bb = "../nih_data/BBox_List_2017.csv",
 
 def move_cam_pngs(#cam_method, layer_name,
                   pathology,
-                  path_to_bb_murata = "../nih_data/bb_images/%s/murata_select/", # % pathology
-                  path_to_cams="../nih_data/models/mm.../%s/cams/",
+                  path_to_bb_murata = base_dir + "../nih_data/bb_images/%s/murata_select/", # % pathology
+                  path_to_cams=base_dir + "../nih_data/models/mm.../%s/cams/",
 #                  path_to_cam_pngs = "../nih_data/models/mm11dd26_size%d_%s/%s/cams/%s_%s/TP/", # % (size, network, pathology, cam_method, layer_name) 
 #                  path_to_cam_moved = "../nih_data/models/mm11dd26_size256/%s/cams/%s_%s/murata_select/",
                   ):

@@ -545,8 +545,10 @@ def train_pathologies(pathologies,#=[],
 
 def read_comandline(arg_dict, 
                     str_args, int_args, bool_args, list_args, float_args,
-                    total_args, comandline):
+#                    total_args, 
+                    comandline):
     count=0
+    total_args=int_args+str_args+bool_args+list_args+float_args
     for arg_name in total_args:
         if re.match('^'+arg_name, comandline):
             count += 1

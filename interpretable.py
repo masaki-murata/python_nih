@@ -264,6 +264,7 @@ class CAM:
 
 
 def main():
+    print("start interpretable")
     arg_nih={}
     arg_nih['pathologies']=['Effusion']#['Edema', 'Effusion', 'Consolidation', 'Atelectasis', 'Hernia', 'Cardiomegaly', 'Infiltration', 'Fibrosis']
     arg_nih['layer_names']=["block5_conv4"]#["block4_conv4", "block5_conv4", "block5_pool"]
@@ -281,7 +282,7 @@ def main():
     arg_nih['if_duplicate']=True
     arg_nih['if_murata_select']=True
     arg_nih['if_single_pathology']=False
-    arg_nih['if_load_npy']=False
+    arg_nih['if_load_npy']=True
     arg_nih['if_save_npy']=False
 
     print("arg_nih['if_murata_select'] = ", arg_nih['if_murata_select'])
@@ -297,11 +298,12 @@ def main():
     argc=len(argvs)
     if argc > 0:
         for arg_index in range(argc):
-            arg_input = argvs[arg_index]
+            comandline = argvs[arg_index]
             for arg_name in total_args:
                 nih.read_comandline(arg_nih, 
                                 str_args, int_args, bool_args, list_args, float_args,
-                                arg_name, arg_input)
+#                                total_args,
+                                comandline)
 
     arg_nih['ratio']=[arg_nih['ratio_train'], arg_nih['ratio_validation'], 1-arg_nih['ratio_train']-arg_nih['ratio_validation']]
 
@@ -332,7 +334,7 @@ def main():
                              nb_gpus=arg_nih['nb_gpus'],
                              )
         interpretable.grad_cam()
-        path_to_cams="../nih_data/models/mm11dd26_size256/%s/cams/" # % pathology
+        path_to_cams=base_dir + "../nih_data/models/mm11dd26_size256/%s/cams/" # % pathology
         data_process.move_cam_pngs(pathology, path_to_cams=path_to_cams)
         data_process.glue_cams(pathology, 512, path_to_cams)
 #    grad_cam(input_shape=(256,256,1),layer_name="block4_conv4")
