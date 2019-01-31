@@ -8,7 +8,7 @@ Created on Tue Nov 20 14:36:03 2018
 from PIL import Image, ImageOps, ImageDraw
 import pandas as pd
 import numpy as np
-import os, re, shutil
+import os, re, shutil, math
 from keras.utils import to_categorical
 
 base_dir = os.getcwd()+"/"
@@ -256,9 +256,13 @@ def glue_cams(#cam_method, layer_name,
                     pngs.append(png)
         pngs.sort(), cam_pngs.sort()
         assert len(pngs) == len(cam_pngs), print( len(pngs), len(cam_pngs) )
-        row_num = int(np.sqrt(len(pngs)*2))
-        column_num = int( len(pngs)*2.0 / row_num - 0.01) + 2
-        row_num -= 1
+        row_num = math.ceil(np.sqrt(len(pngs)*2))
+        half_column_num = math.ceil( len(pngs) / row_num )
+        column_num = 2*half_column_num
+        while row_num*half_column_num > len(pngs)+min(row_num, half_column_num):
+            row_num -= 1
+#        column_num = int( len(pngs)*2.0 / row_num - 0.01) + 2
+#        row_num -= 1
         canvas = Image.new("RGB", (column_num*size, row_num*size))
         print(column_num, row_num, 2*len(pngs))
         r,c = 0,0
@@ -362,11 +366,14 @@ def main():
 #    layer_names = ["block4_conv4", "block5_conv4", "block5_pool"]
 #    cam_methods = ["grad_cam", "grad_cam_murata"]#, "grad_cam+", "grad_cam+2"]
     pathology="Effusion"
-    size = 1024
+    size = 512
 #    path_to_cam_pngs="../nih_data/models/mm12dd17_size512_VGG19/%s/cams/%s_%s/murata_select/"
-    path_to_cams = "../nih_data/models/mm12dd17_size512_VGG19/%s/cams/"
+#    path_to_cams = "../nih_data/models/mm12dd17_size512_VGG19/%s/cams/"
     
 
+    path_to_cams = base_dir + "../nih_data/models/mm11dd26_size256/%s/cams/" # % pathology
+    move_cam_pngs(pathology, path_to_cams=path_to_cams)
+    glue_cams(pathology, size, path_to_cams)
 #    move_cam_pngs(#cam_method, layer_name, 
 #                  pathology,
 #                  path_to_cams=path_to_cams,
@@ -377,24 +384,24 @@ def main():
 #              pathology, size,
 ##                      path_to_cam_pngs=path_to_cam_pngs, # % (pathology, cam_method, layer_name), 
 #              path_to_cams=path_to_cams, # % (pathology, cam_method, layer_name),
-#              )
-    for group in ["train", "validation", "test"]:
-        make_dataset(df=[],
-                     group=group,
-                     path_to_image_dir=base_dir+"../nih_data/images/",
-                     ratio=[0.7,0.1,0.2],
-                     input_shape=(128, 128, 1),
-                     data_num=-1,
-                     pathology="Effusion",
-                     path_to_group_csv="",
-                     if_rgb=False,
-        #                 if_normalize=True,
-                     if_load_npy=False,
-                     if_save_npy=True,
-                     if_return_df=False,
-                     if_load_df=False,
-                     if_single_pathology=False,
-                     )
+##              )
+#    for group in ["train", "validation", "test"]:
+#        make_dataset(df=[],
+#                     group=group,
+#                     path_to_image_dir=base_dir+"../nih_data/images/",
+#                     ratio=[0.7,0.1,0.2],
+#                     input_shape=(128, 128, 1),
+#                     data_num=-1,
+#                     pathology="Effusion",
+#                     path_to_group_csv="",
+#                     if_rgb=False,
+#        #                 if_normalize=True,
+#                     if_load_npy=False,
+#                     if_save_npy=True,
+#                     if_return_df=False,
+#                     if_load_df=False,
+#                     if_single_pathology=False,
+#                     )
     
 if __name__ == '__main__':
     main()
