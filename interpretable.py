@@ -315,6 +315,7 @@ def main():
     print("arg_nih['if_murata_select'] = ", arg_nih['if_murata_select'])
     for pathology in arg_nih['pathologies']:
         print(pathology)
+        """
         interpretable = CAM(layer_names=arg_nih['layer_names'],
                              ratio=arg_nih['ratio'],
                              input_shape=arg_nih['input_shape'],
@@ -334,6 +335,7 @@ def main():
                              nb_gpus=arg_nih['nb_gpus'],
                              )
         interpretable.grad_cam()
+        """
         path_to_cams=base_dir + "../nih_data/models/mm11dd26_size256/%s/cams/" # % pathology
         data_process.move_cam_pngs(pathology, path_to_cams=path_to_cams)
         data_process.glue_cams(pathology, 512, path_to_cams)
