@@ -337,7 +337,7 @@ def main():
         interpretable.grad_cam()
         """
         path_to_cams=base_dir + "../nih_data/models/mm11dd26_size256/%s/cams/" # % pathology
-        data_process.move_cam_pngs(pathology, path_to_cams=path_to_cams)
+#        data_process.move_cam_pngs(pathology, path_to_cams=path_to_cams)
         data_process.glue_cams(pathology, 512, path_to_cams)
 #    grad_cam(input_shape=(256,256,1),layer_name="block4_conv4")
 
