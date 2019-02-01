@@ -10,7 +10,7 @@ from PIL import Image
 from keras import backend as K
 from keras.utils import multi_gpu_model
 from keras import initializers, layers
-import tensorflow.keras.activations as activations
+import keras.activations as activations
 from keras.models import Model
 import pandas as pd
 import os, re, sys
@@ -153,12 +153,12 @@ class CAM:
             else:
                 if previous_layer_name==layer_name:
                     count += 1
-                    layer.activation = activations.linear
+#                    layer.activation = activations.linear
 #                    x = noise_layer(self.noiselevel)(x)
                     x = layer(x)
 #                    x = Activation("relu")(x)
                 else:
-                    layer.activation = activations.linear
+#                    layer.activation = activations.linear
                     x = layer(x)
             previous_layer_name = layer.name
         assert count==1, print("count = ", count)
