@@ -151,7 +151,7 @@ class CAM:
                 x = input_layer
             else:
                 if previous_layer_name==layer_name:
-                    count = 1
+                    count += 1
 #                    layer.activation = activations.linear
                     x = noise_layer(self.noiselevel)(x)
                     x = layer(x)
