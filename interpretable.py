@@ -171,8 +171,8 @@ class CAM:
     def save_cam(self, layer_name, cam_method, cams, start_index):
         path_to_save_cam = self.path_to_model[:-3]+"/cams/"
         path_to_save_cam = path_to_save_cam + cam_method + "_" + layer_name
-        if self.samplesize > 1:
-            path_to_save_cam = path_to_save_cam + "_samplesize%d_noiselevel%.2f" % (self.samplesize, self.noiselevel)
+        if self.samplesize > 0:
+            path_to_save_cam = path_to_save_cam + "_samplesize%d_noiselevel%.2f_noiselayer=%s" % (self.samplesize, self.noiselevel, self.noise_layer)
         path_to_save_cam = path_to_save_cam + "/%s/" # % (TPFP)
         if start_index==0:
             if not os.path.exists(path_to_save_cam % "TP"):
@@ -309,7 +309,7 @@ def main():
 #    cam_methods = ["grad_cam+2"]
 #    pathology="Effusion"
     
-    print("arg_nih['path_to_image_dir']  = ", arg_nih['path_to_image_dir'] )
+    print("arg_nih['noiselevel']  = ", arg_nih['noiselevel'] )
 #    print("arg_nih['if_murata_select'] = ", arg_nih['if_murata_select'])
     for pathology in arg_nih['pathologies']:
         print(pathology)
