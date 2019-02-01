@@ -38,11 +38,9 @@ if os.name=='posix' and if_DLB:
 
 
 class noise_layer(layers.Layer):
-    def __init__(self, noiselevel, 
-#                 **kwargs,
-                 ):
+    def __init__(self, noiselevel, **kwargs):
         self.noiselevel = noiselevel
-#        super(MyLayer, self).__init__(**kwargs)
+        super(noise_layer, self).__init__(**kwargs)
 
     def call(self, inputs, **kwargs):
         mean = K.mean(inputs)
@@ -64,7 +62,7 @@ class CAM:
                  cam_methods,
                  samplesize,
                  noiselevel,
-                 noise_layer, #  initial, intermediate
+                 noiselayer_place, #  initial, intermediate
                  nb_gpus,
                  ratio=[0.7,0.1,0.2],
                  if_single_pathology=False,
@@ -84,7 +82,7 @@ class CAM:
         self.batch_size=batch_size
         self.samplesize=samplesize
         self.noiselevel=noiselevel
-        self.noise_layer=noise_layer
+        self.noiselayer_place=noiselayer_place
         self.if_load_npy=if_load_npy
         self.if_save_npy=if_save_npy
         self.cam_methods=cam_methods
@@ -146,12 +144,14 @@ class CAM:
     
     def add_noise_layer(self, layer_name):
         previous_layer_name="maeno layer no namae"
+        count = 0
         for i, layer in enumerate(self.model.layers):
             if i==0:
                 input_layer = layer.input
                 x = input_layer
             else:
-                if previous_layer_name==layer.name:
+                if previous_layer_name==layer_name:
+                    count = 1
 #                    layer.activation = activations.linear
                     x = noise_layer(self.noiselevel)(x)
                     x = layer(x)
@@ -159,6 +159,7 @@ class CAM:
                 else:
                     x = layer(x)
             previous_layer_name = layer.name
+        assert count==1, print("count = ", count)
     
         _model = Model(input_layer, x)
         if int(self.nb_gpus) > 1:
@@ -172,7 +173,7 @@ class CAM:
         path_to_save_cam = self.path_to_model[:-3]+"/cams/"
         path_to_save_cam = path_to_save_cam + cam_method + "_" + layer_name
         if self.samplesize > 0:
-            path_to_save_cam = path_to_save_cam + "_samplesize%d_noiselevel%.2f_noiselayer=%s" % (self.samplesize, self.noiselevel, self.noise_layer)
+            path_to_save_cam = path_to_save_cam + "_samplesize%d_noiselevel%.2f_noiselayer=%s" % (self.samplesize, self.noiselevel, self.noiselayer_place)
         path_to_save_cam = path_to_save_cam + "/%s/" # % (TPFP)
         if start_index==0:
             if not os.path.exists(path_to_save_cam % "TP"):
@@ -239,7 +240,7 @@ class CAM:
                 cams = 0
                 original_data = self.test_data[start_index:end_index]
                 for sample in range(self.samplesize):
-                    input_data = original_data + (noise_layer=="initial")*self.noiselevel*np.random.normal(size=original_data.shape)  
+                    input_data = original_data + (self.noiselayer_place=="initial")*self.noiselevel*np.random.normal(size=original_data.shape)  
                     cams += self.compute_cams(input_data, gradient_function, cam_method)
                 cams = cams / float(self.samplesize)
             self.save_cam(layer_name, cam_method, cams=cams, start_index=start_index)
@@ -253,7 +254,7 @@ class CAM:
         print(self.test_data.shape)
         for layer_name in self.layer_names:
             for cam_method in self.cam_methods:
-                if noise_layer == "intermediate":
+                if self.noiselayer_place == "intermediate":
                     self.add_noise_layer(layer_name)
                     self.model_multiple_gpu.summary()
                 print( "layer_name = {0}, cam_method = {1}".format(layer_name,cam_method) )
@@ -272,7 +273,7 @@ def main():
     arg_nih['path_to_image_dir'] = "../nih_data/images/"
     arg_nih['ratio_train']=0.7
     arg_nih['ratio_validation']=0.1
-    arg_nih['noise_layer']="initial"
+    arg_nih['noiselayer_place']="initial"
     arg_nih['noiselevel']=0.1    
     arg_nih['input_shape']=256
     arg_nih['batch_size']=64
@@ -287,7 +288,7 @@ def main():
 
     int_args = ['batch_size', 'input_shape', 'nb_gpus', 'samplesize']
     float_args = ['ratio_train', 'ratio_validation', 'noiselevel']
-    str_args = ["path_to_model", "path_to_image_dir", "noise_layer"]
+    str_args = ["path_to_model", "path_to_image_dir", "noiselayer_place"]
     list_args = ['pathologies', 'layer_names', 'cam_methods']
     bool_args = ['if_duplicate', 'if_murata_select', 'if_single_pathology', 'if_load_npy', 'if_save_npy']
     total_args=int_args+str_args+bool_args+list_args+float_args
@@ -318,7 +319,7 @@ def main():
                              input_shape=arg_nih['input_shape'],
                              batch_size=arg_nih['batch_size'],
                              samplesize=arg_nih['samplesize'],
-                             noise_layer=arg_nih['noise_layer'],
+                             noiselayer_place=arg_nih['noiselayer_place'],
                              noiselevel=arg_nih['noiselevel'],
                              pathology=pathology,
                              path_to_model=base_dir+arg_nih['path_to_model'],
