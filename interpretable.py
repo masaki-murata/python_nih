@@ -167,7 +167,7 @@ class CAM:
     
         _model = Model(input_layer, x)
         print(_model.output)
-        print(_model.get_layer[layer_name].output)
+        print(_model.get_layer(layer_name).output)
         if int(self.nb_gpus) > 1:
             self.model_multiple_gpu = multi_gpu_model(_model, gpus=self.nb_gpus)
         else:
