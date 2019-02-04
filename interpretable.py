@@ -148,11 +148,11 @@ class CAM:
 #        previous_layer_name="maeno layer no namae"
 #        before_noise_layer = self.model.layers[layer_name]
         print("before modeling: self.model.get_layer(block1_conv2).output = ", self.model.get_layer("block1_conv2").output)
-        count = 0
         
         list_layers = self.model.layers
         del self.model
         del self.model_multiple_gpu
+        count = 0
         for i, layer in enumerate(list_layers):
             if i==0:
                 input_layer = layer.input
