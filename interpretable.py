@@ -149,7 +149,11 @@ class CAM:
 #        before_noise_layer = self.model.layers[layer_name]
         print("before modeling: self.model.get_layer(block1_conv2).output = ", self.model.get_layer("block1_conv2").output)
         count = 0
-        for i, layer in enumerate(self.model.layers):
+        
+        list_layers = self.model.layers
+        del self.model
+        del self.model_multiple_gpu
+        for i, layer in enumerate(list_layers):
             if i==0:
                 input_layer = layer.input
                 x = input_layer
@@ -165,16 +169,15 @@ class CAM:
                     x = layer(x)
 #            previous_layer_name = layer.name
         assert count==1, print("count = ", count)
-    
-        _model = Model(input_layer, x)
-        del self.model_multiple_gpu
-        print(_model.output)
+        
+        self.model = Model(input_layer, x)
         print("after modeling self.model.get_layer(block1_conv2).output = ", self.model.get_layer("block1_conv2").output)
+#        print(_model.output)
 #        print(_model.get_layer("block1_conv2").output)
         if int(self.nb_gpus) > 1:
-            self.model_multiple_gpu = multi_gpu_model(_model, gpus=self.nb_gpus)
+            self.model_multiple_gpu = multi_gpu_model(self.model, gpus=self.nb_gpus)
         else:
-            self.model_multiple_gpu = _model
+            self.model_multiple_gpu = self.model
         
         
 #        return model, predictions
