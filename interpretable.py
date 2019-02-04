@@ -147,7 +147,7 @@ class CAM:
     def add_noise_layer(self, layer_name):
 #        previous_layer_name="maeno layer no namae"
 #        before_noise_layer = self.model.layers[layer_name]
-#        x = noise_layer(self.noiselevel, name="noise_layer")(before_noise_layer.output)
+        print("before modeling: self.model.get_layer(block1_conv2).output = ", self.model.get_layer("block1_conv2").output)
         count = 0
         for i, layer in enumerate(self.model.layers):
             if i==0:
@@ -169,7 +169,7 @@ class CAM:
         _model = Model(input_layer, x)
         del self.model_multiple_gpu
         print(_model.output)
-        print("self.model.get_layer(block1_conv2).output = ", self.model.get_layer("block1_conv2").output)
+        print("after modeling self.model.get_layer(block1_conv2).output = ", self.model.get_layer("block1_conv2").output)
 #        print(_model.get_layer("block1_conv2").output)
         if int(self.nb_gpus) > 1:
             self.model_multiple_gpu = multi_gpu_model(_model, gpus=self.nb_gpus)
@@ -264,6 +264,7 @@ class CAM:
         for layer_name in self.layer_names:
             for cam_method in self.cam_methods:
                 if self.noiselayer_place == "intermediate":
+                    print("self.model.get_layer(block1_conv2).output = ", self.model.get_layer("block1_conv2").output)
                     self.add_noise_layer(layer_name)
                     self.model_multiple_gpu.summary()
                 print( "layer_name = {0}, cam_method = {1}".format(layer_name,cam_method) )
