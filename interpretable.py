@@ -144,26 +144,30 @@ class CAM:
         self.predictions = self.model_multiple_gpu.predict(self.test_data, batch_size=self.batch_size)
     
     def add_noise_layer(self, layer_name):
-        previous_layer_name="maeno layer no namae"
+#        previous_layer_name="maeno layer no namae"
+#        before_noise_layer = self.model.layers[layer_name]
+#        x = noise_layer(self.noiselevel, name="noise_layer")(before_noise_layer.output)
         count = 0
         for i, layer in enumerate(self.model.layers):
             if i==0:
                 input_layer = layer.input
                 x = input_layer
             else:
-                if previous_layer_name==layer_name:
+                if layer.name==layer_name:
                     count += 1
 #                    layer.activation = activations.linear
-#                    x = noise_layer(self.noiselevel)(x)
                     x = layer(x)
+#                    x = noise_layer(self.noiselevel, name="noise_layer")(x)
 #                    x = Activation("relu")(x)
                 else:
 #                    layer.activation = activations.linear
                     x = layer(x)
-            previous_layer_name = layer.name
+#            previous_layer_name = layer.name
         assert count==1, print("count = ", count)
     
         _model = Model(input_layer, x)
+        print(_model.output)
+        print(_model.get_layer[layer_name].output)
         if int(self.nb_gpus) > 1:
             self.model_multiple_gpu = multi_gpu_model(_model, gpus=self.nb_gpus)
         else:
