@@ -166,8 +166,10 @@ class CAM:
         assert count==1, print("count = ", count)
     
         _model = Model(input_layer, x)
+        del self.model_multiple_gpu
         print(_model.output)
-        print(_model.get_layer(layer_name).output)
+        print(self.model.get_layer("block1_conv2").output)
+        print(_model.get_layer("block1_conv2").output)
         if int(self.nb_gpus) > 1:
             self.model_multiple_gpu = multi_gpu_model(_model, gpus=self.nb_gpus)
         else:
