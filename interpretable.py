@@ -158,6 +158,10 @@ class CAM:
             model_copy.add(type(layer)(**layer_config, weights=layer.get_weights()))
             if layer.name=="block2_conv1":
                 model_copy.add(noise_layer(noiselevel=0.2, name="noise"))
+        if int(self.nb_gpus) > 1:
+            self.model_multiple_gpu = multi_gpu_model(model_copy, gpus=self.nb_gpus)
+        else:
+            self.model_multiple_gpu = model_copy
         #        list_layers = self.model.layers
 #        del self.model
 #        del self.model_multiple_gpu
@@ -183,10 +187,6 @@ class CAM:
 #        print("after modeling self.model.get_layer(block1_conv2).output = ", self.model.get_layer("block1_conv2").output)
 ##        print(_model.output)
 ##        print(_model.get_layer("block1_conv2").output)
-        if int(self.nb_gpus) > 1:
-            self.model_multiple_gpu = multi_gpu_model(model_copy, gpus=self.nb_gpus)
-        else:
-            self.model_multiple_gpu = model_copy
         
         
 #        return model, predictions
