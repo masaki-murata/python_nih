@@ -11,7 +11,8 @@ from keras import backend as K
 from keras.utils import multi_gpu_model
 from keras import initializers, layers
 import keras.activations as activations
-from keras.models import Model
+from keras.models import Model, Sequential
+from keras.layers import InputLayer
 import pandas as pd
 import os, re, sys
 
@@ -149,35 +150,43 @@ class CAM:
 #        before_noise_layer = self.model.layers[layer_name]
         print("before modeling: self.model.get_layer(block1_conv2).output = ", self.model.get_layer("block1_conv2").output)
         
-        list_layers = self.model.layers
-        del self.model
-        del self.model_multiple_gpu
-        count = 0
-        for i, layer in enumerate(list_layers):
-            if i==0:
-                input_layer = layer.input
-                x = input_layer
-            else:
-                if layer.name==layer_name:
-                    count += 1
-#                    layer.activation = activations.linear
-                    x = layer(x)
-#                    x = noise_layer(self.noiselevel, name="noise_layer")(x)
-#                    x = Activation("relu")(x)
-                else:
-#                    layer.activation = activations.linear
-                    x = layer(x)
-#            previous_layer_name = layer.name
-        assert count==1, print("count = ", count)
-        
-        self.model = Model(input_layer, x)
-        print("after modeling self.model.get_layer(block1_conv2).output = ", self.model.get_layer("block1_conv2").output)
-#        print(_model.output)
-#        print(_model.get_layer("block1_conv2").output)
+#        model_layers = self.model.layers[1:]
+        model_copy = Sequential()
+        model_copy.add(InputLayer(input_shape=self.model.input_shape[1:]))
+        for i, layer in enumerate(self.model.layers[1:]):
+            layer_config = layer.get_config()
+            model_copy.add(type(layer)(**layer_config, weights=layer.get_weights()))
+            if layer.name=="block2_conv1":
+                model_copy.add(noise_layer(noiselevel=0.2, name="noise"))
+        #        list_layers = self.model.layers
+#        del self.model
+#        del self.model_multiple_gpu
+#        count = 0
+#        for i, layer in enumerate(list_layers):
+#            if i==0:
+#                input_layer = layer.input
+#                x = input_layer
+#            else:
+#                if layer.name==layer_name:
+#                    count += 1
+##                    layer.activation = activations.linear
+#                    x = layer(x)
+##                    x = noise_layer(self.noiselevel, name="noise_layer")(x)
+##                    x = Activation("relu")(x)
+#                else:
+##                    layer.activation = activations.linear
+#                    x = layer(x)
+##            previous_layer_name = layer.name
+#        assert count==1, print("count = ", count)
+#        
+#        self.model = Model(input_layer, x)
+#        print("after modeling self.model.get_layer(block1_conv2).output = ", self.model.get_layer("block1_conv2").output)
+##        print(_model.output)
+##        print(_model.get_layer("block1_conv2").output)
         if int(self.nb_gpus) > 1:
-            self.model_multiple_gpu = multi_gpu_model(self.model, gpus=self.nb_gpus)
+            self.model_multiple_gpu = multi_gpu_model(model_copy, gpus=self.nb_gpus)
         else:
-            self.model_multiple_gpu = self.model
+            self.model_multiple_gpu = model_copy
         
         
 #        return model, predictions
