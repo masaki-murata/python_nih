@@ -155,8 +155,12 @@ class CAM:
         model_copy.add(InputLayer(input_shape=self.model.input_shape[1:]))
         for i, layer in enumerate(self.model.layers[1:]):
             layer_config = layer.get_config()
-            print("type(layer_config) =", type(layer_config))
-            model_copy.add(type(layer)(*layer_config, weights=layer.get_weights()))
+            print("type(layer) =", type(layer))
+            print("layer_config =", layer_config)
+            model_copy.add(type(layer)(**layer_config))
+#            model_copy.add(type(layer)(**{'filters':layer_config["filters"], 'kernel_size':layer_config["kernel_size"]}))
+#            model_copy.add(type(layer)(filters=layer_config["filters"], kernel_size=layer_config["kernel_size"]))
+#            model_copy.add(type(layer)(**layer_config, weights=layer.get_weights()))
             if layer.name=="block2_conv1":
                 model_copy.add(noise_layer(noiselevel=0.2, name="noise"))
         if int(self.nb_gpus) > 1:
