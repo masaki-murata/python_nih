@@ -292,7 +292,7 @@ class CAM:
         for layer_name in self.layer_names:
             for cam_method in self.cam_methods:
                 if self.noiselayer_place == "intermediate":
-                    print("self.model.get_layer(block1_conv2).output = ", self.model.get_layer("block1_conv2").output)
+#                    print("self.model.get_layer(block1_conv2).output = ", self.model.get_layer("block1_conv2").output)
                     self.add_noise_layer(layer_name)
                     self.model_multiple_gpu.summary()
                 print( "layer_name = {0}, cam_method = {1}".format(layer_name,cam_method) )
@@ -373,8 +373,11 @@ def main():
         interpretable.grad_cam()
         path_to_cams=base_dir+arg_nih['path_to_model'][:-3]+"/cams/"
 #        base_dir + "../nih_data/models/mm11dd26_size256/%s/cams/" # % pathology
-        data_process.move_cam_pngs(pathology, path_to_cams=path_to_cams)
-        data_process.glue_cams(pathology, 1024, path_to_cams)
+        for cam_method in arg_nih['cam_methods']:
+            for layer_name in arg_nih['layer_names']:
+                cam_dir=cam_method+"_"+layer_name+"_samplesize%d_noiselevel%.2f_noiselayer=%s" % (arg_nih['samplesize'], arg_nih['noiselevel'], arg_nih['noiselayer_place'])
+            data_process.move_cam_pngs_single(pathology, cam_dir, path_to_cams=path_to_cams)
+            data_process.glue_cams_single(pathology, size=1024, path_to_cam_dir=path_to_cams+cam_dir)
 #    grad_cam(input_shape=(256,256,1),layer_name="block4_conv4")
 
 if __name__ == '__main__':

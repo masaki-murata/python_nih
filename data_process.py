@@ -202,43 +202,97 @@ def make_bb_images(path_to_bb = "../nih_data/BBox_List_2017.csv",
     return count
 
 
-def move_cam_pngs(#cam_method, layer_name,
-                  pathology,
-                  path_to_bb_murata = base_dir + "../nih_data/bb_images/%s/murata_select/", # % pathology
-                  path_to_cams=base_dir + "../nih_data/models/mm.../%s/cams/",
+def move_cam_pngs_single(pathology, cam_dir,
+                         path_to_bb_murata = base_dir + "../nih_data/bb_images/%s/murata_select/", # % pathology
+                         path_to_cams=base_dir + "../nih_data/models/mm.../%s/cams/",
+                         ):
+    path_to_bb_murata=path_to_bb_murata % pathology
+    path_to_cams=path_to_cams % pathology
+    path_to_cam=path_to_cams+cam_dir
+    path_to_cam_pngs = path_to_cam + "/TP/"
+    path_to_cam_moved = path_to_cam + "/murata_select/"
+
+    if not os.path.exists(path_to_cam_moved):
+        os.makedirs(path_to_cam_moved)
+
+    bb_pngs = []
+    for png in os.listdir(path_to_bb_murata):
+        if re.match(".*.png$", png): 
+            bb_pngs.append(png)
+    cam_pngs = []
+    for png in os.listdir(path_to_cam_pngs):
+        if re.match(".*.png$", png): 
+            cam_pngs.append(png)
+
+    for png in bb_pngs:
+        if png in cam_pngs: 
+            shutil.copyfile(path_to_cam_pngs+png, path_to_cam_moved+png[:-4]+"_cam.png")
+            shutil.copyfile(path_to_bb_murata+png, path_to_cam_moved+png)
+
+
+def move_cam_pngs_all(#cam_method, layer_name,
+                      pathology,
+                      path_to_bb_murata = base_dir + "../nih_data/bb_images/%s/murata_select/", # % pathology
+                      path_to_cams=base_dir + "../nih_data/models/mm.../%s/cams/",
 #                  path_to_cam_pngs = "../nih_data/models/mm11dd26_size%d_%s/%s/cams/%s_%s/TP/", # % (size, network, pathology, cam_method, layer_name) 
 #                  path_to_cam_moved = "../nih_data/models/mm11dd26_size256/%s/cams/%s_%s/murata_select/",
                   ):
-    path_to_bb_murata=path_to_bb_murata % pathology
-    path_to_cams=path_to_cams % pathology
-    def move_cam_pngs_single(path_to_cam_pngs, path_to_cam_moved):
-        if not os.path.exists(path_to_cam_moved):
-            os.makedirs(path_to_cam_moved)
-    
-        bb_pngs = []
-        for png in os.listdir(path_to_bb_murata):
-            if re.match(".*.png$", png): 
-                bb_pngs.append(png)
-        cam_pngs = []
-        for png in os.listdir(path_to_cam_pngs):
-            if re.match(".*.png$", png): 
-                cam_pngs.append(png)
-    
-        for png in bb_pngs:
-            if png in cam_pngs: 
-                shutil.copyfile(path_to_cam_pngs+png, path_to_cam_moved+png[:-4]+"_cam.png")
-                shutil.copyfile(path_to_bb_murata+png, path_to_cam_moved+png)
+#    path_to_bb_murata=path_to_bb_murata % pathology
+#    path_to_cams=path_to_cams % pathology
                 
-    for path_to_cam in os.listdir(path_to_cams):
-        path_to_cam=path_to_cams+path_to_cam
-        if os.path.isdir(path_to_cam):
-            path_to_cam_pngs = path_to_cam + "/TP/"
-            path_to_cam_moved = path_to_cam + "/murata_select/"
-            move_cam_pngs_single(path_to_cam_pngs, path_to_cam_moved)
+    for cam_dir in os.listdir(path_to_cams):
+        if os.path.isdir(cam_dir):
+#            path_to_cam_pngs = path_to_cam + "/TP/"
+#            path_to_cam_moved = path_to_cam + "/murata_select/"
+            move_cam_pngs_single(pathology, cam_dir, path_to_bb_murata, path_to_cams)
+#        path_to_cam=path_to_cams+path_to_cam
+#        if os.path.isdir(path_to_cam):
+#            path_to_cam_pngs = path_to_cam + "/TP/"
+#            path_to_cam_moved = path_to_cam + "/murata_select/"
+#            move_cam_pngs_single(path_to_cam_pngs, path_to_cam_moved)
 #    path_to_bb_murata=path_to_bb_murata % pathology
 #    path_to_cam_pngs = (path_to_cams+"%s_%s/TP/") % (pathology, cam_method, layer_name) 
 #    path_to_cam_moved = path_to_cam_pngs[:-3] + "murata_select/"
 
+
+def glue_cams_single(pathology, size, 
+                     path_to_cam_dir):
+    path_to_cam_dir=path_to_cam_dir % pathology
+    path_to_cam_pngs = path_to_cam_dir + "/murata_select/"
+    path_to_glued_png = path_to_cam_dir+".png"
+    pngs, cam_pngs = [], []
+    for png in os.listdir(path_to_cam_pngs):
+        if re.match(".*.png$", png): 
+            if re.match(".*_cam.png$", png): 
+                cam_pngs.append(png)
+            else:
+                pngs.append(png)
+    pngs.sort(), cam_pngs.sort()
+    assert len(pngs) == len(cam_pngs), print( len(pngs), len(cam_pngs) )
+    row_num = math.ceil(np.sqrt(len(pngs)*2))
+    half_column_num = math.ceil( len(pngs) / row_num )
+    column_num = 2*half_column_num
+    while row_num*half_column_num > len(pngs)+min(row_num, half_column_num):
+        row_num -= 1
+#        column_num = int( len(pngs)*2.0 / row_num - 0.01) + 2
+#        row_num -= 1
+    canvas = Image.new("RGB", (column_num*size, row_num*size))
+    print(column_num, row_num, 2*len(pngs))
+    r,c = 0,0
+    for i in range(len(pngs)):
+        print(c,r)
+#        img = Image.open(path_to_cam_pngs % (pathology, cam_method, layer_name) +pngs[i]).convert('L').resize((128,128))
+#        img_cam = Image.open(path_to_cam_pngs % (pathology, cam_method, layer_name) +cam_pngs[i]).convert('L').resize((128,128))
+        img = Image.open(path_to_cam_pngs+pngs[i]).resize((size,size))
+        img_cam = Image.open(path_to_cam_pngs+cam_pngs[i]).resize((size,size))
+        canvas.paste(img, (c*size, r*size))
+        canvas.paste(img_cam, ((c+1)*size, r*size))
+        if c > column_num-3:
+            r+=1
+            c=0
+        else:
+            c+=2
+    canvas.save(path_to_glued_png)
 
 def glue_cams(#cam_method, layer_name, 
               pathology, size, 
@@ -246,49 +300,15 @@ def glue_cams(#cam_method, layer_name,
 #              path_to_cam_pngs="../nih_data/models/mm11dd26_size%d_%s/%s/cams/%s_%s/murata_select/",  # % (pathology, cam_method, layer_name) 
 #              path_to_cams = "../nih_data/models/mm11dd26_size%d_%s/%s/cams/%s_%s.png",  # % (pathology, cam_method, layer_name) 
               ):
-    def glue_cams_single(path_to_cam_pngs, path_to_glued_png):
-        pngs, cam_pngs = [], []
-        for png in os.listdir(path_to_cam_pngs):
-            if re.match(".*.png$", png): 
-                if re.match(".*_cam.png$", png): 
-                    cam_pngs.append(png)
-                else:
-                    pngs.append(png)
-        pngs.sort(), cam_pngs.sort()
-        assert len(pngs) == len(cam_pngs), print( len(pngs), len(cam_pngs) )
-        row_num = math.ceil(np.sqrt(len(pngs)*2))
-        half_column_num = math.ceil( len(pngs) / row_num )
-        column_num = 2*half_column_num
-        while row_num*half_column_num > len(pngs)+min(row_num, half_column_num):
-            row_num -= 1
-#        column_num = int( len(pngs)*2.0 / row_num - 0.01) + 2
-#        row_num -= 1
-        canvas = Image.new("RGB", (column_num*size, row_num*size))
-        print(column_num, row_num, 2*len(pngs))
-        r,c = 0,0
-        for i in range(len(pngs)):
-            print(c,r)
-    #        img = Image.open(path_to_cam_pngs % (pathology, cam_method, layer_name) +pngs[i]).convert('L').resize((128,128))
-    #        img_cam = Image.open(path_to_cam_pngs % (pathology, cam_method, layer_name) +cam_pngs[i]).convert('L').resize((128,128))
-            img = Image.open(path_to_cam_pngs+pngs[i]).resize((size,size))
-            img_cam = Image.open(path_to_cam_pngs+cam_pngs[i]).resize((size,size))
-            canvas.paste(img, (c*size, r*size))
-            canvas.paste(img_cam, ((c+1)*size, r*size))
-            if c > column_num-3:
-                r+=1
-                c=0
-            else:
-                c+=2
-        canvas.save(path_to_glued_png)
 
     path_to_cams_dir=path_to_cams_dir % pathology
     for path_to_cam_dir in os.listdir(path_to_cams_dir):
         path_to_cam_dir=path_to_cams_dir+path_to_cam_dir
         if os.path.isdir(path_to_cam_dir):
-            path_to_cam_pngs = path_to_cam_dir + "/murata_select/"
-            path_to_glued_png = (path_to_cam_dir+".png")
-            print(path_to_cam_pngs, path_to_glued_png)
-            glue_cams_single(path_to_cam_pngs, path_to_glued_png)
+#            path_to_cam_pngs = path_to_cam_dir + "/murata_select/"
+#            path_to_glued_png = path_to_cam_dir+".png"
+#            print(path_to_cam_pngs, path_to_glued_png)
+            glue_cams_single(pathology, size, path_to_cam_dir)
 #    path_to_cam_pngs=(path_to_cams+"%s_%s/murata_select/") % (pathology, cam_method, layer_name) 
 #    path_to_cams_png = (path_to_cams+"%s_%s.png") % (pathology, cam_method, layer_name)
 
