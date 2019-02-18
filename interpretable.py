@@ -153,16 +153,27 @@ class CAM:
 #        model_layers = self.model.layers[1:]
         model_copy = Sequential()
         model_copy.add(InputLayer(input_shape=self.model.input_shape[1:]))
-        for i, layer in enumerate(self.model.layers[1:]):
+        model_layers=[]
+        for layer in self.model.layers[1:]:
+            try:           
+                model_layers.extend(layer.layers)
+            except:
+                model_layers.append(layer)
+        print("model_layers")
+#        for i, layer in enumerate(self.model.layers[1:]):
+        for i, layer in enumerate(model_layers):
             layer_config = layer.get_config()
-            print("type(layer) =", type(layer))
-            print("layer_config =", layer_config)
-            model_copy.add(type(layer)(**layer_config))
+#            if type(layer_config) == list:
+#                print(len(layer_config))
+#                print(layer.layers)
+#            print("type(layer) =", type(layer))
+#            print("layer_config =", layer_config)
+#            model_copy.add(type(layer)(**layer_config))
 #            model_copy.add(type(layer)(**{'filters':layer_config["filters"], 'kernel_size':layer_config["kernel_size"]}))
 #            model_copy.add(type(layer)(filters=layer_config["filters"], kernel_size=layer_config["kernel_size"]))
-#            model_copy.add(type(layer)(**layer_config, weights=layer.get_weights()))
-            if layer.name=="block2_conv1":
-                model_copy.add(noise_layer(noiselevel=0.2, name="noise"))
+            model_copy.add(type(layer)(**layer_config, weights=layer.get_weights()))
+            if layer.name==layer_name:
+                model_copy.add(noise_layer(noiselevel=self.noiselevel, name="noise"))
         if int(self.nb_gpus) > 1:
             self.model_multiple_gpu = multi_gpu_model(model_copy, gpus=self.nb_gpus)
         else:
@@ -300,7 +311,7 @@ def main():
     arg_nih['path_to_image_dir'] = "../nih_data/images/"
     arg_nih['ratio_train']=0.7
     arg_nih['ratio_validation']=0.1
-    arg_nih['noiselayer_place']="initial"
+    arg_nih['noiselayer_place']=""
     arg_nih['noiselevel']=0.1    
     arg_nih['input_shape']=256
     arg_nih['batch_size']=64
