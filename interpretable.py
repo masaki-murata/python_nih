@@ -376,8 +376,8 @@ def main():
         for cam_method in arg_nih['cam_methods']:
             for layer_name in arg_nih['layer_names']:
                 cam_dir=cam_method+"_"+layer_name+"_samplesize%d_noiselevel%.2f_noiselayer=%s" % (arg_nih['samplesize'], arg_nih['noiselevel'], arg_nih['noiselayer_place'])
-            data_process.move_cam_pngs_single(pathology, cam_dir, path_to_cams=path_to_cams)
-            data_process.glue_cams_single(pathology, size=1024, path_to_cam_dir=path_to_cams+cam_dir)
+                data_process.move_cam_pngs_single(pathology, cam_dir, path_to_cams=path_to_cams)
+                data_process.glue_cams_single(pathology, size=1024, path_to_cam_dir=path_to_cams+cam_dir)
 #    grad_cam(input_shape=(256,256,1),layer_name="block4_conv4")
 
 if __name__ == '__main__':
